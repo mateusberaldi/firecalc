@@ -1,0 +1,468 @@
+{
+ "nome": "Edifício alto (SP, reforço, 16 pavimentos)",
+ "norma": "SP",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "tipo": "2",
+  "coluna": "1-t2",
+  "area": 4800,
+  "divisao": "A-2"
+ },
+ "ambiente": {
+  "altitude": 700,
+  "temperatura": 30
+ },
+ "fonte": {
+  "modo": "reforco",
+  "zCheio": 51.0,
+  "rtiEfetiva": 18,
+  "elevado": true,
+  "nota": "RTI elevada de 18 m3, dado do caso (com 5.000 m2 a tabela de RTI daria a faixa seguinte). Rede inteira: os 16 hidrantes, do H01 no 15º pavimento ao H16 no térreo."
+ },
+ "nos": {
+  "H01": {
+   "z": 47.7
+  },
+  "H02": {
+   "z": 44.6
+  },
+  "A": {
+   "z": 44.6
+  },
+  "RI": {
+   "z": 51.0
+  },
+  "B": {
+   "z": 41.5
+  },
+  "H03": {
+   "z": 41.5
+  },
+  "C": {
+   "z": 38.4
+  },
+  "H04": {
+   "z": 38.4
+  },
+  "D": {
+   "z": 35.3
+  },
+  "H05": {
+   "z": 35.3
+  },
+  "E": {
+   "z": 32.2
+  },
+  "H06": {
+   "z": 32.2
+  },
+  "F": {
+   "z": 29.1
+  },
+  "H07": {
+   "z": 29.1
+  },
+  "G": {
+   "z": 26.0
+  },
+  "H08": {
+   "z": 26.0
+  },
+  "J": {
+   "z": 22.9
+  },
+  "H09": {
+   "z": 22.9
+  },
+  "K": {
+   "z": 19.8
+  },
+  "H10": {
+   "z": 19.8
+  },
+  "L": {
+   "z": 16.7
+  },
+  "H11": {
+   "z": 16.7
+  },
+  "M": {
+   "z": 13.6
+  },
+  "H12": {
+   "z": 13.6
+  },
+  "N": {
+   "z": 10.5
+  },
+  "H13": {
+   "z": 10.5
+  },
+  "P": {
+   "z": 7.4
+  },
+  "H14": {
+   "z": 7.4
+  },
+  "Q": {
+   "z": 4.3
+  },
+  "H15": {
+   "z": 4.3
+  },
+  "H16": {
+   "z": 1.2
+  }
+ },
+ "trechos": [
+  {
+   "nome": "A-H01",
+   "dn": 65,
+   "L": 4.1,
+   "pecas": {
+    "te_pd": 1,
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "A-H02",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "RI-A",
+   "dn": 65,
+   "L": 24.5,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "A-B",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "B-H03",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "B-C",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "C-H04",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "C-D",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "D-H05",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "D-E",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "E-H06",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "E-F",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "F-H07",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "F-G",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "G-H08",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "G-J",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "J-H09",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "J-K",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "K-H10",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "K-L",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "L-H11",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "L-M",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "M-H12",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "M-N",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "N-H13",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "N-P",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "P-H14",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "P-Q",
+   "dn": 65,
+   "L": 3.1,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "Q-H15",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "Q-H16",
+   "dn": 65,
+   "L": 4.1,
+   "pecas": {
+    "cot90_medio": 1,
+    "angulo": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H01",
+   "no": "H01",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-01"
+  },
+  {
+   "id": "H02",
+   "no": "H02",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-02"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H03",
+   "no": "H03"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H04",
+   "no": "H04"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H05",
+   "no": "H05"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H06",
+   "no": "H06"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H07",
+   "no": "H07"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H08",
+   "no": "H08"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H09",
+   "no": "H09"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H10",
+   "no": "H10"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H11",
+   "no": "H11"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H12",
+   "no": "H12"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H13",
+   "no": "H13"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H14",
+   "no": "H14"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H15",
+   "no": "H15"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H16",
+   "no": "H16"
+  }
+ ],
+ "bomba": {
+  "id": "sch59-2"
+ }
+}

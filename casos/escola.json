@@ -1,0 +1,112 @@
+{
+ "nome": "Escola E-1 (SP, tipo 2, par H1 e H2 simétrico, sem a válvula de 10 m no ramal)",
+ "norma": "SP",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "coluna": "1-t2",
+  "area": 5150,
+  "divisao": "E-1"
+ },
+ "ambiente": {
+  "altitude": 700,
+  "temperatura": 30
+ },
+ "fonte": {
+  "modo": "bomba",
+  "zX": 0.5,
+  "zCheio": 2.0,
+  "rtiEfetiva": 18,
+  "nota": "zCheio adotada só para o teste; não entra nos números do gabarito"
+ },
+ "nos": {
+  "H1": {
+   "z": 1.2
+  },
+  "H2": {
+   "z": 1.2
+  },
+  "J": {
+   "z": 0
+  },
+  "BI": {
+   "z": 0
+  },
+  "RI": {
+   "z": 0.5
+  }
+ },
+ "trechos": [
+  {
+   "nome": "BI-R",
+   "dn": 65,
+   "L": 29.8,
+   "pecas": {
+    "ret_leve": 1,
+    "gaveta": 1,
+    "cot90_medio": 3,
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "R-J",
+   "dn": 65,
+   "L": 18.0,
+   "pecas": {
+    "cot90_medio": 2,
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "J-H1",
+   "dn": 65,
+   "L": 60.9,
+   "pecas": {
+    "cot90_medio": 3,
+    "gaveta": 1,
+    "te_sl": 1
+   }
+  },
+  {
+   "nome": "J-H2",
+   "dn": 65,
+   "L": 60.9,
+   "pecas": {
+    "cot90_medio": 3,
+    "gaveta": 1,
+    "te_sl": 1
+   }
+  },
+  {
+   "nome": "RI-BI",
+   "dn": 80,
+   "L": 3.0,
+   "pecas": {
+    "entrada_normal": 1,
+    "gaveta": 1,
+    "cot90_medio": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H1",
+   "no": "H1",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-1"
+  },
+  {
+   "id": "H2",
+   "no": "H2",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-2"
+  }
+ ],
+ "bomba": {
+  "id": "sch59-3"
+ }
+}

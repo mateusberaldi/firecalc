@@ -1,0 +1,74 @@
+{
+ "norma": "SP",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "tipo": "2"
+ },
+ "ambiente": {
+  "altitude": 0,
+  "temperatura": 20
+ },
+ "nome": "Planilha de conferência, tipo 2, comprimento virtual digitado",
+ "fonte": {
+  "modo": "bomba",
+  "zX": 3.95
+ },
+ "nos": {
+  "H1": {
+   "z": 0
+  },
+  "H2": {
+   "z": -3.65
+  },
+  "A": {
+   "z": 0
+  },
+  "BI": {
+   "z": 2.95
+  },
+  "RI": {
+   "z": 3.95
+  }
+ },
+ "trechos": [
+  {
+   "nome": "A-H1",
+   "dn": 65,
+   "L": 0.5,
+   "Lvirtual": 14.3
+  },
+  {
+   "nome": "A-H2",
+   "dn": 65,
+   "L": 23.0,
+   "Lvirtual": 20.6
+  },
+  {
+   "nome": "BI-A",
+   "dn": 65,
+   "L": 7.5,
+   "Lvirtual": 18.1
+  },
+  {
+   "nome": "RI-BI",
+   "dn": 65,
+   "L": 2.5,
+   "Lvirtual": 8.0
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H1",
+   "no": "H1"
+  },
+  {
+   "id": "H2",
+   "no": "H2"
+  }
+ ]
+}

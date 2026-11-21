@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>FireCalc 2.6.3, manual de uma página</title>
+<style>
+@page { size: A4; margin: 8mm 11mm; }
+body { font-family: "Segoe UI", Arial, sans-serif; font-size: 7.3pt; line-height: 1.22; color: #0A0A0A; margin: 0; }
+h1 { font-size: 15pt; margin: 0; color: #A84300; }
+.sub { font-size: 8.4pt; color: #3D3D3D; margin: 1mm 0 2mm; }
+h2 { font-size: 9.4pt; margin: 2.2mm 0 0.8mm; color: #A84300; border-bottom: 0.3mm solid #B84A00; padding-bottom: 0.4mm; }
+.cols { column-count: 2; column-gap: 7mm; }
+.bloco { break-inside: avoid; }
+p { margin: 0 0 1mm; }
+ol, ul { margin: 0 0 1mm; padding-left: 4.2mm; }
+li { margin-bottom: 0.4mm; }
+table { border-collapse: collapse; width: 100%; font-size: 7.2pt; margin-bottom: 1mm; }
+td, th { border: 0.2mm solid #D6D6D3; padding: 0.5mm 1.2mm; text-align: left; vertical-align: top; }
+th { background: #FFF1E6; }
+.rod { margin-top: 2mm; font-size: 7.4pt; color: #3D3D3D; border-top: 0.2mm solid #D6D6D3; padding-top: 1mm; }
+code { font-family: Consolas, monospace; font-size: 7.8pt; background: #ECECEA; padding: 0 0.6mm; }
+</style></head><body>
+<h1>FireCalc 2.6.3: manual de uma página</h1>
+<div class="sub">Dimensionamento de hidrantes e mangotinhos pela IT 22/2025 (SP) ou pela NPT 022 (PR).</div>
+<div class="cols">
+<div class="bloco"><h2>1. Abrir</h2>
+<ol>
+<li>Copie a pasta do kit para o seu computador: <code>firecalc.html</code>, este manual, as notas da versão e a pasta <code>exemplos</code>. Se veio pelo OneDrive ou por e-mail, <b>baixe os arquivos</b> antes; não abra direto da nuvem nem de dentro do anexo.</li>
+<li>Dê duplo clique em <code>firecalc.html</code>. Abre no navegador (Chrome ou Edge recomendados). <b>Não precisa de internet, instalação nem senha de administrador.</b></li>
+<li>Na tela Início: <b>Novo projeto</b> ou <b>Abrir projeto (.json)</b>. Os casos de exemplo estão na pasta <code>exemplos</code>. Projetos das versões anteriores abrem sem conversão.</li>
+</ol></div>
+<div class="bloco"><h2>2. Testar meu computador (faça antes do primeiro projeto)</h2>
+<p>Menu <b>Ajuda</b>, aba <b>Testar meu computador</b>, botão <b>Rodar as conferências</b>. O resultado esperado é <b>93 conferidas, 0 falhas</b>. Qualquer falha: anote a linha e não use o programa neste computador até resolver.</p></div>
+<div class="bloco"><h2>3. As oito etapas do projeto</h2>
+<table>
+<tr><th>Etapa</th><th>O que fazer</th></tr>
+<tr><td>1 Identificação</td><td>Obra, endereço, responsável técnico, ART ou RRT, a norma (SP ou PR) e, obrigatórias, a <b>altitude do local</b> e a <b>temperatura da água</b>. O "?" de cada uma diz o que é e como buscar o valor.</td></tr>
+<tr><td>2 Edificação e sistema</td><td>Divisão de ocupação, área e, se a tabela pedir, a carga de incêndio. Cada sistema aparece num botão com o desenho, a vazão, a pressão, a mangueira e a reserva. <b>Alterar sistema</b> escolhe outro tipo, e a reserva acompanha o tipo adotado; tipo inferior que a tabela não admite não atende nas Verificações. O <b>Próximo</b> pede a confirmação do tipo uma vez.</td></tr>
+<tr><td>3 Abastecimento</td><td>Escolha a <b>fonte de pressão</b> (reservatório inferior ou ao nível, ou elevado) e o <b>tipo do reservatório</b> (concreto, taça, torre, standpipe, cilíndrico, caixa de polietileno). O menu que abre pede a saída, as cotas, as medidas, a bomba e as particularidades; o resultado aparece ao vivo. "Confirmar" desenha o reservatório com os níveis e mostra a reserva efetiva e o estado da sucção (afogada, positiva ou negativa), que a ferramenta deduz da tomada.</td></tr>
+<tr><td>4 Rede</td><td>A linha <code>RI</code>-<code>BI</code> já vem com os nós e as cotas do Abastecimento. Lance um trecho por linha, de montante para jusante, com a cota real de cada nó em relação ao nível 0,00 do projeto, diâmetro, comprimento, tipo de tubo e peças. Passe o mouse no desenho para ver os dados do ponto ou do trecho; a <b>planilha da rede</b> mostra trecho a trecho e marca com ▲ o que passa do limite.</td></tr>
+<tr><td>5 Hidrantes</td><td>Cartões da mangueira e do esguicho. <b>Selecionar esguicho</b> abre os esguichos cadastrados; sem escolha vale o padrão do diâmetro, um para o projeto inteiro. A tela mostra o que chega ao esguicho (pressão, vazão e alcance) e a pressão de cada hidrante (a estática aparece depois da escolha da bomba); clique na linha para ver a curva dele. <b>V. redutora</b> lança a válvula redutora de pressão.</td></tr>
+<tr><td>6 Bomba e automação</td><td>As cinco bombas do catálogo de menor folga e, ao lado, a curva contra a do sistema; "Escolher" fixa a bomba. NPSH quando a sucção pede. Bomba de pressurização pela lista completa, com a curva e o ponto de partida; pressostatos e, no PR, o ramal de retorno para testes.</td></tr>
+<tr><td>7 Verificações</td><td>Cada item com o resultado, o item da norma e o que fazer quando não atende. Nos itens a conferir, "Conferido" registra que você leu e resolveu.</td></tr>
+<tr><td>8 Relatório</td><td>Baixar o relatório (.xlsx), o memorial (.docx) e o projeto (.json).</td></tr>
+</table>
+<p>O resumo no alto mostra o resultado a cada mudança. Campo inválido suspende o resultado até a correção. <b>Estatísticas</b> traz os números principais, a cascata de pressões, a curva da bomba com a hipótese de cálculo e a pressão estática por ponto em barras.</p></div>
+<div class="bloco"><h2>4. Nomes dos nós</h2>
+<p><b>RI</b> reservatório de incêndio; <b>BI</b> bomba de incêndio; <b>H1, H2...</b> hidrantes (todo nó que começa com H). Os outros nós têm nome livre (A, B, C); <b>REC1</b> é o recalque. Renomear um nó leva a cota junto. Na gravidade não há BI.</p></div>
+<div class="bloco"><h2>5. Ler as verificações</h2>
+<ul>
+<li><b>Não atende</b>: o projeto não cumpre a norma (exemplo: estática acima de 100 mca). O relatório sai com ressalva.</li>
+<li><b>Conferir</b>: pede conferência ou justificativa no memorial (exemplo: tipo inferior ao da tabela, alcance do jato).</li>
+<li><b>Atende</b> e <b>Informação</b>: sempre com o item da IT 22 ou da NPT 022 ao lado. Cite o item, não a ferramenta.</li>
+</ul></div>
+<div class="bloco"><h2>6. Relatório</h2>
+<p>A planilha tem 15 abas: <b>Resumo</b> de uma página com campo de assinatura, <b>Memorial descritivo</b>, <b>Memorial</b> de cálculo e <b>Passo a passo</b>, depois as abas de cálculo, com fórmulas que recalculam no Excel ou no LibreOffice e impressão já configurada em A4. O memorial (.docx) traz os mesmos números. Entregue a planilha, o memorial e o arquivo <code>.json</code>.</p></div>
+<div class="bloco"><h2>7. Cadastros, Configurações e Sobre</h2>
+<ul>
+<li><b>Cadastros</b>: tubos, peças, esguichos, mangueiras, bombas e ocupações, cada um com o arquivo do catálogo e a página. <b>Minha biblioteca</b>: o "?" ensina a gerar o arquivo .json com uma IA a partir do PDF do catálogo, com o modelo e o prompt prontos.</li>
+<li><b>Modo personalizado</b> (botão "trocar", no pé da barra lateral): fator C por trecho, par forçado para estudo, bomba e mangueira fora da base, sempre com a fonte.</li>
+<li><b>Configurações</b>: dados do escritório, padrões de projeto novo e tema claro ou escuro. <b>Busca</b>: Ctrl K.</li>
+<li><b>Sobre</b>: licença (software livre, AGPL-3.0), titular e endereço do código-fonte.</li>
+</ul></div>
+<div class="bloco"><h2>8. Limites (leia)</h2>
+<ul>
+<li>A ferramenta <b>não decide</b> a exigência do sistema: isso é do Decreto 69.118/24 (SP) ou do CSCIP (PR). Ela só enquadra na tabela de reserva.</li>
+<li>Cobertura pelo trajeto e posição dos pontos são conferidas no desenho, pelo projetista.</li>
+<li>Catálogos são apoio. Fontes da verdade: Azevedo Netto, IT 22/2025, NPT 022, NBR respectiva e Brentano.</li>
+<li><b>Paraná:</b> a base só tem a pressão na ponta do esguicho CAC 1½"; nos outros, comprove pelo catálogo.</li>
+</ul></div>
+<div class="bloco"><h2>9. Problemas comuns</h2>
+<table>
+<tr><td>Tela em branco ou botões sem resposta</td><td>Arquivo aberto de dentro do e-mail ou da nuvem: baixe e abra de novo. Use Chrome ou Edge atualizados.</td></tr>
+<tr><td>Perdi o projeto</td><td>Tela Início, projetos salvos neste navegador (até 12). Daí em diante, use <b>Baixar o projeto (.json)</b>.</td></tr>
+<tr><td>Resumo sem resultado</td><td>Campo inválido ou rede incompleta: use o botão "Ir corrigir" do aviso.</td></tr>
+<tr><td>Pressão muito alta ou baixa</td><td>Veja o diâmetro, a tabela de comprimento equivalente e as cotas. Estática acima de 100 mca: troque a bomba ou use a <b>V. redutora</b> na etapa 5.</td></tr>
+<tr><td>Reserva insuficiente</td><td>No Abastecimento, confira o tipo do reservatório, a saída e as cotas no menu do reservatório.</td></tr>
+</table></div>
+</div>
+<div class="rod">FireCalc 2.6.3, arquivo único em HTML. Planilha com ExcelJS 4.4.0 e memorial com docx 9.8.1 (licença MIT), embutidos. Código-fonte: github.com/mateusberaldi/firecalc. © 2026 Mateus Beraldi Nobre. Software livre sob a AGPL-3.0, sem garantia.</div>
+</body></html>

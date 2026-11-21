@@ -1,0 +1,131 @@
+{
+ "nome": "Loja com mezanino, três hidrantes (SP, caminho A)",
+ "norma": "SP",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "coluna": "1-t2",
+  "area": 1800,
+  "divisao": "C-1"
+ },
+ "ambiente": {
+  "altitude": 700,
+  "temperatura": 20
+ },
+ "fonte": {
+  "modo": "bomba",
+  "zX": 0.465,
+  "zCheio": 2.095,
+  "rtiEfetiva": 8
+ },
+ "nos": {
+  "RI": {
+   "z": 0.465
+  },
+  "BI": {
+   "z": 0.3
+  },
+  "A": {
+   "z": -0.5
+  },
+  "B": {
+   "z": 3.0
+  },
+  "H1": {
+   "z": 1.2
+  },
+  "H2": {
+   "z": 4.4
+  },
+  "H3": {
+   "z": 1.2
+  }
+ },
+ "trechos": [
+  {
+   "nome": "RI-BI",
+   "dn": 65,
+   "L": 0.8,
+   "pecas": {
+    "entrada_normal": 1,
+    "gaveta": 1
+   }
+  },
+  {
+   "nome": "BI-A",
+   "dn": 65,
+   "L": 2.5,
+   "pecas": {
+    "gaveta": 1,
+    "ret_leve": 1,
+    "cot90_curto": 2
+   }
+  },
+  {
+   "nome": "A-H1",
+   "dn": 65,
+   "L": 12.0,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "A-B",
+   "dn": 65,
+   "L": 30.0,
+   "pecas": {
+    "te_pd": 1,
+    "cot90_curto": 1
+   }
+  },
+  {
+   "nome": "B-H2",
+   "dn": 65,
+   "L": 9.5,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 3,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "B-H3",
+   "dn": 65,
+   "L": 26.0,
+   "pecas": {
+    "te_pd": 1,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H1",
+   "no": "H1",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-1"
+  },
+  {
+   "id": "H2",
+   "no": "H2",
+   "alturaValvula": 1.4,
+   "idPrancha": "H-2"
+  },
+  {
+   "id": "H3",
+   "no": "H3",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-3"
+  }
+ ],
+ "bomba": {
+  "id": "sch63-1"
+ }
+}

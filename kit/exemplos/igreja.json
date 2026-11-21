@@ -1,0 +1,106 @@
+{
+ "nome": "Igreja F-2 (SP, caminho A)",
+ "norma": "SP",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "coluna": "1-t2",
+  "area": 816,
+  "divisao": "F-2"
+ },
+ "ambiente": {
+  "altitude": 700,
+  "temperatura": 20
+ },
+ "fonte": {
+  "modo": "bomba",
+  "zX": 0.465,
+  "zCheio": 2.095,
+  "rtiEfetiva": 8
+ },
+ "nos": {
+  "H1": {
+   "z": 1.2
+  },
+  "H2": {
+   "z": 1.2
+  },
+  "A": {
+   "z": -0.5
+  },
+  "BI": {
+   "z": 0.3
+  },
+  "RI": {
+   "z": 0.465
+  }
+ },
+ "trechos": [
+  {
+   "nome": "A-H1",
+   "dn": 65,
+   "L": 48.73,
+   "pecas": {
+    "te_sl": 2,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "A-H2",
+   "dn": 65,
+   "L": 21.83,
+   "pecas": {
+    "te_pd": 1,
+    "cot90_curto": 3,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "BI-A",
+   "dn": 65,
+   "L": 1.8,
+   "pecas": {
+    "gaveta": 1,
+    "ret_leve": 1,
+    "cot90_curto": 3
+   }
+  },
+  {
+   "nome": "RI-BI",
+   "dn": 65,
+   "L": 0.8,
+   "pecas": {
+    "entrada_normal": 1,
+    "gaveta": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H1",
+   "no": "H1",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-1"
+  },
+  {
+   "id": "H2",
+   "no": "H2",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-2"
+  }
+ ],
+ "bomba": {
+  "id": "sch59-3"
+ },
+ "recalque": {
+  "tipo": "muro",
+  "z": 1.01,
+  "dn": 65,
+  "L": 5.05
+ }
+}

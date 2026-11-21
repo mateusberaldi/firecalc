@@ -1,0 +1,201 @@
+{
+ "nome": "Escritórios D-1 (SP, tipo 3, BPI BC-23 e BPI BT4-1010E8)",
+ "norma": "SP",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "tipo": "3",
+  "coluna": "2",
+  "area": 10700,
+  "divisao": "D-1",
+  "carga": 700
+ },
+ "ambiente": {
+  "altitude": 700,
+  "temperatura": 30
+ },
+ "fonte": {
+  "modo": "bomba",
+  "zX": -2.81,
+  "zCheio": -0.8099999999999999,
+  "rtiEfetiva": 35,
+  "nota": "Área e RTI dadas no caso (10.700 m2, coluna 2, tipo 3, RTI 35 m3). Rede inteira: os pontos do térreo e dos subsolos são os hidrantes H8, H9 e H10, num ramal que sai do nó C, logo depois da bomba."
+ },
+ "nos": {
+  "H6": {
+   "z": 22.2
+  },
+  "H7": {
+   "z": 25.7
+  },
+  "A": {
+   "z": 21.2
+  },
+  "BI": {
+   "z": 0.4
+  },
+  "RI": {
+   "z": -0.8099999999999999
+  },
+  "C": {
+   "z": 0.4
+  },
+  "D": {
+   "z": 0.9
+  },
+  "E": {
+   "z": -1.8
+  },
+  "H8": {
+   "z": 1.2
+  },
+  "H9": {
+   "z": -1.8
+  },
+  "H10": {
+   "z": -4.8
+  }
+ },
+ "trechos": [
+  {
+   "nome": "A-H6",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "A-H7",
+   "dn": 65,
+   "L": 4.5,
+   "pecas": {
+    "te_pd": 1,
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "BI-C",
+   "dn": 65,
+   "L": 0.5,
+   "pecas": {
+    "gaveta": 1,
+    "ret_leve": 1,
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "C-A",
+   "dn": 65,
+   "L": 110.3,
+   "pecas": {
+    "cot90_medio": 5,
+    "te_pd": 5
+   }
+  },
+  {
+   "nome": "RI-BI",
+   "dn": 80,
+   "L": 4.52,
+   "pecas": {
+    "pe_crivo": 1,
+    "cot90_medio": 1,
+    "gaveta": 1
+   }
+  },
+  {
+   "nome": "C-D",
+   "dn": 65,
+   "L": 2.0,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_medio": 1
+   }
+  },
+  {
+   "nome": "D-H8",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "D-E",
+   "dn": 65,
+   "L": 2.7,
+   "pecas": {
+    "te_pd": 1,
+    "cot90_medio": 1
+   }
+  },
+  {
+   "nome": "E-H9",
+   "dn": 65,
+   "L": 1.0,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "E-H10",
+   "dn": 65,
+   "L": 4.0,
+   "pecas": {
+    "cot90_medio": 1,
+    "angulo": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H6",
+   "no": "H6",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-6"
+  },
+  {
+   "id": "H7",
+   "no": "H7",
+   "alturaValvula": 1.2,
+   "idPrancha": "H-7"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H8",
+   "no": "H8"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H9",
+   "no": "H9"
+  },
+  {
+   "alturaValvula": 1.2,
+   "id": "H10",
+   "no": "H10"
+  }
+ ],
+ "bomba": {
+  "id": "sch60-2",
+  "npshr": 2.96
+ },
+ "jockey": {
+  "id": "sch61-3"
+ },
+ "saidas": 7,
+ "recalque": {
+  "tipo": "muro",
+  "z": 1.0,
+  "dn": 65,
+  "L": 12
+ }
+}

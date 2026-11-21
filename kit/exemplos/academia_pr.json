@@ -1,0 +1,164 @@
+{
+ "nome": "Academia E-3 com garagem G-2, Paraná (NPT 022): 23 mca na entrada do esguicho de HD1, par de cálculo HD1 e HD2",
+ "norma": "PR",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "coluna": "2",
+  "area": 2226.7,
+  "divisao": "E-3",
+  "carga": 300
+ },
+ "ambiente": {
+  "altitude": 760,
+  "temperatura": 20
+ },
+ "fonte": {
+  "modo": "bomba",
+  "zX": 12.46,
+  "zCheio": 13.96,
+  "rtiEfetiva": 8,
+  "elevado": true
+ },
+ "nos": {
+  "RI": {
+   "z": 12.46
+  },
+  "BI": {
+   "z": 11.38
+  },
+  "A": {
+   "z": 8.44
+  },
+  "N2": {
+   "z": 3.42
+  },
+  "N3": {
+   "z": 3.42
+  },
+  "HD1": {
+   "z": 8.44
+  },
+  "HD2": {
+   "z": 5.05
+  },
+  "HD3": {
+   "z": 1.1
+  }
+ },
+ "trechos": [
+  {
+   "nome": "RI-BI",
+   "dn": 65,
+   "L": 2.39,
+   "pecas": {
+    "entrada_normal": 1,
+    "gaveta": 2,
+    "te_sl": 1,
+    "te_pd": 1,
+    "cot90_curto": 1
+   }
+  },
+  {
+   "nome": "BI-A",
+   "dn": 65,
+   "L": 7.98,
+   "pecas": {
+    "te_sl": 3,
+    "ret_leve": 1,
+    "cot90_curto": 3
+   }
+  },
+  {
+   "nome": "A-HD1",
+   "dn": 65,
+   "L": 0.1,
+   "pecas": {
+    "te_sl": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "A-N2",
+   "dn": 65,
+   "L": 4.88,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "N2-HD3",
+   "dn": 65,
+   "L": 2.36,
+   "pecas": {
+    "te_pd": 1,
+    "cot90_curto": 1,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "N2-N3",
+   "dn": 65,
+   "L": 16.36,
+   "pecas": {
+    "te_sl": 1
+   }
+  },
+  {
+   "nome": "N3-HD2",
+   "dn": 65,
+   "L": 1.73,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 1,
+    "angulo": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "HD1",
+   "no": "HD1",
+   "caminho": "B",
+   "esguicho": "MR CAC 1 1/2\" ER longo",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.1
+  },
+  {
+   "id": "HD2",
+   "no": "HD2",
+   "caminho": "B",
+   "esguicho": "MR CAC 1 1/2\" ER longo",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.38
+  },
+  {
+   "id": "HD3",
+   "no": "HD3",
+   "caminho": "B",
+   "esguicho": "MR CAC 1 1/2\" ER longo",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.1
+  }
+ ],
+ "lancamento": {
+  "Pentrada": 23,
+  "alcance": 7,
+  "fontes": {
+   "Pentrada": "Memorial do projeto: ponto de 23 mca na entrada do esguicho, lido na curva do fabricante (cerca de 155 L/min e 14,5 mca na ponta)",
+   "alcance": "NPT 022, 5.7.1: duas vezes o pé-direito (2 x 3,50 m), sistema abastecido por gravidade; leitura do projeto"
+  }
+ },
+ "parForcado": "HD1 + HD2",
+ "retornoTeste": true,
+ "bomba": {
+  "id": "sch59-2"
+ }
+}

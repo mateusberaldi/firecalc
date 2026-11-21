@@ -1,0 +1,163 @@
+[
+[
+"SP",
+"F-2",
+null,
+"1-t2",
+"igreja F-2"
+],
+[
+"SP",
+"D-1",
+700,
+"2",
+"escritórios D-1, 700 MJ/m²"
+],
+[
+"SP",
+"E-1",
+null,
+"1-t2",
+"escola E-1"
+],
+[
+"SP",
+"A-2",
+null,
+"1-t2",
+"edifício alto A-2"
+],
+[
+"SP",
+"G-4",
+300,
+"1-t2",
+"galpão G-4 com 300 MJ/m² (limite: até 300)"
+],
+[
+"SP",
+"G-4",
+301,
+"3",
+"G-4 acima de 300 MJ/m²"
+],
+[
+"SP",
+"D-1",
+300,
+"1-t1",
+"D-1 com 300 MJ/m² (limite)"
+],
+[
+"SP",
+"D-1",
+301,
+"2",
+"D-1 com 301 MJ/m²"
+],
+[
+"SP",
+"C-2",
+1000,
+"2",
+"C-2 com 1.000 MJ/m² (limite)"
+],
+[
+"SP",
+"C-2",
+1001,
+"3",
+"C-2 acima de 1.000"
+],
+[
+"SP",
+"C-2",
+200,
+null,
+"C-2 até 300: sem coluna"
+],
+[
+"SP",
+"I-2",
+800,
+"2",
+"I-2 com 800 MJ/m² (limite)"
+],
+[
+"SP",
+"I-2",
+801,
+"3",
+"I-2 acima de 800"
+],
+[
+"SP",
+"B-1",
+null,
+"2",
+"hotel B-1"
+],
+[
+"SP",
+"G-5",
+null,
+"4",
+"hangar G-5"
+],
+[
+"SP",
+"M-7",
+null,
+"4",
+"pátio de contêineres M-7"
+],
+[
+"SP",
+"A-1",
+null,
+null,
+"A-1 fora do regulamento"
+],
+[
+"PR",
+"F-2",
+null,
+"2",
+"igreja F-2 no PR"
+],
+[
+"PR",
+"G-4",
+500,
+"1",
+"G-4 no PR (sem faixa de carga)"
+],
+[
+"PR",
+"C-2",
+200,
+"3",
+"C-2 até 1.000 no PR"
+],
+[
+"PR",
+"G-5",
+null,
+"5",
+"hangar G-5 no PR"
+],
+[
+"PR",
+"K-1",
+null,
+null,
+"K-1 sem coluna no PR"
+],
+[
+"PR",
+"M-5",
+null,
+"4",
+"silos M-5 no PR"
+]
+]
