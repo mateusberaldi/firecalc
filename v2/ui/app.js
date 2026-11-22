@@ -11,11 +11,13 @@
     ['Trecho', 'Pedaço de tubo entre dois nós, com um só diâmetro e uma só vazão. O nome é formado pelos dois nós, de montante para jusante (RI-BI, BI-A, A-H1). Fonte da convenção: Azevedo Netto, Manual de Hidráulica, cap. 19.'],
     ['Montante e jusante', 'Montante é o lado de onde a água vem (o reservatório); jusante é o lado para onde ela vai (o hidrante). Fonte: Azevedo Netto, Manual de Hidráulica.'],
     ['Altura manométrica total (AMT)', 'Energia que a bomba entrega à água, em metros de coluna de água: a pressão na descarga menos a pressão na sucção. Fonte: Azevedo Netto, Manual de Hidráulica.'],
+    ['Curva da bomba em visualização', 'Na etapa Bomba, clicar numa linha das listas de bombas (ou usar Enter e Espaço no nome da bomba) mostra a curva dela no gráfico, sem escolhê-la. A linha ganha o sinal "em visualização" e só o botão Escolher troca a bomba. Fonte: convenção do FireCalc.'],
     ['Comprimento equivalente (Leq)', 'Comprimento de tubo reto que causa a mesma perda de carga de uma peça. Fonte: Azevedo Netto, Tabela 7.6.'],
     ['Reserva técnica de incêndio (RTI)', 'Volume de água guardado só para o combate a incêndio. Fonte: IT 22, Tabela 3.'],
     ['NPSH disponível', 'Energia da água na entrada da bomba, acima da pressão de vapor. Precisa ser maior que o NPSH requerido do catálogo. Fonte: IT 22, 4.8.15.'],
     ['Pressão a vazão nula (shut-off)', 'Pressão que a bomba dá com o registro fechado, sem vazão. Fonte: IT 22, C.1.14.'],
     ['Bomba de pressurização (jockey)', 'Bomba pequena que mantém a rede pressurizada e repõe pequenas perdas, para a bomba principal não partir à toa. Fonte: IT 22, C.1.15.'],
+    ['Escada de pressostatos', 'Pressões em que as bombas ligam e desligam, contadas a partir da pressão calculada na descarga. A bomba principal liga nessa pressão; a bomba de pressurização liga 10 mca acima e desliga 10 mca acima da própria partida, sem passar do teto, que é o shut-off da bomba principal no cavalete, com a água no nível X. Fonte: IT 22, C.1.15.1.'],
     ['Par mais desfavorável', 'Os dois jatos que, abertos juntos, pedem a maior altura manométrica. Fonte: IT 22, 4.8.3.'],
     ['Nível X', 'Nível da água no reservatório quando só resta a reserva de incêndio. A altura manométrica é contada a partir dele. Fonte: convenção do FireCalc.'],
     ['Fator C', 'Coeficiente de Hazen-Williams, que mede o atrito do tubo: quanto menor, mais perda de carga. Aço galvanizado: 120. Fonte: IT 22, Tabela 1.'],
@@ -24,7 +26,8 @@
     ['Pressão estática', 'Pressão na válvula com a rede cheia e sem vazão, bomba ligada. Não pode passar de 100 mca. Fonte: IT 22, 4.8.8; no Paraná, NPT 022, 5.7.7.'],
     ['Ponto de trabalho', 'Vazão e altura em que a bomba de fato opera: o encontro da curva da bomba com a curva do sistema. Fonte: Azevedo Netto, Manual de Hidráulica.'],
     ['Dispositivo de recalque', 'Entrada de água na fachada ou no passeio, por onde a viatura dos bombeiros abastece a rede. Fonte: IT 22, 4.3.'],
-    ['Ramal de retorno para testes', 'Tubo que leva a água da descarga da bomba de volta ao reservatório, para ensaiar a bomba sem abrir hidrante. Exigido no Paraná. Fonte: NPT 022, 5.10.6.3.']
+    ['Ramal de retorno para testes', 'Tubo que leva a água da descarga da bomba de volta ao reservatório, para ensaiar a bomba sem abrir hidrante. Exigido no Paraná. Fonte: NPT 022, 5.10.6.3.'],
+    ['Desenho da rede pelo teclado', 'Tab leva ao desenho. Setas, Home e End passam de um trecho ou ponto a outro e abrem o cartão com os dados; Esc fecha o cartão; Tab segue para fora do desenho. Fonte: convenção do FireCalc.']
   ];
   U.GLOSS = GLOSS;
   var CAMPOS = [['Nome da obra', 'ident.obra'], ['Norma do projeto', 'norma'], ['Divisão de ocupação', 'sistema.divisao'], ['Área da edificação', 'sistema.area'], ['Fator C', 'C'], ['Tabela de comprimento equivalente', 'tabelaLeq'],
@@ -53,7 +56,7 @@
     var rec = L.length ? '<div class="cartao grupo" style="margin-top:16px" id="salvos"><div class="gt"><h2 class="t3">Projetos salvos neste navegador</h2></div><div class="rolar"><table><thead><tr><th>Projeto</th><th>Norma</th><th>Etapa</th><th>Última mudança</th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' +
       L.map(function (a, k) { var nome = esc(a.F.ident.obra || 'Projeto sem nome'), et = etapaGuardada(a); return '<tr><td><b>' + nome + '</b>' + (S.aberto && S.F.pid === a.pid ? ' <span class="peq">aberto agora</span>' : '') + '</td><td>' + (a.F.norma && D.normas[a.F.norma] ? esc(D.normas[a.F.norma].nome) : 'a escolher') + '</td><td>' + et + ' de ' + U.ETAPAS.length + ', ' + U.ETAPAS[et - 1] + '</td><td>' + esc(a.quando || '') + '</td><td class="r" style="white-space:nowrap"><button class="bt min' + (k ? '' : ' pri') + '" data-acao="continuar" data-v="' + esc(a.pid) + '" aria-label="Abrir o projeto ' + nome + '">Abrir</button> <button class="bt lig min" data-acao="esquecer" data-v="' + esc(a.pid) + '" aria-label="Tirar o projeto ' + nome + ' da lista">Tirar da lista</button></td></tr>'; }).join('') +
       '</tbody></table></div><div class="rodape-tab"><span class="peq">A lista guarda os ' + MAXP + ' projetos mais recentes, só neste navegador. Para não depender dela, baixe o arquivo .json de cada projeto.</span></div></div>' : '';
-    return '<div class="cab"><div class="tx"><h1>Início</h1><p>Dimensionamento de hidrantes e mangotinhos em oito etapas, com as verificações da norma e o relatório em planilha.</p></div></div>' +
+    return '<div class="cab"><div class="tx"><h1>Início</h1></div></div>' +
       '<div class="vazia" id="solta"><svg class="il" viewBox="0 0 96 96" aria-hidden="true"><rect x="14" y="10" width="68" height="76" rx="8" fill="var(--fc-superficie-2)" stroke="var(--fc-borda-campo)" stroke-width="1.5"/><path d="M26 30h32M26 42h44M26 54h20" stroke="var(--fc-borda-campo)" stroke-width="3" stroke-linecap="round"/><circle cx="66" cy="66" r="16" fill="var(--fc-fogo)"/><path d="M66 58v16M58 66h16" stroke="var(--fc-superficie)" stroke-width="3" stroke-linecap="round"/></svg>' +
       '<h2>' + (S.aberto ? 'Começar outro projeto' : 'Nenhum projeto aberto') + '</h2><p>O projeto novo começa em branco. Você preenche uma etapa por vez e a ferramenta mostra o que falta antes de avançar.</p>' +
       '<div class="passos">' + U.ETAPAS.map(function (e, i) { return '<span>' + (i + 1) + ' ' + e.split(' ')[0] + '</span>'; }).join('') + '</div>' +
@@ -84,6 +87,7 @@
     else if (S.tela === 'estat') h = U.telas.estat();
     else if (S.tela === 'projeto') h = S.aberto ? (U.telas[S.etapa] || U.telas[S.etapa = 1])() : telaInicio();   /* 2.5.3: etapa fora da faixa (lista antiga) abre a 1 */
     else h = U.telas[S.tela]();
+    if (!(S.tela === 'projeto' && S.etapa === U.POS.bomba)) S.verBomba = '';   /* 2.6.4: a curva em visualização some ao sair da etapa Bomba */
     document.getElementById('conteudo').innerHTML = h;
   }
   function desenhar(manterFoco) {
@@ -106,12 +110,12 @@
   U.avisa = function (tx, ms) { var a = document.getElementById('aviso-proto'); a.textContent = tx; a.hidden = false; clearTimeout(U.avisa.t); U.avisa.t = setTimeout(function () { a.hidden = true; }, ms || 4500); };
   /** 2.5.3: etapa guardada na lista de projetos do navegador. Até a 2.5.2 eram nove etapas (sem a marca etv): da 3 em diante, uma a menos. */
   function etapaGuardada(a) { var n = a.etapa || 1; if (a.etv !== 8 && n >= 3) n -= 1; return Math.min(U.ETAPAS.length, Math.max(1, n)); }
-  function carrega(F, etapa) { E.migraF(F, D); if (!F.pid) F.pid = novoPid(); S.F = F; if (F._aviso) { var av = F._aviso; delete F._aviso; setTimeout(function () { U.avisa(av, 12000); }, 0); } S.aberto = true; S.tela = 'projeto'; S.etapa = etapa || 1; S.sel = F.trechos.length ? 0 : -1; S.tocados = {}; S.forcar = {}; S.visit = {}; S.sujo = false; S.origem = 'digitar'; S.hidCurva = ''; U.H = E.Historico(); U.H.guarda(S.F); desenhar(); window.scrollTo(0, 0); }
+  function carrega(F, etapa) { E.migraF(F, D); if (!F.pid) F.pid = novoPid(); S.F = F; S.esgFalado = ''; if (F._aviso) { var av = F._aviso; delete F._aviso; setTimeout(function () { U.avisa(av, 12000); }, 0); } S.aberto = true; S.tela = 'projeto'; S.etapa = etapa || 1; S.sel = F.trechos.length ? 0 : -1; S.tocados = {}; S.forcar = {}; S.visit = {}; S.sujo = false; S.origem = 'digitar'; S.hidCurva = ''; S.verBomba = ''; U.H = E.Historico(); U.H.guarda(S.F); desenhar(); window.scrollTo(0, 0); }
   function ir(dest) {
     var p = dest.split(':');
     S.ajuda = '';
     if (p[0] === 'tela') { if (p[1] === 'estat' && (!S.aberto || S.sit.k !== 'ok')) { U.avisa('As estatísticas aparecem quando o projeto tiver resultado calculado.'); return; } if (p[1] === 'projeto' && !S.aberto) { U.avisa('Nenhum projeto aberto. Comece um projeto novo ou abra um arquivo.'); S.tela = 'inicio'; } else S.tela = p[1]; }
-    else { var n = +p[1]; if (!S.aberto) return; if (!U.aberta(n)) { U.avisa('A etapa ' + U.ETAPAS[n - 1] + ' abre quando as anteriores estiverem completas.'); return; } if (S.tela === 'projeto') S.visit[S.etapa] = 1; S.tela = 'projeto'; S.etapa = n; }
+    else { var n = +p[1]; if (!S.aberto) return; if (!U.aberta(n)) { U.avisa('A etapa ' + U.ETAPAS[n - 1] + ' abre quando as anteriores estiverem completas.'); return; } if (S.tela === 'projeto') S.visit[S.etapa] = 1; S.tela = 'projeto'; S.etapa = n; S.esgFalado = ''; }
     desenhar(); window.scrollTo(0, 0); document.getElementById('conteudo').focus({ preventScroll: true });
   }
   /** "Ir corrigir": abre a etapa do campo e põe o foco nele. */
@@ -125,13 +129,13 @@
     if (etapa === U.POS.abast && S.F.fonte.xModo === 'calc' && S.F.fonte.tip && /^(fonte\.(?!tipo$|tip$)|nos\.(BI|RI)$)/.test(c) && U.abMenu) { U.abMenu(); return; }   /* 2.6.0: o campo está no menu do reservatório */
     if (c === 'fonte.tipo') { var bf = document.getElementById('ab-fonte-inferior'); if (bf) { bf.scrollIntoView({ block: 'center' }); bf.focus(); } return; }
     if (c === 'fonte.tip') { var bt0 = document.querySelector('#ab-tipo .ab-bt'); if (bt0) { bt0.scrollIntoView({ block: 'center' }); bt0.focus(); } return; }
-    if (/\.redP$/.test(c) && S.etapa === U.POS.hidr && U.dialogoRedutora) U.dialogoRedutora();   /* 2.6.0: a regulagem fica no menu da válvula redutora */
+    if (/\.redP$/.test(c) && S.etapa === U.POS.hidr && U.dialogoRedutora) { U.redRodape = !!document.querySelector('#pe [data-acao="red-rodape"]'); U.dialogoRedutora(); }   /* 2.6.4: vindo do rodapé, o foco volta a ele ao fechar; 2.6.0: a regulagem fica no menu da válvula redutora */
     if (/^(C|Cfonte|tabelaLeq|tipoTubo)$/.test(c) && S.etapa === U.POS.rede && U.dialogoTubo) U.dialogoTubo('p');   /* 2.5.2: o fator C fica no menu do tubo */
     var el = document.getElementById(U.idDe(c)); if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); if (el.select) el.select(); el.classList.add('pulso'); }
   }
   function comTrabalho(fn) {
     if (!S.aberto || !S.sujo) { fn(); return; }
-    dialogo('Há trabalho que ainda não foi baixado', 'O projeto "' + (S.F.ident.obra || 'sem nome') + '" tem mudanças que só estão na cópia deste navegador.', [['Baixar e continuar', function () { U.baixaJson(); fn(); }, true], ['Continuar sem baixar', fn], ['Cancelar', function () {}]]);
+    dialogo('Há trabalho que ainda não foi baixado', 'O projeto "' + esc(S.F.ident.obra || 'sem nome') + '" tem mudanças que só estão na cópia deste navegador.', [['Baixar e continuar', function () { U.baixaJson(); fn(); }, true], ['Continuar sem baixar', fn], ['Cancelar', function () {}]]);
   }
   U.dialogo = dialogo;
   function dialogo(titulo, corpo, botoes) {
@@ -146,7 +150,7 @@
   }
   function abrirArquivo(f) {
     var r = new FileReader();
-    r.onload = function () { try { var o = JSON.parse(r.result); if (!o.trechos && !o.norma && !o.identificacao) throw new Error('o arquivo não é um projeto do FireCalc'); carrega(E.abrir(o, D, M), 1); guardaProjeto(); S.etapa = primeiraPendente(); desenhar(); var mg = S.F.migracao; delete S.F.migracao; if (mg) dialogo('Projeto de uma versão anterior', '<p class="peq">O arquivo abriu sem perder dado. O que mudou na 2.5.0:</p><ul class="peq">' + mg.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>', [['Entendi', function () {}, true]]); else U.avisa('Projeto aberto: ' + (S.F.ident.obra || f.name)); } catch (e) { U.avisa('Arquivo inválido: ' + e.message); } };
+    r.onload = function () { try { var o = JSON.parse(r.result); if (!o.trechos && !o.norma && !o.identificacao) throw new Error('o arquivo não é um projeto do FireCalc'); carrega(E.abrir(o, D, M), 1); guardaProjeto(); S.etapa = primeiraPendente(); desenhar(); var mg = S.F.migracao; delete S.F.migracao; if (mg) dialogo('Projeto de uma versão anterior', '<p class="peq">O arquivo abriu sem perder dado. O que mudou ao abrir este arquivo:</p><ul class="peq">' + mg.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>', [['Entendi', function () {}, true]]); else U.avisa('Projeto aberto: ' + (S.F.ident.obra || f.name)); } catch (e) { U.avisa('Arquivo inválido: ' + e.message); } };
     r.readAsText(f);
   }
   function primeiraPendente() { for (var n = 1; n < U.POS.rel; n++) if (!S.et[n - 1].completa) return U.aberta(n) ? n : Math.max(1, n - 1); return U.POS.rel; }
@@ -185,7 +189,7 @@
     else if (d.acao === 'colauto') { F.sistema.colManual = false; F.sistema.coluna = ''; E.autoColuna(F, D, M); mudou(); }
     else if (d.acao === 'casc') { S.casc = d.v; desenhar(); }
     else if (d.acao === 'conferir') { var CF = F.conferidos || (F.conferidos = {}); if (CF[d.v] !== undefined) delete CF[d.v]; else CF[d.v] = d.s; mudou(); var bc = document.getElementById('conf-' + d.v); if (bc) bc.focus({ preventScroll: true }); }   /* 2.5.4 */   /* 2.5.3: cascata trecho a trecho ou agrupada */
-    else if (d.acao === 'bomba') { F.bomba.id = d.v; mudou(); }
+    else if (d.acao === 'bomba') { F.bomba.id = d.v; S.verBomba = ''; mudou(); }
     else if (d.acao === 'jockey') { F.jockey.id = d.v; mudou(); }   /* 2.6.0: escolher ou tirar a bomba de pressurização pela lista */
     else if (d.acao === 'fonte' || d.acao === 'tip') U.abTroca(d.acao, d.v);   /* 2.6.0: fonte de pressão e tipo do reservatório */
     else if (d.acao === 'abmenu') { if (F.fonte.tip && U.abMenu) U.abMenu(); else ir('etapa:' + U.POS.abast); }   /* 2.6.0: a cota de RI e BI na Rede abre o menu do Abastecimento */

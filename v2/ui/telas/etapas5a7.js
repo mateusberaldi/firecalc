@@ -47,6 +47,9 @@
     var cat = D.esguichos.filter(function (e) { return e.modelo === mod; });
     if (cat.length) { var ps = cat.map(function (e) { return e.P; }), qs = cat.map(function (e) { return e.Q; }); he += linhaDl('Catálogo', fmt(Math.min.apply(null, ps), 0) + ' a ' + fmt(Math.max.apply(null, ps), 0) + ' mca; ' + fmt(Math.min.apply(null, qs), 0) + ' a ' + fmt(Math.max.apply(null, qs), 0) + ' L/min'); }
     he += '</dl>';
+    /* FC-014: esguicho escolhido que não está na base nem na biblioteca: aviso fixo, sem trocar o esguicho; lido uma vez ao entrar na etapa (role alert) */
+    var ausente = E.esguichoAusente(F, D);
+    if (ausente) { var key = ausente + '|' + F.norma, fala = S.esgFalado !== key; S.esgFalado = key; he += '<div id="esg-ausente"' + (fala ? ' role="alert"' : '') + '>' + U.aviso('al', esc(E.textoEsguichoAusente(ausente, F.norma))) + '</div>'; }
     if (PR) {
       var inf = !l.PeAuto, pp = n && n.pontoProjeto;
       he += '<div class="form hi-form">' + U.campo('lanc.Pe', 'Pressão de projeto na entrada' + (inf ? ' ' + U.pilula('al', 'informada') : ''), { un: 'mca', num: true, aj: l.PeMin === null ? 'mínima calculada depois de escolher o esguicho' : 'mínima calculada: ' + fmt(l.PeMin, 2) + ' mca' }) +
@@ -77,7 +80,7 @@
     d.onclick = function (ev) { if (ev.target.closest('[data-fechar]') || ev.target === d) d.close(); };
     d.oninput = null;
     d.onchange = function (ev) { var b = ev.target; if (d.dataset.modo !== 'esguicho' || b.name !== 'esg') return; S.F.lanc.esg = b.value; U.mudou(); d.innerHTML = corpoEsg(); var r = d.querySelector('input[name="esg"]:checked'); if (r) r.focus(); };
-    d.onclose = function () { d.dataset.modo = ''; var bt = document.getElementById('esg-sel'); if (bt) bt.focus(); };
+    d.onclose = function () { if (d.open) return; /* 2.6.4: close atrasado de um fechamento anterior, com o menu já aberto de novo, não zera o modo */ d.dataset.modo = ''; var bt = document.getElementById('esg-sel'); if (bt) bt.focus(); };
     if (!d.open) d.showModal();
     var p1 = d.querySelector('input[name="esg"]:checked') || d.querySelector('input'); if (p1) p1.focus();
   };
@@ -88,6 +91,21 @@
     if (t.dataset.hi === 'esg') U.dialogoEsguicho();
     else if (t.dataset.hi === 'red') U.dialogoRedutora();
     else if (t.dataset.hi === 'curva') { S.hidCurva = t.dataset.h; U.desenhar(); var bc = document.querySelector('[data-hi="curva"][data-h="' + t.dataset.h + '"]'); if (bc) bc.focus({ preventScroll: true }); }
+  });
+
+  /* 2.6.4 (FC-033): o clique na linha da lista de bombas mostra a curva daquela bomba, sem escolher; só o botão Escolher escolhe. Foco devolvido ao mesmo controle. */
+  document.addEventListener('click', function (ev) {
+    var al = ev.target.closest && ev.target.closest('#tab-sugeridas tr[data-b], #tab-bombas-15 tr[data-b]');
+    if (al && !ev.target.closest('button,input,select,a')) { var bl = al.querySelector('[data-vb]'); if (bl) bl.click(); return; }
+    var t = ev.target.closest && ev.target.closest('[data-vb]'); if (!t || t.disabled) return;
+    var F = S.F, id = t.dataset.vb, tab = t.closest('table'), tid = tab ? tab.id : '';
+    if (id === F.bomba.id) id = '';
+    var igual = (S.verBomba || '') === id; S.verBomba = id; S.verBombaBase = F.bomba.id; if (!igual) U.desenhar();
+    var gr = document.getElementById('card-curva-bomba'); if (!igual && gr && window.innerWidth < 1100) gr.scrollIntoView({ block: 'nearest' });
+    var fl = document.getElementById('fala'); if (fl && !igual) fl.textContent = id ? 'Curva da bomba ' + (U.bombaDe(id) || {}).modelo + ' em visualização no gráfico.' : 'Gráfico com a bomba escolhida.';
+    var alvo = tid ? t.dataset.vb : F.bomba.id, bc = Array.prototype.filter.call(document.querySelectorAll((tid ? '#' + tid + ' [data-vb]' : '#tab-sugeridas [data-vb], #tab-bombas-15 [data-vb]')), function (x) { return x.dataset.vb === alvo; })[0];
+    if (!bc && !tid && gr) bc = gr;   /* 2.6.4: ao voltar, a escolhida fora das listas deixa o foco no cartão do gráfico */
+    if (bc) bc.focus({ preventScroll: true });
   });
 
   /* Válvula redutora de pressão no ponto: regulagem declarada, com fonte (leitura da ferramenta; a IT 22 só dá o limite de 100 mca) */
@@ -107,10 +125,10 @@
     if (pr.com.length) {
       h += '<div class="rolar" role="region" tabindex="0" aria-label="Válvulas redutoras do projeto"><table class="tab-res" id="red-tab"><thead><tr><th scope="col">Ponto</th><th scope="col" class="r">Saída regulada <small>(mca)</small></th><th scope="col" class="r">Estática antes <small>(mca)</small></th><th scope="col" class="r">Estática depois <small>(mca)</small></th><th scope="col" class="r">Dinâmica antes <small>(mca)</small></th><th scope="col" class="r">Dinâmica depois <small>(mca)</small></th><th scope="col"><span class="so-leitor">Ação</span></th></tr></thead><tbody>';
       pr.com.forEach(function (p) {
-        var o = U.pegaObj(p[0]), nome = o.id || o.nome, r = lr.filter(function (x) { return x.nome === nome; })[0], q = lp.filter(function (x) { return x.id === nome; })[0], v = function (x) { return x === null || x === undefined || isNaN(x) ? 'sem dado' : fmt(x, 2); };
+        var o = U.pegaObj(p[0]), nome = o.id || o.nome, r = lr.filter(function (x) { return x.nome === nome; })[0], q = lp.filter(function (x) { return x.id === nome; })[0], v = function (x) { return x === null || x === undefined || isNaN(x) ? 'sem dado' : fmt(x, 2); }; var vd = function (x) { return sit.k === 'ok' && /^cotasExtras\./.test(p[0]) ? 'sem hidrante na rede' : v(x); };
         var ea = r ? r.montante : null, ed = r && r.montante !== null ? Math.min(r.montante, r.P) : null, da = q ? (q.dinSem !== undefined ? q.dinSem : q.din) : null, dd = q ? q.din : null;
         h += '<tr><th scope="row" style="padding-top:14px">' + esc(p[1]) + (r && r.situacao === 'ERRO' ? ' ' + U.pilula('er', 'Não atende') : '') + '</th>' + U.celula(p[0] + '.redP', 'Pressão de saída regulada da válvula redutora, ' + p[1] + ', em metros de coluna de água', 'num') +
-          '<td class="r">' + v(ea) + '</td><td class="r">' + v(ed) + '</td><td class="r">' + v(da) + '</td><td class="r">' + v(dd) + '</td>' +
+          '<td class="r">' + v(ea) + '</td><td class="r">' + v(ed) + '</td><td class="r">' + vd(da) + '</td><td class="r">' + vd(dd) + '</td>' +
           '<td class="r"><button class="bt lig min" data-acao="tirared" data-v="' + p[0] + '" aria-label="Tirar a válvula redutora, ' + esc(p[1]) + '">tirar</button></td></tr>';
       });
       h += '</tbody></table></div>';
@@ -131,7 +149,7 @@
     /* digitando: o menu é refeito 250 ms depois da última tecla, com o foco e a seleção de volta, para mostrar as pressões e as mensagens do campo */
     d.oninput = function (ev) { if (d.dataset.modo !== 'redutora' || !ev.target.dataset || !/\.redP$/.test(ev.target.dataset.c || '')) return; clearTimeout(tIn); tIn = setTimeout(function () { refaz(null); }, 250); };
     d.onchange = function (ev) { if (d.dataset.modo === 'redutora' && ev.target.dataset && /\.redP$/.test(ev.target.dataset.c || '')) refaz(null, 120); };
-    d.onclose = function () { d.dataset.modo = ''; var bt = document.getElementById('red-abrir'); if (bt) bt.focus(); };
+    d.onclose = function () { if (d.open) return; /* 2.6.4: close atrasado de um fechamento anterior, com o menu já aberto de novo, não zera o modo */ d.dataset.modo = ''; var bt = (U.redRodape && document.querySelector('#pe [data-acao="red-rodape"]')) || document.getElementById('red-abrir'); U.redRodape = false; if (bt) bt.focus(); };
     if (!d.open) d.showModal();
     var p1 = d.querySelector('#red-tab input') || d.querySelector('select,button'); if (p1) p1.focus();
   };
@@ -139,14 +157,13 @@
   /* 2.6.0: a tela do Abastecimento mudou para abastecimento.js; a figura do modo manual (U.figuraReservatorio) segue abaixo. */
   /* 2.6.0: sem "potência no eixo pela curva" no menu; a potência só aparece quando o catálogo dá o motor (cv) */
   function rotBomba(b) { return b.modelo + (b.rotorTxt ? ', rotor ' + b.rotorTxt + ' mm' : '') + ' (' + (b.cv ? fmt(b.cv, b.cv % 1 ? 1 : 0) + ' cv, ' : '') + b.serie + ')'; }
-  /** Bomba KSB: o que foi lido da folha de curvas (potência no eixo, NPSH requerido) e o aviso da curva aceita como lida. */
+  /** Bomba KSB: o que foi lido da folha de curvas (potência no eixo, NPSH requerido). */
   function catalogoKsb() {
     var F = S.F, b = U.bombaDe(F.bomba.id), n = S.sit.k === 'ok' ? S.sit.R.numeros : null, h = ''; if (!b || b.fabricante !== 'KSB') return '';
     if (b.npsh && n && n.NPSHrForaDaCurva) {
       var qs = b.npsh.map(function (p) { return p[1]; }), fx = fmt(Math.min.apply(null, qs), 1) + ' a ' + fmt(Math.max.apply(null, qs), 1) + ' m³/h';
       h += U.aviso('al', 'A ' + (n.Qverif === 1.5 ? '1,5 vez a vazão de projeto' : 'vazão de projeto') + ' (' + fmt((n.Qverif === 1.5 ? n.Q15 : n.Qt) * 0.06, 2) + ' m³/h)' + ' fica fora da faixa da curva de NPSH do catálogo (' + fx + '): não há leitura. Informe o valor do fabricante no cartão Bomba escolhida.');
     }
-    if (b.curvaSobe) h += U.aviso('al', 'Curva aceita como lida no catálogo: em um trecho a altura sobe até ' + fmt(b.curvaSobe, 2) + ' m com a vazão' + (b.incerteza && b.incerteza.H ? ', abaixo da incerteza de leitura de ' + fmt(b.incerteza.H, 2) + ' m' : '') + '.');
     return '<div id="ksb-info" style="margin-top:12px">' + h + '</div>';
   }
   /** 2.5.1: o que o projeto precisa e o que a bomba escolhida entrega, em cartões separados e lado a lado, acima da escolha.
@@ -197,27 +214,38 @@
       h += '<p class="peq">' + U.pilula(ok ? 'ok' : 'er', ok ? 'Atende' : 'Cavita') + '</p><p class="peq">' +
         'NPSH disponível a ' + (q15 ? '1,5 Q' : '1,0 Q') + ' de ' + fmt(dv, 2) + ' mca, ' + (ok ? 'maior ou igual ao' : 'menor que o') + ' requerido de ' + fmt(n.NPSHr, 2) + ' mca.' +
         (ok ? '' : q15 ? ' Baixe a bomba, suba o nível da água, encurte a sucção, aumente o diâmetro dela ou escolha bomba com requerido menor.' : ' Escolha comparar a 1,5 Q e uma bomba que entregue ' + fmt(n.AMT, 2) + ' mca a ' + fmt(n.Q15 * 0.06, 2) + ' m³/h, e informe o NPSH requerido dela. <button class="bt lig min" data-rolar="bombas-15">Ver as bombas que atendem a 1,5 Q</button>') + '</p>';
-    } else h += U.aviso('al', n.NPSHrForaDaCurva ? 'A curva de NPSH do catálogo não cobre ' + fmt((q15 ? n.Q15 : n.Qt) * 0.06, 2) + ' m³/h: informe o NPSH requerido dado pelo fabricante.' : 'Informe o NPSH requerido da bomba escolhida, lido na curva do catálogo.');
+    } else if (n.NPSHrForaDaCurva) h += U.aviso('al', 'A curva de NPSH do catálogo não cobre ' + fmt((q15 ? n.Q15 : n.Qt) * 0.06, 2) + ' m³/h: informe o NPSH requerido dado pelo fabricante.');   /* 2.6.4 (FC-008): o pedido do requerido vazio fica só na mensagem do campo */
     return h + '</div>';
   };
   /** 2.6.0: quantas bombas a lista sugerida mostra. */
   var N_SUGERIDAS = 5;
   /** Potência como o catálogo dá, só o valor e a unidade: cv do motor (Schneider) ou hp lido da curva na vazão da lista (KSB). */
-  function potLista(b, q) { if (b.cv) return fmt(b.cv, b.cv % 1 ? 1 : 0) + ' cv'; var p = b.potEixo && q !== undefined ? M.leCurva(b.potEixo.pts, q) : null; return p === null || p === undefined ? '' : fmt(p, 1) + ' ' + b.potEixo.unidade; }
+  function potLista(b, q) { if (b.cv) return fmt(b.cv, b.cv % 1 ? 1 : 0) + ' cv'; var p = b.potEixo && q !== undefined ? M.leCurva(b.potEixo.pts, q) : null; return p === null || p === undefined ? '' : fmt(p, 1) + ' ' + esc(b.potEixo.unidade); }
   /** Uma linha de lista de bombas: modelo (com o rotor), potência, as colunas do meio e o botão de escolher. col = função que devolve as células do meio; acao = 'bomba' ou 'jockey'. */
   function linhaBomba(b, escolhida, meio, acao) {
-    return '<tr class="' + (escolhida ? 'sel' : '') + '"><td><b>' + esc(b.modelo) + '</b>' + (b.rotorTxt ? ' <span class="peq">rotor ' + esc(b.rotorTxt) + ' mm</span>' : '') + '</td>' + meio + '<td class="r"><button class="bt min' + (escolhida ? '' : ' pri') + '" data-acao="' + acao + '" data-v="' + esc(b.id) + '"' + (escolhida ? ' disabled' : '') + '>' + (escolhida ? 'Escolhida' : 'Escolher') + '</button></td></tr>';
+    var ver = acao === 'bomba', vendo = ver && !escolhida && S.verBomba === b.id, nome = esc(b.modelo);
+    return '<tr' + (ver ? ' data-b="' + esc(b.id) + '"' : '') + ' class="' + (escolhida ? 'sel' : '') + (vendo ? ' vendo' : '') + '"><td>' + (ver ? '<button type="button" class="bt lig min bt-ver" data-vb="' + esc(b.id) + '" aria-pressed="' + vendo + '" aria-label="Mostrar a curva da bomba ' + nome + '"><b>' + nome + '</b></button>' : '<b>' + nome + '</b>') + (b.rotorTxt ? ' <span class="peq">rotor ' + esc(b.rotorTxt) + ' mm</span>' : '') + (vendo ? ' <span class="pilula p-in pil-vendo">em visualização</span>' : '') + '</td>' + meio + '<td class="r"><button class="bt min' + (escolhida ? '' : ' pri') + '" data-acao="' + acao + '" data-v="' + esc(b.id) + '"' + (escolhida ? ' disabled' : '') + '>' + (escolhida ? 'Escolhida' : 'Escolher') + '</button></td></tr>';
   }
+  /** 2.6.4 (FC-033): bombas da lista sugerida na vazão de projeto (as mesmas da tabela) e, quando aparece, as da lista a 1,5 Q. */
+  function candBombas(n, q) { return D.bombas.filter(function (b) { return !b.jockey; }).map(function (b) { return { b: b, h: M.alturaBomba(b.pts, q) }; }).filter(function (x) { return !x.h.extrapolado && x.h.H >= n.AMT; }).sort(function (x, y) { return (x.h.H - y.h.H) || ((x.b.cv || 0) - (y.b.cv || 0)); }).slice(0, N_SUGERIDAS); }
+  function mostra15(n) { return n.NPSHd !== undefined && (n.Qverif === 1.5 || (n.NPSHr !== undefined && n.NPSHd1 < n.NPSHr - 1e-9)); }
+  /** Bomba em visualização (S.verBomba): só vale na etapa Bomba, sobre a mesma escolha de quando foi pedida, e enquanto estiver numa das listas. Sem isso volta à escolhida. */
+  U.verBombaEf = function () {
+    var sit = S.sit, id = S.verBomba; if (!id) return null;
+    var ok = sit.k === 'ok' && S.verBombaBase === S.F.bomba.id && id !== S.F.bomba.id && S.tela === 'projeto' && S.etapa === U.POS.bomba && S.F.fonte.modo !== 'gravidade';
+    if (ok) { var n = sit.R.numeros; ok = candBombas(n, n.Qth).concat(mostra15(n) ? candBombas(n, 1.5 * n.Qth) : []).some(function (x) { return x.b.id === id; }); }
+    if (!ok) { S.verBomba = ''; return null; }
+    return U.bombaDe(id) || null;
+  };
   /** Lista das bombas sugeridas: modelo, potência, altura na vazão, shut-off e botão (sem série e sem folga). q = vazão em m³/h da altura mostrada. */
   function tabSugeridas(l, q, tit, id) {
     var F = S.F;
-    return '<div class="rolar"><table id="' + id + '"><thead><tr><th>Modelo</th><th class="r">Potência</th><th class="r">' + tit + ' <small>(mca)</small></th><th class="r">Shut-off <small>(mca)</small></th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' +
+    return '<div class="rolar"><table class="tab-bomba" id="' + id + '"><thead><tr><th>Modelo</th><th class="r">Potência</th><th class="r">' + tit + ' <small>(mca)</small></th><th class="r">Shut-off <small>(mca)</small></th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' +
       l.map(function (x) { return linhaBomba(x.b, F.bomba.id === x.b.id, '<td class="r tec">' + potLista(x.b, q) + '</td><td class="r tec">' + fmt(x.h.H, 2) + '</td><td class="r tec">' + fmt(x.b.shutoff, 0) + '</td>', 'bomba'); }).join('') + '</tbody></table></div>';
   }
   /** Bombas que entregam a altura manométrica a 1,5 vez a vazão de projeto: aparecem quando a bomba escolhida cavita na vazão de projeto. */
   U.tabBombas15 = function (n) {
-    var q = 1.5 * n.Qth, l = D.bombas.filter(function (b) { return !b.jockey; }).map(function (b) { return { b: b, h: M.alturaBomba(b.pts, q) }; }).filter(function (x) { return !x.h.extrapolado && x.h.H >= n.AMT; })
-      .sort(function (x, y) { return (x.h.H - y.h.H) || ((x.b.cv || 0) - (y.b.cv || 0)); }).slice(0, N_SUGERIDAS);
+    var q = 1.5 * n.Qth, l = candBombas(n, q);
     var h = '<div id="bombas-15" style="margin-top:16px"><h3 class="t3">Bombas que entregam ' + fmt(n.AMT, 2) + ' mca a 1,5 vez a vazão de projeto (' + fmt(q, 2) + ' m³/h)</h3>';
     if (!l.length) return h + U.aviso('al', 'Nenhuma bomba do catálogo entrega essa altura a ' + fmt(q, 2) + ' m³/h dentro da curva. Reveja a sucção ou a rede.') + '</div>';
     return h + tabSugeridas(l, q, 'Altura a 1,5 Q', 'tab-bombas-15') + '</div>';
@@ -231,11 +259,12 @@
       (at ? '<div class="linha-ac"><button class="bt lig min" id="jockey-nenhuma" data-acao="jockey" data-v="">Sem bomba de pressurização</button></div>' : '') +
       '<div class="form">' + U.campo('saidas', 'Número de saídas do sistema', { num: true, aj: 'Em branco vale o número de hidrantes da rede (' + F.hidrantes.length + ').' }) + '</div></div>';
     var curva = '<div class="cartao bloco" id="card-curva-jockey"><h2 class="t3">Curva da bomba de pressurização</h2>' + (U.graficoJockey ? U.graficoJockey() : '') + '</div>';
-    var pres = n && n.escada ? '<div class="cartao bloco" id="card-pressostatos"><h2 class="t3">Pressostatos</h2><div class="dados"><div><b>' + fmt(n.escada.desligaJockey, 1) + '</b>mca, desliga a bomba de pressurização</div><div><b>' + fmt(n.escada.ligaJockey, 1) + '</b>mca, liga a bomba de pressurização</div><div><b>' + fmt(n.escada.ligaPrincipal, 1) + '</b>mca, liga a bomba principal</div></div><p class="peq">Escada a partir da pressão calculada na descarga: a principal liga nela; a bomba de pressurização liga 10 mca acima e desliga 10 mca acima da própria partida, até o teto de ' + fmt(n.escada.teto, 1) + ' mca (shut-off da principal no cavalete, IT 22, C.1.15.1).' + (n.escada.cabe ? '' : ' <b>A escada não cabe: o teto fica a menos de 10 mca da pressão calculada.</b>') + '</p></div>' : '';
+    var pres = n && n.escada ? '<div class="cartao bloco" id="card-pressostatos"><h2 class="t3">Pressostatos</h2><div class="dados"><div><b>' + fmt(n.escada.desligaJockey, 1) + '</b>mca, desliga a bomba de pressurização</div><div><b>' + fmt(n.escada.ligaJockey, 1) + '</b>mca, liga a bomba de pressurização</div><div><b>' + fmt(n.escada.ligaPrincipal, 1) + '</b>mca, liga a bomba principal</div></div>' + (n.escada.cabe ? '' : U.aviso('al', 'A escada não cabe: o teto fica a menos de 10 mca da pressão calculada.')) + '</div>' : '';
     return '<div class="g-hi4" id="grade-jockey">' + lista + curva + '</div>' + pres;
   };
   U.telas[U.POS.bomba] = function () {
     var F = S.F, sit = S.sit, n = sit.k === 'ok' ? sit.R.numeros : null, h = U.cab(U.POS.bomba, 'Bomba e automação', '');
+    U.verBombaEf();
     if (F.fonte.modo === 'gravidade') h += U.aviso('in', 'Sistema só por gravidade: não há bomba de incêndio a escolher.');
     else {
       if (n) h += U.cartoesBomba(n);
@@ -243,15 +272,15 @@
       var esq = '<div class="cartao bloco" id="card-escolha"><h2 class="t3">Bomba de incêndio: escolha</h2>';
       if (!n) esq += U.aviso('in', 'A seleção assistida aparece quando houver resultado (etapas 1 a 5 completas).');
       else {
-        var cand = D.bombas.filter(function (b) { return !b.jockey; }).map(function (b) { return { b: b, h: M.alturaBomba(b.pts, n.Qth) }; }).filter(function (x) { return !x.h.extrapolado && x.h.H >= n.AMT; }).sort(function (x, y) { return (x.h.H - y.h.H) || ((x.b.cv || 0) - (y.b.cv || 0)); }).slice(0, N_SUGERIDAS);
+        var cand = candBombas(n, n.Qth);
         if (cand.length) esq += tabSugeridas(cand, n.Qth, 'Altura na vazão', 'tab-sugeridas');
         else esq += U.aviso('al', 'Nenhuma bomba do catálogo entrega ' + fmt(n.AMT, 2) + ' mca em ' + fmt(n.Qth, 2) + ' m³/h dentro da curva. Veja todas na lista abaixo ou reveja a rede.');
       }
-      if (n && n.NPSHd !== undefined && (n.Qverif === 1.5 || (n.NPSHr !== undefined && n.NPSHd1 < n.NPSHr - 1e-9))) esq += U.tabBombas15(n);   // 2.5.4: comparação a 1,5 Q, ou cavita na vazão de projeto: bombas para 1,5 Q
+      if (n && mostra15(n)) esq += U.tabBombas15(n);   // 2.5.4: comparação a 1,5 Q, ou cavita na vazão de projeto: bombas para 1,5 Q
       esq += '<div class="form">' + U.escolha('bomba.id', 'Outra bomba do catálogo (lista completa)', D.bombas.filter(function (b) { return !b.jockey; }).map(function (b) { return [b.id, rotBomba(b)]; }), { vazio: 'Nenhuma', larga: true, aj: U.bombaDe(F.bomba.id) && U.bombaDe(F.bomba.id).usuario ? 'Bomba cadastrada à mão. Fonte informada: ' + esc(U.bombaDe(F.bomba.id).fonte) + '.' : '' }) + '</div>';   // 2.5.4: menu da lista completa logo abaixo da tabela das recomendadas
       if (S.modo === 'personalizado') esq += '<p class="peq" id="lig-bib">Bomba fora do catálogo: <button class="bt lig min" data-ir="tela:cadastros" data-abrir-aba="cadastros:bib">cadastrar na minha biblioteca</button> (modo personalizado). Ela passa a aparecer nesta lista, com a fonte que você informar.</p>';
       esq += U.statusSuc() + catalogoKsb() + '</div>';
-      h += n ? '<div class="g-hi4" id="grade-bomba">' + esq + '<div class="cartao bloco" id="card-curva-bomba"><h2 class="t3">Curva da bomba</h2>' + U.graficoBomba({ card: true }) + '</div></div>' : esq;
+      h += n ? '<div class="g-hi4" id="grade-bomba">' + esq + '<div class="cartao bloco" id="card-curva-bomba" tabindex="-1"><h2 class="t3">Curva da bomba</h2>' + U.graficoBomba({ card: true, ver: true }) + '</div></div>' : esq;
       if (F.fonte.modo === 'bomba') {
         h += U.blocoJockey(n);
         // ramal de retorno (PR)

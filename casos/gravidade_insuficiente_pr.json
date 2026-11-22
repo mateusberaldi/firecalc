@@ -1,0 +1,183 @@
+{
+ "nome": "Edifício E-3 de quatro pavimentos, Paraná (NPT 022), gravidade: reservatório elevado 27,6 m acima do ponto A, desnível insuficiente",
+ "norma": "PR",
+ "tabelaLeq": "A",
+ "tubo": {
+  "norma": "NBR 5580",
+  "classe": "leve"
+ },
+ "C": 120,
+ "sistema": {
+  "coluna": "2",
+  "area": 2226.7,
+  "divisao": "E-3",
+  "carga": 300
+ },
+ "ambiente": {
+  "altitude": 760,
+  "temperatura": 20
+ },
+ "fonte": {
+  "modo": "gravidade",
+  "elevado": true,
+  "zCheio": 41.0,
+  "rtiEfetiva": 16.02,
+  "xModo": "calc",
+  "saida": "lateral",
+  "dnSuc": 65,
+  "resForma": "ret",
+  "zFundo": 38.0,
+  "resC": 4.0,
+  "resL": 3.0,
+  "zConsumo": 39.4,
+  "tipo": "elevado",
+  "tipologia": "ret",
+  "elevModo": "gravidade",
+  "topoReserva": 39.4,
+  "nota": "Quatro pavimentos de 3,50 m (hidrantes H1 a H4, do térreo ao terceiro pavimento), com o reservatório elevado retangular de 4,0 x 3,0 m sobre estrutura de apoio ao lado da edificação, abastecendo a rede por gravidade, sem bomba. Por gravidade os hidrantes mais desfavoráveis são os mais altos (H4 e H3). Vazão e pressão mínima pela NPT 022, Tabela 1 (tipo 2: 150 L/min; 10 mca na expedição do esguicho, nota 4 e 5.10.2.3; 5.7.1, 5.7.4, 5.7.12). Esguicho MR tipo MR 1 1/2\" ER (Esguichos Reunidas, p. 9; os 150 L/min ficam abaixo do menor ponto ensaiado, 212 L/min, e a pressão de entrada vem da lei do orifício a partir dele) e mangueira de 40 mm com 30 m (Kidde Sintex N, p. 1). Perdas por Hazen-Williams, C = 120, tabela A de comprimentos equivalentes (Azevedo Netto, Tabela 7.6). RI na saída lateral do reservatório, na face superior do tubo de adução, com a reserva de incêndio esgotada (NPT 022, Anexo B, B.2.1 b). A descida leva válvula de gaveta e válvula de retenção (B.2.3), esta do tipo pesado, adotado como opção conservadora de projeto, de maior perda (8,1 m contra 5,2 m do tipo leve, Azevedo Netto, Tabela 7.6). C = 120 adotado pelo programa para o aço galvanizado (IT 22, Tabela 1, usada como referência; a NPT 022 não traz tabela de C). Folga por gravidade = desnível entre RI e o ponto A, menos as perdas de RI até A, menos a pressão necessária em A. Neste caso o desnível não basta: a norma prevê, nesse caso, bomba de reforço (Anexo B, B.2.2)."
+ },
+ "nos": {
+  "RI": {
+   "z": 38.065
+  },
+  "A": {
+   "z": 10.5
+  },
+  "N2": {
+   "z": 7.0
+  },
+  "N1": {
+   "z": 3.5
+  },
+  "N0": {
+   "z": 0.0
+  },
+  "H4": {
+   "z": 11.7
+  },
+  "H3": {
+   "z": 8.2
+  },
+  "H2": {
+   "z": 4.7
+  },
+  "H1": {
+   "z": 1.2
+  }
+ },
+ "trechos": [
+  {
+   "nome": "RI-A",
+   "dn": 65,
+   "L": 47.565,
+   "pecas": {
+    "entrada_normal": 1,
+    "gaveta": 1,
+    "ret_pesada": 1,
+    "cot90_curto": 4
+   }
+  },
+  {
+   "nome": "A-H4",
+   "dn": 65,
+   "L": 16.2,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "A-N2",
+   "dn": 65,
+   "L": 3.5,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "N2-H3",
+   "dn": 65,
+   "L": 16.2,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "N2-N1",
+   "dn": 65,
+   "L": 3.5,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "N1-H2",
+   "dn": 65,
+   "L": 16.2,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  },
+  {
+   "nome": "N1-N0",
+   "dn": 65,
+   "L": 3.5,
+   "pecas": {
+    "te_pd": 1
+   }
+  },
+  {
+   "nome": "N0-H1",
+   "dn": 65,
+   "L": 16.2,
+   "pecas": {
+    "te_sl": 1,
+    "cot90_curto": 2,
+    "angulo": 1
+   }
+  }
+ ],
+ "hidrantes": [
+  {
+   "id": "H1",
+   "no": "H1",
+   "caminho": "B",
+   "esguicho": "MR tipo MR 1 1/2\" ER",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.2
+  },
+  {
+   "id": "H2",
+   "no": "H2",
+   "caminho": "B",
+   "esguicho": "MR tipo MR 1 1/2\" ER",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.2
+  },
+  {
+   "id": "H3",
+   "no": "H3",
+   "caminho": "B",
+   "esguicho": "MR tipo MR 1 1/2\" ER",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.2
+  },
+  {
+   "id": "H4",
+   "no": "H4",
+   "caminho": "B",
+   "esguicho": "MR tipo MR 1 1/2\" ER",
+   "mangueiraDN": 40,
+   "Lmang": 30,
+   "alturaValvula": 1.2
+  }
+ ]
+}

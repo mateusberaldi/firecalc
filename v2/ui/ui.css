@@ -8,7 +8,7 @@
 --fc-agua:#0B7FB3;--fc-info-texto:#075E86;--fc-info-fundo:#E6F4FA;
 --fc-sucesso:#15803D;--fc-sucesso-texto:#116432;--fc-sucesso-fundo:#E8F6EC;
 --fc-alerta:#FFC107;--fc-alerta-texto:#7A4F00;--fc-alerta-fundo:#FFF6D9;
---fc-erro:#E11D2E;--fc-erro-texto:#A30E1C;--fc-erro-fundo:#FDEBEC;--fc-foco:#0B7FB3;
+--fc-erro:#E11D2E;--fc-erro-texto:#A30E1C;--fc-erro-fundo:#FDEBEC;--fc-foco:#0B7FB3;--fc-foco-des:#7A2FD0;
 --fc-sombra:0 1px 2px rgba(10,10,10,.06),0 4px 12px rgba(10,10,10,.06);--fc-sombra-janela:0 12px 36px rgba(10,10,10,.18);
 --fc-texto-fam:"Inter FireCalc",Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 --fc-tec-fam:"JetBrains Mono FireCalc","JetBrains Mono",ui-monospace,Consolas,monospace;
@@ -20,7 +20,7 @@
 --fc-agua:#38BDF8;--fc-info-texto:#7DD3FC;--fc-info-fundo:#0B2533;
 --fc-sucesso:#22C55E;--fc-sucesso-texto:#4ADE80;--fc-sucesso-fundo:#0E2A18;
 --fc-alerta:#FFC107;--fc-alerta-texto:#FFC107;--fc-alerta-fundo:#2E2507;
---fc-erro:#F2495A;--fc-erro-texto:#FF7A85;--fc-erro-fundo:#33090E;--fc-foco:#FF8A33;
+--fc-erro:#F2495A;--fc-erro-texto:#FF7A85;--fc-erro-fundo:#33090E;--fc-foco:#FF8A33;--fc-foco-des:#D7B0FF;
 --fc-sombra:none;--fc-sombra-janela:0 12px 36px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box}
@@ -39,6 +39,7 @@ a{color:var(--fc-fogo-texto)}
 button,input,select{font:inherit;color:inherit}
 .pular{position:absolute;left:-999px;top:8px;background:var(--fc-superficie);padding:8px 12px;border-radius:8px;z-index:50}
 .pular:focus{left:8px}
+.pular:focus~.app .marca svg{opacity:0}
 .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100%}
 /* barra lateral */
 .lat{background:var(--fc-superficie);border-right:1px solid var(--fc-borda);padding:16px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:auto}
@@ -254,7 +255,7 @@ textarea.campo{width:100%;min-height:140px;font-family:"JetBrains Mono FireCalc"
   .conteudo{padding:16px}.cab{flex-direction:column;align-items:stretch;gap:10px}h1{font-size:24px}
   .form{grid-template-columns:minmax(0,1fr)}.dados{grid-template-columns:repeat(2,minmax(0,1fr))}
   .conc{padding:14px}.conc .bt{width:100%}.ver{grid-template-columns:minmax(0,1fr)}.ver .ac .bt{width:100%}
-  .pe{gap:8px;padding-top:8px;padding-bottom:8px}.pe .falta{order:-1;flex:1 1 100%;text-align:left}.pe .bt.pri{flex:1}
+  .pe{gap:8px;padding-top:8px;padding-bottom:8px}.pe .falta{order:-1;flex:1 1 100%;text-align:left}.pe .bt.pri{flex:1}.pe .bt.lig{min-height:44px}
   .vazia{padding:24px 16px}.vazia .acoes{flex-direction:column}.vazia .acoes .bt{width:100%}
   #dlg,#bq{width:94vw}
 }
@@ -490,6 +491,9 @@ div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
 .des .hit{fill:transparent;stroke:transparent;cursor:help}
 .des path.hit{fill:none;stroke-width:18;pointer-events:stroke}
 .des rect.hit{pointer-events:all}
+.des .hit:focus{outline:none}
+.des .hit:focus-visible{outline:3px solid var(--fc-foco-des);outline-offset:3px}
+.des path.hit:focus-visible{outline:none}
 .des .al-t{font:700 11px var(--fc-texto-fam);fill:#fff;pointer-events:none}
 .des svg.leg-al{width:14px;height:14px;display:inline-block;margin-right:6px;vertical-align:middle}
 #cartao-mouse{position:absolute;z-index:5;min-width:190px;width:max-content;max-width:320px;padding:10px 12px;background:var(--fc-superficie);border:1px solid var(--fc-borda-campo);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.18);font-size:13px;color:var(--fc-texto)}
@@ -551,5 +555,17 @@ div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
 .ia-passos{margin:8px 0 12px;padding-left:22px}
 .ia-passos li{margin:4px 0}
 .ia-prompt{height:auto;padding:8px;width:100%;font:400 13px/1.45 var(--fc-tec-fam);resize:vertical}
-@media (max-width:640px){#dlg[data-modo="ia"]{width:100vw;max-width:100vw;height:100vh;max-height:100vh;margin:0;border-radius:0;padding:16px}}
+/* FC-010: no celular o menu "?" é uma folha ancorada embaixo; sobra no alto uma faixa do fundo (48px ou mais) que fecha ao toque */
+@media (max-width:640px){#dlg[data-modo="ia"]{width:100vw;max-width:100vw;height:auto;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);margin:auto 0 0;border-radius:16px 16px 0 0;padding:16px;overscroll-behavior:contain}#dlg[data-modo="ia"] .bt{min-height:44px;min-width:44px}}
 @media (max-width:640px){.ia-prompt{height:120px}}
+
+/* 2.6.4 (FC-033): linha da lista de bombas que mostra a curva sem escolher */
+.tab-bomba tbody tr[data-b]{cursor:pointer}
+.tab-bomba tbody tr.vendo>*{background:var(--fc-superficie-2)}
+.tab-bomba tbody tr.vendo>td:first-child{box-shadow:inset 3px 0 0 var(--fc-agua)}
+.tab-bomba tbody tr.vendo .bt-ver{text-decoration:underline dotted}
+.tab-bomba .bt-ver{text-align:left}
+.tab-bomba .bt-ver:focus-visible{outline:3px solid var(--fc-foco,var(--fc-fogo));outline-offset:2px}
+.bt-voltar{margin-bottom:8px}
+#card-curva-bomba:focus{outline:none}
+@media (max-width:900px){.bt.min.bt-voltar{min-height:44px;height:auto}.tab-bomba tbody tr[data-b] .bt{min-height:44px}.tab-bomba tbody tr[data-b] td{padding-top:4px;padding-bottom:4px}}

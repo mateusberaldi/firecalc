@@ -271,9 +271,9 @@
     var TABN = P.norma === 'SP' ? 'IT 22, Tabela 2' : 'NPT 022, Tabela 1', PARANA = N.pressaoNo === 'esguicho';
     function fonteAlt(a) { return 'ALTERADO pelo projetista; ' + TABN + ': ' + a.oficial + (a.fonte ? '; fonte: ' + a.fonte : ''); }   /* Fonte só quando informada */
     if (LA.Q) pe('Qt0', 'Q mínima por jato (alterada)', LN.Q, 'in', 'L/min', fonteAlt(LA.Q)); else pe('Qt0', 'Q mínima por jato', { f: 'INDEX(' + TPQ + ',MATCH(' + 'B' + (pr - 1) + ',' + TPID + ',0))' }, 'fo', 'L/min');
-    if (LA.P) pe('Pt0', PARANA ? 'P mínima por jato, na ponta do esguicho (alterada)' : 'P mínima por jato, na válvula, caminho A (alterada)', LN.P, 'in', 'mca', fonteAlt(LA.P)); else pe('Pt0', 'P mínima por jato (na válvula, caminho A)', { f: 'INDEX(' + TPP + ',MATCH(B' + (pr - 2) + ',' + TPID + ',0))' }, 'fo', 'mca');
+    if (LA.P) pe('Pt0', PARANA ? 'P mínima por jato, na ponta do esguicho (alterada)' : 'P mínima por jato, pressão na válvula (alterada)', LN.P, 'in', 'mca', fonteAlt(LA.P)); else pe('Pt0', 'P mínima por jato (pressão na válvula)', { f: 'INDEX(' + TPP + ',MATCH(B' + (pr - 2) + ',' + TPID + ',0))' }, 'fo', 'mca');
     if (LA.Q || LA.P) pe('Kvt', 'Kv = Q mín. / raiz(P mín.), com os valores adotados', { f: PR.Qt0 + '/SQRT(' + PR.Pt0 + ')' }, 'fo', 'L/min/mca^0,5', 'Derivado dos valores adotados'); else pe('Kvt', 'Kv do tipo = Q mín. / raiz(P mín.)', { f: 'INDEX(' + TPK + ',MATCH(B' + (pr - 3) + ',' + TPID + ',0))' }, 'fo', 'L/min/mca^0,5', 'Derivado da Tabela 2');
-    if (temB && !PARANA) pe('piso', 'Piso de pressão no esguicho (caminho B)', N.pisoEsguicho || 0, 'in', 'mca', 'NPT 022, Tabela 1 (PR); zero em SP');
+    if (temB && !PARANA) pe('piso', 'Piso de pressão no esguicho', N.pisoEsguicho || 0, 'in', 'mca', 'NPT 022, Tabela 1 (PR); zero em SP');
     if (PARANA) {
       var JP = jatos.filter(function (j) { return j.parana; })[0], PP = JP ? JP.ponto : null;
       pe('piso', 'Pressão mínima na ponta do esguicho', LN.P, 'in', 'mca', LA.P ? fonteAlt(LA.P) : 'NPT 022, Tabela 1, nota 4');
@@ -386,7 +386,7 @@
 
     // ===== Pares
     var PS = FO.Pares;
-    PS.s(1, 1, 'Pares de jatos: PA exigida por cada jato, equilíbrio no nó de derivação (' + (temB ? 'caminho B: vazão do jato equilibrado é valor do motor, em cinza' : '8 iterações de ponto fixo') + '), Qt, Pd e AMT', 'tit');
+    PS.s(1, 1, 'Pares de jatos: PA exigida por cada jato, equilíbrio no nó de derivação (' + (temB ? 'pressão no esguicho: vazão do jato equilibrado é valor do motor, em cinza' : '8 iterações de ponto fixo') + '), Qt, Pd e AMT', 'tit');
     var rotulos = { par: 'Par', ia: 'Jato a (índice)', ib: 'Jato b (índice)', A: 'Nó de derivação', zA: 'Cota de A', Qa0: 'Q mín. a', Qb0: 'Q mín. b', Pa0: 'P na válvula a', Pb0: 'P na válvula b', dza: 'dz a', dzb: 'dz b', Kra: 'Σk ramal a', Krb: 'Σk ramal b', Ktr: 'Σk tronco',
       PAa: 'PA exigida por a', PAb: 'PA exigida por b', ca: 'a é crítico (1) ou b (0)', PA: 'PA = máx.', PAo: 'PA do outro', dif: 'Diferença (4.8.14)', Qc: 'Q do crítico', Qo0: 'Q mín. do outro', Kva: 'Kv a', Kvb: 'Kv b', Kvc: 'Kv crítico', Kvo: 'Kv outro', dzc: 'dz crítico', dzo: 'dz outro', Krc: 'Σk ramal crítico', Kro: 'Σk ramal outro', Pmc: 'P mín. crítico', Pmo: 'P mín. outro',
       Qo: 'Q do outro (equilibrado)', Qt: 'Qt (L/min)', Qth: 'Qt (m³/h)', hfTr: 'hf do tronco', Pd: bombaModo ? 'Pd (descarga da bomba)' : 'Pg (por gravidade em A)', hfSuc: 'hf da sucção', AMT: bombaModo ? 'AMT' : 'AMT do reforço', Qa: 'Q do jato a', Qb: 'Q do jato b', Pvc: 'P na válvula do crítico', Pvo: 'P na válvula do outro' };
@@ -551,7 +551,7 @@
         var HH2 = rg('Bomba', 22, G1, 22, G2), hw = ix(HH2) + '+' + frac + '*(' + ix(HH2, 1) + '-' + ix(HH2) + ')';
         B.s(1, br, 'Ponto de trabalho: altura (mca)', 'tx'); B.s(2, br, { f: 'IF(AND(' + kk + '>=1,' + kk + '<=40),' + hw + ',"fora da grade")' }, 'fo'); BR.Hw = cl('Bomba', 2, br); br++;
       } else {
-        B.s(1, br, 'Caminho B: a curva do esguicho e da mangueira vem do catálogo; ponto de trabalho do motor (valor, cinza)', 'tx'); br++;
+        B.s(1, br, 'Pressão no esguicho: a curva do esguicho e da mangueira vem do catálogo; ponto de trabalho do motor (valor, cinza)', 'tx'); br++;
         B.s(1, br, 'Vazão (m³/h)', 'tx'); B.s(2, br, num0.Qw === undefined ? 'sem cruzamento' : num0.Qw, 'mo'); BR.Qw = cl('Bomba', 2, br); br++;
         B.s(1, br, 'Altura (mca)', 'tx'); B.s(2, br, num0.Hw === undefined ? 'sem cruzamento' : num0.Hw, 'mo'); BR.Hw = cl('Bomba', 2, br); br++;
       }
@@ -643,7 +643,7 @@
     sec(2, 'Tipo de sistema e RTI');
     mi('Norma', PR.norma, '', 'Premissas');
     mi('Tipo de sistema (arábico)', PR.tipo, '', 'IT 22, Tabelas 2 e 3');
-    mi('Q mínima por jato', PR.Qt0, 'L/min', 'IT 22, Tabela 2'); mi('P mínima na válvula (caminho A)', PR.Pt0, 'mca', 'IT 22, Tabela 2'); mi('Kv do tipo', PR.Kvt, 'L/min/mca^0,5', 'derivado da Tabela 2');
+    mi('Q mínima por jato', PR.Qt0, 'L/min', 'IT 22, Tabela 2'); mi('P mínima (pressão na válvula)', PR.Pt0, 'mca', 'IT 22, Tabela 2'); mi('Kv do tipo', PR.Kvt, 'L/min/mca^0,5', 'derivado da Tabela 2');
     if (RR.tab) mi('RTI mínima da tabela', RR.tab, 'm³', 'Reservatorio');
     mt('Materiais por ponto (mangueira, esguicho, chave)', AR, 'IT 22, Tabela 4');
     sec(3, 'Distribuição');
@@ -717,7 +717,7 @@
     CA.s(1, cr, 'Verificações com ALERTA', 'tx'); CA.s(2, cr, { f: 'SUMPRODUCT((' + VSIT + '="ALERTA")*1)' }, 'fo'); cr += 2;
     ['Fontes da verdade: Azevedo Netto, IT 22/2025 (SP) ou NPT 022 (PR), NBR respectiva e Brentano. Catálogos são apoio e aparecem rotulados.',
       'Azul = entrada; preto = fórmula viva; amarelo = parâmetro de grade; cinza = valor do motor do FireCalc (não vivo).',
-      'Limites desta exportação: valores em cinza (dinâmica de 100 mca, verificações sem fórmula, caminho B) vêm do motor; a cadeia da aba Hipotese segue o par adotado na exportação.',
+      'Limites desta exportação: valores em cinza (dinâmica de 100 mca, verificações sem fórmula, pressão no esguicho) vêm do motor; a cadeia da aba Hipotese segue o par adotado na exportação.',
       'Cada fórmula traz o valor calculado e o Excel recalcula tudo ao abrir. Sem macro, sem vínculo externo.'].forEach(function (t) { CA.s(1, cr++, t, 'tx'); });
     CA.w = { 1: 36, 2: 40 };
 
@@ -751,7 +751,7 @@
       if (!temB) {
         pf('Kv = Q mínima / raiz(P mínima). Com o Kv, a vazão de cada jato acompanha a pressão que chega: Q = Kv x raiz(P)');
         pc('Fator de vazão do hidrante (Kv)', [V(PR.Qt0), '/ raiz(', V(PR.Pt0), ')'], function (a) { return a[0] + '/SQRT(' + a[1] + ')'; }, 'L/min/mca^0,5', '0.00', PR.Kvt);
-      } else pn('Caminho B: a pressão na válvula sai da curva do esguicho e da perda na mangueira (aba Premissas, tabela dos jatos).');
+      } else pn('Pressão no esguicho: a pressão na válvula sai da curva do esguicho e da perda na mangueira (aba Premissas, tabela dos jatos).');
       // 2
       pt(2, 'Vazão e pressão no hidrante mais desfavorável', SP ? 'IT 22, Tabela 2' : 'NPT 022, Tabela 1');
       pv('Vazão do jato crítico', adIdx('Qc'), 'L/min'); pv('Pressão exigida na válvula do jato crítico', Pv0c, 'mca');
@@ -775,7 +775,7 @@
       pt(5, 'Vazão do segundo hidrante (equilíbrio no ponto A)', 'IT 22, 4.8.14');
       var cQo = adIdx('Qo');
       if (UN) pn('Rede com um só hidrante simples: o cálculo considera um jato. Não há segundo jato a equilibrar.');
-      else if (temB) { pv('Vazão do jato equilibrado (valor calculado pelo FireCalc, caminho B)', adIdx('Qo'), 'L/min'); }
+      else if (temB) { pv('Vazão do jato equilibrado (valor calculado pelo FireCalc, pressão no esguicho)', adIdx('Qo'), 'L/min'); }
       else {
         pf('Q = Kv x raiz(PA - desnível - Σk x Q^1,85). A vazão aparece dos dois lados: a conta é repetida até o valor parar de mudar (8 repetições, aba Pares)');
         cQo = pc('Vazão do jato equilibrado', [V(HR.Kvo), 'x raiz(', V(cPA), '-', V(HR.dzo), '-', V(HR.Kro, SCI), 'x', V(adIdx('q7')), '^1,85 )'], function (a) { return a[0] + '*SQRT(MAX(' + a[1] + '-' + a[2] + '-' + a[3] + '*' + a[4] + '^1.85,0))'; }, 'L/min', '0.00', adIdx('Qo'));

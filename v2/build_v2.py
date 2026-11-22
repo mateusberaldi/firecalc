@@ -4,8 +4,10 @@
 Embute as fontes, a logo e o favicon da pasta marca. O mesmo arquivo é copiado para firecalc.html e para kit/firecalc.html,
 e os casos de exemplo vão para kit/exemplos. O autoteste "Testar meu computador" usa os casos e as referências da pasta testes.
 Uso: bash montar.sh, que gera dados.js e chama este script (na raiz)."""
-import os, re, json, base64, urllib.parse
+import os, re, json, base64, urllib.parse, sys
 AQUI = os.path.dirname(os.path.abspath(__file__)); RAIZ = os.path.join(AQUI, '..'); MARCA = os.path.join(RAIZ, 'marca')
+sys.path.insert(0, os.path.join(RAIZ, 'ferramentas')); import licencas_terceiros
+LICENCAS = licencas_terceiros.bloco(RAIZ, licencas_terceiros.V2)
 def ler(*p): return open(os.path.join(*p), encoding='utf8').read()
 b64 = lambda f: base64.b64encode(open(os.path.join(MARCA, f), 'rb').read()).decode()
 logo = lambda f: re.sub(r'<title>.*?</title>', '', ler(MARCA, f).strip()).replace(' role="img" aria-label="FireCalc"', ' aria-hidden="true"')
@@ -31,7 +33,7 @@ html = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FireCalc 2.6.3</title>
+<title>FireCalc 2.6.4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,''' + urllib.parse.quote(fav.replace('"', "'"), safe="/=:'") + '''">
 <style>''' + css + '''</style>
 </head>
@@ -58,7 +60,7 @@ html = '''<!doctype html>
 </dialog>
 <template id="logo-claro">''' + logo('firecalc_horizontal.svg') + '''</template>
 <template id="logo-escuro">''' + logo('firecalc_horizontal_tema_escuro.svg') + '''</template>
-<script>''' + ler(RAIZ, 'dados.js') + '''</script>
+''' + LICENCAS + '''<script>''' + ler(RAIZ, 'dados.js') + '''</script>
 <script>''' + ler(RAIZ, 'motor.js') + '''</script>
 <script id="vendor-exceljs">''' + ler(RAIZ, 'vendor', 'exceljs-4.4.0.min.js') + '''</script>
 <script>''' + ler(RAIZ, 'exporta.js') + '''</script>
@@ -70,11 +72,11 @@ html = '''<!doctype html>
 '''
 assert '{{' not in css
 assert '</script' not in ler(RAIZ, 'vendor', 'docx-9.8.1.min.js') and '—' not in ler(RAIZ, 'exporta_docx.js') and '–' not in ler(RAIZ, 'exporta_docx.js')
-open(os.path.join(AQUI, 'firecalc2.html'), 'w', encoding='utf8').write(html)
+open(os.path.join(AQUI, 'firecalc2.html'), 'w', encoding='utf8', newline='\n').write(html)
 n = len(html.encode('utf8')); assert n < 3 * 1024 * 1024, 'acima de 3 MB'
 print('v2/firecalc2.html: %d bytes (%.2f MB)' % (n, n / 1048576))
 import shutil
-for dest in (os.path.join(RAIZ, 'firecalc.html'), os.path.join(RAIZ, 'kit', 'firecalc.html')): open(dest, 'w', encoding='utf8').write(html)
+for dest in (os.path.join(RAIZ, 'firecalc.html'), os.path.join(RAIZ, 'kit', 'firecalc.html')): open(dest, 'w', encoding='utf8', newline='\n').write(html)
 EX = os.path.join(RAIZ, 'kit', 'exemplos'); os.makedirs(EX, exist_ok=True)
-for c in ORDEM + ['tres_hidrantes', 'escritorios_redutora', 'academia_pr']: shutil.copyfile(os.path.join(RAIZ, 'casos', c + '.json'), os.path.join(EX, c + '.json'))
-print('copiado para firecalc.html e kit/firecalc.html; %d exemplos em kit/exemplos' % (len(ORDEM) + 3))
+for c in ORDEM + ['tres_hidrantes', 'escritorios_redutora', 'academia_pr', 'gravidade_pr', 'gravidade_insuficiente_pr']: shutil.copyfile(os.path.join(RAIZ, 'casos', c + '.json'), os.path.join(EX, c + '.json'))
+print('copiado para firecalc.html e kit/firecalc.html; %d exemplos em kit/exemplos' % (len(ORDEM) + 5))

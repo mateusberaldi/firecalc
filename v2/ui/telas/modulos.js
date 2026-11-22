@@ -121,7 +121,7 @@
   function tab(cab, linhas, id) { return '<div class="rolar"' + (id ? ' id="' + id + '"' : '') + ' tabindex="0" role="region" aria-label="Tabela da base, só consulta"><table><thead><tr>' + cab.map(function (c) { return '<th' + (c[1] ? ' class="r"' : '') + '>' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + linhas.join('') + '</tbody></table></div>'; }
   function tr(cs) { return '<tr>' + cs.map(function (c) { return Array.isArray(c) ? '<td class="r tec">' + c[0] + '</td>' : '<td>' + c + '</td>'; }).join('') + '</tr>'; }
   function arquivos(l) { var v = []; l.forEach(function (x) { var a = String(x || '').split(', p')[0]; if (a && v.indexOf(a) < 0) v.push(a); }); return v.join('; '); }
-  function travado(titulo, fonte, corpo) { return '<div class="cartao bloco"><div class="gt-cad"><h2 class="t3">' + titulo + '</h2><span class="pilula p-in" title="Base travada: só consulta">' + U.IC.cad + 'só consulta</span></div><p class="peq">Fonte: ' + esc(fonte) + '</p>' + corpo.replace('aria-label="Tabela da base, só consulta"', 'aria-label="Tabela só de consulta: ' + String(titulo).replace(/<[^>]*>/g, '').replace(/"/g, '') + '"') + '</div>'; }
+  function travado(titulo, fonte, corpo) { return '<div class="cartao bloco"><div class="gt-cad"><h2 class="t3">' + titulo + '</h2><span class="pilula p-in" title="Base travada: só consulta">' + U.IC.cad + 'só consulta</span></div><p class="peq">Fonte: ' + esc(fonte) + '</p>' + corpo.replace('aria-label="Tabela da base, só consulta"', function () { return 'aria-label="Tabela só de consulta: ' + String(titulo).replace(/<[^>]*>/g, '').replace(/"/g, '') + '"'; }) + '</div>'; }
   function nf(v, c) { return v === null || v === undefined ? '' : fmt(v, c); }
   function linhasBombas() {
     var q = S.filtro.toLowerCase().trim();
@@ -134,10 +134,10 @@
     var a = S.aba.cadastros, h = '<div class="cab"><div class="tx"><h1>Cadastros</h1></div></div>' + abas('cadastros', ABAS_C) + '<div role="tabpanel" aria-labelledby="aba-cadastros-' + a + '">';
     if (a === 'tubos') {
       var grupos = {}; D.tubos.forEach(function (t) { var k = t.norma + ', classe ' + t.classe; (grupos[k] = grupos[k] || []).push(t); });
-      Object.keys(grupos).forEach(function (k) { var g = grupos[k], fts = []; g.forEach(function (t) { if (fts.indexOf(t.fonte) < 0) fts.push(t.fonte); }); h += travado('Tubos ' + esc(k), fts.join('; '), tab([['DN'], ['Polegada'], ['Externo (mm)', 1], ['Parede (mm)', 1], ['Interno (mm)', 1], ['Rosca']], g.map(function (t) { return tr(['DN' + t.dn, esc(t.pol || ''), [nf(t.dext, 1)], [nf(t.parede, 2)], [nf(t.dint, 1)], esc(t.rosca || '')]); }))); });
+      Object.keys(grupos).forEach(function (k) { var g = grupos[k], fts = []; g.forEach(function (t) { if (fts.indexOf(t.fonte) < 0) fts.push(t.fonte); }); h += travado('Tubos ' + esc(k), fts.join('; '), tab([['DN'], ['Polegada'], ['Externo (mm)', 1], ['Parede (mm)', 1], ['Interno (mm)', 1], ['Rosca']], g.map(function (t) { return tr(['DN' + esc(t.dn), esc(t.pol || ''), [nf(t.dext, 1)], [nf(t.parede, 2)], [nf(t.dint, 1)], esc(t.rosca || '')]); }))); });
     } else if (a === 'pecas') {
       Object.keys(D.leq).forEach(function (k) { var T = D.leq[k]; h += travado('Comprimento equivalente, tabela ' + esc(T.titulo), T.fonte, '<p class="peq">Metros de tubo reto que dão a mesma perda de carga de cada peça.</p>' + tab([['Peça']].concat(T.dns.map(function (d) { return ['DN' + d, 1]; })), Object.keys(T.pecas).map(function (id) { var p = T.pecas[id]; return tr([esc(p.nome)].concat(T.dns.map(function (d) { return [nf(p.dn[String(d)], 1)]; }))); }))); });
-      h += travado('Fator C de Hazen-Williams', 'IT 22, Tabela 1', tab([['Material'], ['C', 1], ['Fonte']], D.C.map(function (c) { return tr([esc(c.material), [c.C], '<span class="peq">' + esc(c.fonte) + '</span>']); })));
+      h += travado('Fator C de Hazen-Williams', 'IT 22, Tabela 1', tab([['Material'], ['C', 1], ['Fonte']], D.C.map(function (c) { return tr([esc(c.material), [esc(c.C)], '<span class="peq">' + esc(c.fonte) + '</span>']); })));
     } else if (a === 'hid') {
       h += travado('Esguichos reguláveis', arquivos(D.esguichos.map(function (e) { return e.fonte; })), tab([['Modelo'], ['Vazão (L/min)', 1], ['Pressão (mca)', 1], ['Alcance (m)', 1], ['Fonte']], D.esguichos.map(function (e) { return tr([esc(e.modelo), [nf(e.Q, 0)], [nf(e.P, 0)], [nf(e.alcance, 1)], '<span class="peq">' + esc(e.fonte) + '</span>']); })));
       var EP = D.esguichoPonta || {};
@@ -255,17 +255,38 @@
     else if (m === 'bib-abrir') document.getElementById('bib-arq').click();
     else if (m === 'par-auto') { S.F.parForcado = ''; U.mudou(); }
   });
+  /** 2.6.4 (FC-009): "Trazer de um arquivo" passa pela mesma rota da inclusão em lote (U.importaCadastros), todos os grupos do modelo, e segue aceitando o formato
+   *  antigo (bombasUsuario, o de "Baixar a biblioteca"). Só formato antigo: aviso próprio de sempre. Misto: as bombas antigas entram primeiro e o lote
+   *  recusa a que repetir fabricante e modelo. Texto que não é objeto, ou sem grupo conhecido, cai no erro do lote (S.cadRel registra o erro). */
+  function trazDeArquivo(texto) {
+    var o = null, grupos = FireCadastros.ORDEM; try { o = JSON.parse(texto); } catch (e) { o = null; }
+    var objeto = o && typeof o === 'object' && !Array.isArray(o), antigo = objeto && 'bombasUsuario' in o, novo = objeto && grupos.some(function (g) { return g in o; });
+    if (!antigo) { U.importaCadastros(texto); return; }
+    var l = o.bombasUsuario, n = 0, ent = [], rec = [];
+    if (!Array.isArray(l)) { S.cadRel = { origem: 'arquivo', erro: 'Arquivo inválido: não é uma biblioteca de bombas do FireCalc.', entraram: [], recusados: [] }; redesenha(); U.avisa(S.cadRel.erro); return; }
+    l.forEach(function (b, i) {
+      var nm = b && typeof b === 'object' ? String(b.modelo || b.id || 'item ' + (i + 1)) : 'item ' + (i + 1), motivo = '';
+      if (!b || typeof b !== 'object' || !b.id || !b.pts) motivo = 'Faltam o identificador ou a curva da bomba.';
+      else if (b.pts.length < 3) motivo = 'Informe pelo menos 3 pontos da curva.';
+      else if (!b.fonte) motivo = 'Informe a fonte: catálogo e página.';
+      else if (todasBombas().some(function (x) { return x.id === b.id; })) motivo = 'Já existe uma bomba com este identificador.';
+      else if (novo && todasBombas().some(function (x) { return x.modelo === b.modelo; })) motivo = 'Já existe uma bomba com este fabricante e modelo.';
+      if (motivo) { if (novo) rec.push({ grupo: 'bombas', nome: nm, motivo: motivo }); return; }
+      b.usuario = true; U.bib.push(b); n++; ent.push({ grupo: 'bombas', nome: nm });
+    });
+    if (!novo) { salvaBib(); redesenha(); U.avisa(n ? n + ' bomba(s) trazida(s) para a biblioteca.' : 'Nenhuma bomba nova no arquivo.'); return; }
+    if (n) salvaBib();
+    var resto = Object.assign({}, o); delete resto.bombasUsuario;
+    var r = U.importaCadastros(JSON.stringify(resto));
+    S.cadRel.entraram = ent.concat(S.cadRel.entraram); S.cadRel.recusados = rec.concat(S.cadRel.recusados); redesenha();
+    var ne = S.cadRel.entraram.length, nr = S.cadRel.recusados.length;
+    U.avisa(r.erro ? r.erro + (n ? ' ' + (n === 1 ? 'Entrou 1 bomba' : 'Entraram ' + n + ' bombas') + ' do arquivo.' : '') : ne + (ne === 1 ? ' item entrou' : ' itens entraram') + ' na biblioteca; ' + nr + (nr === 1 ? ' recusado.' : ' recusados.'));
+  }
   document.addEventListener('change', function (ev) {
     var t = ev.target;
     if (t.id === 'bib-arq' && t.files[0]) {
       var r = new FileReader();
-      r.onload = function () {
-        try {
-          var o = JSON.parse(r.result), l = (o.bombasUsuario || []).filter(function (b) { return b && b.id && b.pts && b.pts.length >= 3 && b.fonte; }), n = 0;
-          l.forEach(function (b) { if (!todasBombas().some(function (x) { return x.id === b.id; })) { b.usuario = true; U.bib.push(b); n++; } });
-          salvaBib(); redesenha(); U.avisa(n ? n + ' bomba(s) trazida(s) para a biblioteca.' : 'Nenhuma bomba nova no arquivo.');
-        } catch (e) { U.avisa('Arquivo inválido: não é uma biblioteca de bombas do FireCalc.'); }
-      };
+      r.onload = function () { trazDeArquivo(String(r.result)); };
       r.readAsText(t.files[0]); t.value = ''; return;
     }
     if (t.dataset && t.dataset.cfg && t.tagName === 'SELECT') { U.cfg[t.dataset.cfg] = t.value; guarda(CH.cfg, U.cfg); }

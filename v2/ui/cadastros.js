@@ -175,7 +175,8 @@
     var u = vazia(), tipos = {}, pecas = {}, esg = {}, tem = false; lib = lib || vazia();
     [F.tipoTubo].concat(F.trechos.map(function (t) { return t.tipo; })).forEach(function (t) { if (t) tipos[t] = 1; });
     F.trechos.forEach(function (t) { Object.keys(t.pecas || {}).forEach(function (k) { pecas[k] = 1; }); });
-    (F.hidrantes || []).forEach(function (h) { if (h.esguicho) esg[h.esguicho] = 1; });
+    /* FC-014: o esguicho em uso é o do projeto (F.lanc.esg, desde a 2.6.0); o modelo guardado em cada hidrante pode ser de uma escolha antiga e não vai junto */
+    if (F.lanc && F.lanc.esg) esg[F.lanc.esg] = 1;
     (lib.tiposTubo || []).forEach(function (t) { if (tipos[t.id]) { u.tiposTubo.push(t); t.segmentos.forEach(function (s) { (lib.tubos || []).forEach(function (b) { if (b.norma === s.norma && b.classe === s.classe && s.dns.indexOf(+b.dn) >= 0 && u.tubos.indexOf(b) < 0) u.tubos.push(b); }); }); } });
     (lib.pecas || []).forEach(function (p) { if (p.tabela === F.tabelaLeq && pecas[p.id]) u.pecas.push(p); });
     (lib.esguichos || []).forEach(function (e) { if (esg[e.modelo]) u.esguichos.push(e); });

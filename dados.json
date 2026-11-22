@@ -962,7 +962,7 @@
    "fonte": "Azevedo Netto, Manual de Hidráulica, 8ª ed., Tabela 7.6, p. 127"
   },
   "B": {
-   "titulo": "B, fabricante (Tupy BSP, Catálogo Técnico, pp. 16 e 18)",
+   "titulo": "B, fabricante (Tupy BSP)",
    "pecas": {
     "cot90_femea": {
      "nome": "Cotovelo 90° fêmea (nº 90)",
@@ -1235,7 +1235,7 @@
     100,
     150
    ],
-   "fonte": "Tupy, Catálogo Técnico, pp. 16 e 18"
+   "fonte": "Catalogo_Completo_Tupy.pdf, pp. 16 e 18"
   }
  },
  "C": [

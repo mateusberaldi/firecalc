@@ -9,7 +9,7 @@
   'use strict';
   var num = V.num, vazio = V.vazio;
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
-  function txt(v) { return v === undefined || v === null || v === '' ? '' : String(v).replace('.', ','); }
+  function txt(v) { if (v === undefined || v === null || v === '') return ''; if (typeof v === 'number' && isFinite(v) && Math.abs(v) < 1e15) v = +v.toFixed(10); return String(v).replace('.', ','); }   /* FC-006: 10 casas, sem zeros à direita */
   function txtMapa(m) { var o = {}; Object.keys(m || {}).forEach(function (k) { o[k] = String(m[k]); }); return o; }
   function numMapa(m) { var o = {}; Object.keys(m || {}).forEach(function (k) { var q = parseInt(m[k], 10); if (q > 0) o[k] = q; }); return o; }
   function sem(o, chaves) { var r = {}; Object.keys(o || {}).forEach(function (k) { if (chaves.indexOf(k) < 0) r[k] = o[k]; }); return r; }
@@ -41,6 +41,18 @@
     var mod = esguichoDe(F, M), q = num(l.Q), p = num(l.P);
     if (mod && q > 0 && p > 0) { try { l.PeMin = M.pontoParana(D, { id: '', esguicho: mod }, { Q: q, P: p }).PeMin; } catch (e) { l.PeMin = null; } }
     if (l.PeAuto) l.Pe = l.PeMin === null ? '' : txt(Math.round(l.PeMin * 100) / 100);
+  }
+  /** FC-014: modelo de esguicho escolhido no projeto que não está na base nem na biblioteca (nem na cópia do arquivo); '' quando está, ou quando vale o padrão do diâmetro. */
+  function esguichoAusente(F, D) { var m = F && F.lanc && F.lanc.esg; return m && !(D.esguichos || []).some(function (e) { return e.modelo === m; }) ? m : ''; }
+  /** FC-014: o projeto guarda a cópia do esguicho da biblioteca que usa (F.cadastrosUsuario), para a retirada do item da biblioteca não mudar o cálculo e para o arquivo salvo levá-la. */
+  function guardaEsguicho(F) {
+    var m = F.lanc && F.lanc.esg, rows = m && bibCad && bibCad.esguichos ? bibCad.esguichos.filter(function (e) { return e.modelo === m; }) : [];
+    if (!rows.length) return; if (!F.cadastrosUsuario) F.cadastrosUsuario = CAD.vazia(); if (!Array.isArray(F.cadastrosUsuario.esguichos)) F.cadastrosUsuario.esguichos = [];
+    rows.forEach(function (e) { if (!F.cadastrosUsuario.esguichos.some(function (y) { return JSON.stringify(y) === JSON.stringify(e); })) F.cadastrosUsuario.esguichos.push(clone(e)); });
+  }
+  function textoEsguichoAusente(m, norma) {
+    return 'O esguicho "' + m + '" não está na base nem na biblioteca deste computador. Cadastre-o de novo em Minha biblioteca ou escolha outro em Selecionar esguicho. ' +
+      (norma === 'PR' ? 'Sem ele, não há pressão na válvula.' : 'Sem ele, não há pressão no esguicho nem a verificação V28.');
   }
   /** Ordem montante-jusante de cada trecho, a partir de RI (Azevedo Netto, cap. 19). Trecho sem caminho até RI fica como veio. */
   function orienta(nomes) {
@@ -85,6 +97,11 @@
     if (typeof lc.Pentrada === 'number') { F.lanc.Pe = txt(lc.Pentrada); F.lanc.PeAuto = false; F.lanc.fPe = lf.Pentrada || ''; }
     /* 2.6.0: um esguicho para o projeto inteiro; o arquivo guarda o modelo em cada hidrante. Sem modelo, vale o padrão do diâmetro. */
     F.lanc.esg = typeof p.esguichoProjeto === 'string' ? p.esguichoProjeto : (p.hidrantes || []).map(function (h) { return h.esguicho || ''; }).filter(Boolean)[0] || '';   /* esguichoProjeto: '' = padrão do diâmetro (arquivo da 2.6.0) */
+    /* FC-014: esguicho da biblioteca que o arquivo não traz e este computador não tem: avisa, sem trocar o esguicho */
+    CAD.aplica(D, bibCad, F.cadastrosUsuario); var esgAus = esguichoAusente(F, D); if (esgAus) mig.push(textoEsguichoAusente(esgAus, p.norma));
+    /* FC-013: arquivo anterior à 2.6.0 com esguichos diferentes por hidrante (só PR usa o esguicho do arquivo): fica o do primeiro, e o aviso diz isso */
+    var esgs = (p.hidrantes || []).map(function (h) { return h.esguicho || ''; }).filter(Boolean);
+    if (p.norma === 'PR' && typeof p.esguichoProjeto !== 'string' && esgs.some(function (m) { return m !== esgs[0]; })) mig.push('Os hidrantes deste arquivo tinham esguichos diferentes. O projeto fica com um só, o do primeiro hidrante (' + esgs[0] + '), e a pressão na válvula e a de entrada mínima podem mudar.');
     var lms = (p.hidrantes || []).map(function (h) { return h.Lmang; }).filter(function (v) { return typeof v === 'number'; }), lm0 = typeof lc.Lmang === 'number' ? lc.Lmang : 30;
     if (p.norma === 'PR' && lms.some(function (v) { return Math.abs(v - lm0) > 1e-9; })) mig.push('Este arquivo tem comprimento de mangueira por hidrante (' + lms.join(', ') + ' m). Os valores continuam no cálculo; ao mudar o comprimento no cartão Mangueira, todos os hidrantes passam a ter o mesmo.');
     if ((p.cotasExtras || []).length) mig.push('Este arquivo tem pavimentos sem hidrante no cálculo, recurso que saiu na 2.5.0. As cotas continuam valendo, só para leitura, na etapa Hidrantes; lance os hidrantes desses pavimentos na rede e retire a lista.');
@@ -192,7 +209,7 @@
     if (F.norma === 'PR' && F.retorno.ativo && (tolerante || (n(F.retorno.zDescarga) !== undefined && F.retorno.trechos.every(function (t) { return n(t.L) > 0; })))) { P.retorno = { trechos: F.retorno.trechos.map(function (t) { var o = { dn: t.dn, pecas: numMapa(t.pecas) }, ft = tolerante ? null : tuboDoTipo(D, F.tipoTubo, t.dn); if (ft) o.tubo = { norma: ft.norma, classe: ft.classe }; poe(o, 'L', n(t.L)); poe(o, 'C', n(t.C)); return o; }) }; poe(P.retorno, 'zDescarga', n(F.retorno.zDescarga)); } else delete P.retorno;
     if (F.norma === 'PR' && (F.retornoTeste || P.retorno)) P.retornoTeste = true; else delete P.retornoTeste;
     poe(P, 'parForcado', F.parForcado || undefined);
-    if (tolerante) { P.identificacao = clone(F.ident); P.confirmacoes = clone(F.conf); delete P.origemRede; P.versaoFireCalc = '2.6.3'; if (F.conferidos && Object.keys(F.conferidos).length) P.conferidos = clone(F.conferidos); else delete P.conferidos; }
+    if (tolerante) { P.identificacao = clone(F.ident); P.confirmacoes = clone(F.conf); delete P.origemRede; P.versaoFireCalc = '2.6.4'; if (F.conferidos && Object.keys(F.conferidos).length) P.conferidos = clone(F.conferidos); else delete P.conferidos; }
     else { delete P.identificacao; delete P.confirmacoes; delete P.origemRede; delete P.versaoFireCalc; delete P.conferidos; }
     return P;
   }
@@ -253,7 +270,7 @@
     /* 2.6.0: fonte e tipologia. Arquivo antigo: bomba é inferior; reforço e gravidade são elevado. Bomba com a marca "elevado" (combinação contraditória da 2.5.4) abre como inferior, sem a marca. */
     fo.tipo = f.tipo || (modo === 'bomba' ? 'inferior' : modo ? 'elevado' : ''); fo.tip = f.tipologia || (fo.tipo ? (f.resForma === 'cil' ? 'cil' : 'ret') : '');
     fo.elevModo = f.elevModo || (fo.tipo === 'elevado' ? (modo === 'reforco' ? 'reforco' : modo === 'gravidade' ? 'gravidade' : '') : ''); fo.cubaForma = f.cubaForma || 'cil';
-    if (modo === 'bomba' && f.elevado && !f.tipo) F._aviso = 'A marca de reservatório elevado não vale com bomba puxando de reservatório inferior; a dispensa da bomba de pressurização em SP saiu.';
+    if (modo === 'bomba' && f.elevado && !f.tipo) F._aviso = F.norma === 'SP' ? 'A marca de reservatório elevado não vale com bomba puxando de reservatório inferior; a dispensa da bomba de pressurização em SP saiu.' : 'A marca de reservatório elevado não vale com bomba puxando de reservatório inferior; ela saiu.';
     if (f.xModo === 'calc') { fo.xModo = 'calc'; fo.saida = f.saida || ''; fo.dnSuc = +f.dnSuc || ''; fo.resForma = f.resForma || 'ret'; XK.forEach(function (k) { fo[k] = txt(f[k]); }); fo.poco = !!f.poco; fo.anti = !!f.anti; fo.pocoProfAuto = vazio(fo.pocoProf); fo.pocoLadoAuto = vazio(fo.pocoLado); }
     else if (f.xModo === 'manual') { fo.xModo = 'manual'; fo.zXFonte = f.zXFonte || ''; }
     else if (temDado) { fo.xModo = 'manual'; fo.xOrigem = 'antigo'; fo.zXFonte = f.zXFonte || ''; }
@@ -358,12 +375,13 @@
   /** Situação do projeto: 'branco', 'invalido', 'incompleta', 'aguarda' (faltam dados de outras etapas), 'ok' (calculado) ou 'falha' (o motor recusou).
    *  Só chega ao motor quando não há campo inválido, a rede fecha e nada do que o cálculo precisa está vazio. */
   function avalia(F, D, M) {
-    sincroniza(F); carregaCadastros(F, D); sincAbast(F, D, M); sincLanc(F, D, M);
-    var ctx = contexto(F, D, M), campos = V.validar(F, ctx), r = { campos: campos, ctx: ctx, inv: campos.filter(function (c) { return c.n === 'erro'; }), av: [], falta: [] };
+    sincroniza(F); carregaCadastros(F, D); guardaEsguicho(F); sincAbast(F, D, M); sincLanc(F, D, M);
+    var ctx = contexto(F, D, M), campos = V.validar(F, ctx), r = { campos: campos, ctx: ctx, inv: campos.filter(function (c) { return c.n === 'erro'; }), av: [], falta: [], esgAusente: esguichoAusente(F, D) };
     if (!F.trechos.length) { r.k = 'branco'; return r; }
     var est = V.estrutura(F); r.alc = est.alc;
     if (r.inv.length) { r.k = 'invalido'; return r; }
     if (est.avisos.length) { r.k = 'incompleta'; r.av = est.avisos; return r; }
+    if (r.esgAusente && F.norma === 'PR') { r.k = 'falha'; r.msg = 'O esguicho "' + r.esgAusente + '" não está na base nem na biblioteca deste computador. Cadastre-o de novo ou escolha outro esguicho na etapa Hidrantes.'; return r; }   /* FC-014: o PR calcula pelo esguicho */
     r.falta = campos.filter(function (c) { return c.motor; });
     if (!r.falta.length && !tipoFinal(F, D, M)) r.falta.push({ c: 'sistema.coluna', etapa: 2, n: 'vazio', msg: 'Falta definir o tipo de sistema (etapa Edificação e sistema).' });
     if (r.falta.length) { r.k = 'aguarda'; return r; }
@@ -384,5 +402,5 @@
       pode: function () { return { desfazer: pos > 0, refazer: pos < pilha.length - 1 }; }
     };
   }
-  return { novo: novo, abrir: abrir, autoColuna: autoColuna, sincroniza: sincroniza, contexto: contexto, paraMotor: paraMotor, migraF: migraF, tipoTubo: tipoTubo, tuboDoTipo: tuboDoTipo, dnsDoTipo: dnsDoTipo, sincTubo: sincTubo, cAlterado: cAlterado, move: move, paraArquivo: paraArquivo, avalia: avalia, tipoFinal: tipoFinal, tipoDe: tipoDe, orienta: orienta, Historico: Historico, txt: txt, clone: clone, defineBiblioteca: defineBiblioteca, defineCadastros: defineCadastros, carregaCadastros: carregaCadastros, renomeiaNo: renomeiaNo, lancNovo: lancNovo, esguichoDe: esguichoDe, lancAlterado: lancAlterado, lancOficial: lancOficial, fonteNova: fonteNova, chavesDaRota: chavesDaRota, camposPerdidos: camposPerdidos, trocaRota: trocaRota, ROT_ROTULOS: ROT_ROTULOS, sincAbast: sincAbast, trechoSuc: trechoSuc, primeiroTrecho: primeiroTrecho, criaSuccao: criaSuccao, dnSugerido: dnSugerido, X_ANTIGO: X_ANTIGO };
+  return { novo: novo, abrir: abrir, autoColuna: autoColuna, sincroniza: sincroniza, contexto: contexto, paraMotor: paraMotor, migraF: migraF, tipoTubo: tipoTubo, tuboDoTipo: tuboDoTipo, dnsDoTipo: dnsDoTipo, sincTubo: sincTubo, cAlterado: cAlterado, move: move, paraArquivo: paraArquivo, avalia: avalia, esguichoAusente: esguichoAusente, textoEsguichoAusente: textoEsguichoAusente, tipoFinal: tipoFinal, tipoDe: tipoDe, orienta: orienta, Historico: Historico, txt: txt, clone: clone, defineBiblioteca: defineBiblioteca, defineCadastros: defineCadastros, carregaCadastros: carregaCadastros, renomeiaNo: renomeiaNo, lancNovo: lancNovo, esguichoDe: esguichoDe, lancAlterado: lancAlterado, lancOficial: lancOficial, fonteNova: fonteNova, chavesDaRota: chavesDaRota, camposPerdidos: camposPerdidos, trocaRota: trocaRota, ROT_ROTULOS: ROT_ROTULOS, sincAbast: sincAbast, trechoSuc: trechoSuc, primeiroTrecho: primeiroTrecho, criaSuccao: criaSuccao, dnSugerido: dnSugerido, X_ANTIGO: X_ANTIGO };
 });

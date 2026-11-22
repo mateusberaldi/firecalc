@@ -33,13 +33,13 @@
   /** 2.6.0: botão de escolha do sistema: SVG à esquerda e uma linha por parâmetro à direita. tag 'button' escolhe; 'div' só mostra.
    *  o = {tag, atual, attr (atributos de dados), selo (texto curto ao lado do nome)} */
   function botaoSist(t, cl, o) {
-    var N = U.norma(), tag = o.tag || 'button', nome = (t.mangueira <= 25 ? 'Mangotinho' : 'Hidrante') + ', sistema tipo ' + t.id;
+    var N = U.norma(), tag = o.tag || 'button', rp = cl ? rtiDe(t) : null, nadm = !!(rp && rp.inferior && !rp.admitido), nome = (t.mangueira <= 25 ? 'Mangotinho' : 'Hidrante') + ', sistema tipo ' + t.id;
     return '<' + tag + (tag === 'button' ? ' type="button"' : '') + ' class="opcao sbt' + (o.atual ? ' at' : '') + '"' + (tag === 'button' ? ' aria-pressed="' + !!o.atual + '"' : '') + (o.attr || '') + '>' + FireSVG.sistema(t) +
       '<span class="sb-tx"><span class="ot">' + (o.atual ? U.IC.ok : '') + esc(nome) + (o.selo ? '<span class="selo">' + esc(o.selo) + '</span>' : '') + '</span>' +
       '<span class="opl"><span>Vazão por jato</span> <b>' + fmt(t.Q, 0) + ' L/min</b></span>' +
-      '<span class="opl"><span>Pressão mínima ' + (N.pressaoNo === 'valvula' ? 'na válvula' : 'no esguicho') + '</span> <b>' + fmt(t.P, 0) + ' mca</b></span>' +
+      '<span class="opl"><span>Pressão mínima ' + (N.pressaoNo === 'valvula' ? 'na válvula' : 'na ponta do esguicho') + '</span> <b>' + fmt(t.P, 0) + ' mca</b></span>' +
       '<span class="opl"><span>Mangueira</span> <b>' + t.mangueira + ' mm</b></span>' +
-      '<span class="opl"><span>Reserva de incêndio</span> <b>' + (cl ? fmt((rtiDe(t) || cl).rti, 0) + ' m³' : 'informe a área') + '</b></span></span></' + tag + '>';
+      '<span class="opl"><span>Reserva de incêndio</span> <b>' + (!cl ? 'informe a área' : nadm ? 'não admitido' : fmt((rp || cl).rti, 0) + ' m³') + '</b></span></span></' + tag + '>';
   }
   /** Tipo da tabela para a coluna e a área do projeto (ou nulo). */
   function tipoTabela() {

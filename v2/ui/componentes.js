@@ -5,7 +5,7 @@
   'use strict';
   var D = FIREDADOS, M = FireMotor, E = FireEstado, V = FireValida, FT = FireFormato, fmt = FT.fmt, esc = FT.esc, vir = FT.vir;
   D.bombasBase = D.bombas.slice();
-  var U = window.FireUI = { D: D, M: M, E: E, V: V, fmt: fmt, esc: esc, vir: vir, telas: {}, VERSAO: 'FireCalc 2.6.3' };
+  var U = window.FireUI = { D: D, M: M, E: E, V: V, fmt: fmt, esc: esc, vir: vir, telas: {}, VERSAO: 'FireCalc 2.6.4' };
   var IC = U.IC = {
     ok: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="var(--fc-superficie)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     er: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="var(--fc-superficie)" stroke-width="1.8" stroke-linecap="round"/></svg>',
@@ -71,11 +71,11 @@
     var t = U.pega(base), h = '<ul class="pecas">', soma = 0, falta = false, ids = Object.keys(t.pecas || {});
     ids.forEach(function (id) {
       var c = base + '.pecas.' + id, m = U.msg(c), q = parseInt(t.pecas[id], 10), l = U.leq(id, t.dn); if (isNaN(l)) falta = true; else if (q > 0) soma += q * l;
-      h += '<li><input class="campo" id="' + U.idDe(c) + '" data-c="' + c + '" value="' + esc(t.pecas[id]) + '" inputmode="numeric" aria-label="Quantidade de ' + esc(U.nomePeca(id)) + '"' + attrMsg(c, m) + '><span class="nm">' + esc(U.nomePeca(id)) + htmlMsg(c, m) + '</span><span class="tec">' + (isNaN(l) ? 'sem dado para DN' + t.dn : fmt((q > 0 ? q : 0) * l, 1) + ' m') + '</span><button class="bt lig min" data-tirapeca="' + c + '" aria-label="Tirar ' + esc(U.nomePeca(id)) + '">tirar</button></li>';
+      h += '<li><input class="campo" id="' + U.idDe(c) + '" data-c="' + esc(c) + '" value="' + esc(t.pecas[id]) + '" inputmode="numeric" aria-label="Quantidade de ' + esc(U.nomePeca(id)) + '"' + attrMsg(c, m) + '><span class="nm">' + esc(U.nomePeca(id)) + htmlMsg(c, m) + '</span><span class="tec">' + (isNaN(l) ? 'sem dado para DN' + esc(t.dn) : fmt((q > 0 ? q : 0) * l, 1) + ' m') + '</span><button class="bt lig min" data-tirapeca="' + esc(c) + '" aria-label="Tirar ' + esc(U.nomePeca(id)) + '">tirar</button></li>';
     });
     if (!ids.length) h += '<li><span class="nm peq">Nenhuma peça lançada.</span></li>';
     var ops = Object.keys(D.leq[S.F.tabelaLeq].pecas).filter(function (id) { return ids.indexOf(id) < 0; });
-    h += '</ul><select class="campo" data-addpeca="' + base + '" aria-label="Adicionar peça" style="margin:10px 0;width:100%"><option value="">Adicionar peça...</option>' + ops.map(function (id) { return '<option value="' + id + '">' + esc(U.nomePeca(id)) + '</option>'; }).join('') + '</select>';
+    h += '</ul><select class="campo" data-addpeca="' + base + '" aria-label="Adicionar peça" style="margin:10px 0;width:100%"><option value="">Adicionar peça...</option>' + ops.map(function (id) { return '<option value="' + esc(id) + '">' + esc(U.nomePeca(id)) + '</option>'; }).join('') + '</select>';
     return { html: h, soma: falta ? NaN : soma };
   };
 
@@ -124,7 +124,10 @@
    *  a bomba entrega altura igual ou maior. O motor não muda; só a apresentação. */
   U.vers0 = function () {
     var n = S.sit.R.numeros, b = U.bombaDe(S.F.bomba.id), SIT = { ERRO: 'er', ALERTA: 'al', INFO: 'in', OK: 'ok' };
-    return S.sit.R.verificacoes.filter(function (v) { return v.id !== 'V22'; }).map(function (v) {
+    var lista = S.sit.R.verificacoes.filter(function (v) { return v.id !== 'V22'; });
+    /* FC-014: SP com o esguicho escolhido ausente da base e da biblioteca: o motor não monta a V28; a tela diz que o alcance não foi verificado */
+    if (S.sit.esgAusente && S.F.norma === 'SP') lista = lista.concat([{ id: 'V28', situacao: 'ALERTA', titulo: 'Alcance do jato no esguicho: esguicho não encontrado', valor: 'Esguicho "' + S.sit.esgAusente + '" fora da base e da biblioteca; alcance não verificado. Cadastre o modelo de novo em Minha biblioteca ou escolha outro esguicho.', item: '4.8.2; 4.11.2.3' }]);
+    return lista.map(function (v) {
       var s = SIT[v.situacao], nota = '';
       if (v.id === 'V10' && v.situacao === 'ALERTA' && b && n.Hb >= n.AMT) {
         var q0 = Math.min.apply(null, b.pts.map(function (p) { return p[1]; }));
@@ -142,8 +145,8 @@
     return l;
   };
   U.contaVer = function () { var c = { er: 0, al: 0, in: 0, ok: 0, cf: 0 }; U.vers().forEach(function (x) { c[x.cf ? 'cf' : x.s]++; }); return c; };
-  /** Potência como o catálogo dá: cv do motor (Schneider) ou, na KSB, só a potência no eixo lida da curva (o catálogo não dá o motor). */
-  U.potTxt = function (b, pe) { return b.cv ? fmt(b.cv, b.cv % 1 ? 1 : 0) + ' cv' : (pe ? fmt(pe.P, 1) + ' ' + pe.un + ' no eixo' : (b.potEixo ? 'potência no eixo pela curva' : 'potência não informada')); };
+  /** Potência como o catálogo dá: cv do motor (Schneider) ou, na KSB, só a potência no eixo lida da curva (o catálogo não dá o motor), dita como as listas: valor e unidade. */
+  U.potTxt = function (b, pe) { return b.cv ? fmt(b.cv, b.cv % 1 ? 1 : 0) + ' cv' : (pe ? fmt(pe.P, 1) + ' ' + pe.un : (b.potEixo ? 'potência pela curva' : 'potência não informada')); };
   U.bombaDe = function (id) { return id ? D.bombas.filter(function (x) { return x.id === id; })[0] : null; };
   U.resumo = function () {
     var el = document.getElementById('resumo'), sit = S.sit, h = '', svg = function (k) { return IC[k].replace('<svg', '<svg width="18" height="18"'); };
@@ -152,15 +155,15 @@
       var n = sit.R.numeros, N = U.norma(), c = U.contaVer(), b = U.bombaDe(S.F.bomba.id), grav = S.F.fonte.modo === 'gravidade';
       h = ind('Tipo de sistema', esc(n.tipo), '', N.id === 'SP' ? 'IT 22, Tabela 2' : 'NPT 022, Tabela 1') + ind(n.jatoUnico ? 'Vazão de um jato' : 'Vazão dos dois jatos', fmt(n.Qt, 1), 'L/min', fmt(n.Qth, 2) + ' m³/h') +
         ind('Pressão mínima', fmt(n.Pvcrit, 2), 'mca', 'na válvula de ' + esc(n.critico)) + ind(grav ? 'Folga por gravidade' : 'Altura manométrica', fmt(grav ? -n.AMT : n.AMT, 2), 'mca', n.Pd !== undefined ? fmt(n.Pd, 2) + ' na descarga da bomba' : 'reservatório elevado') +
-        (b && !grav ? ind('Bomba', esc(b.modelo), '', U.potTxt(b, n.potEixo) + (n.Qw !== undefined ? ', trabalha em ' + fmt(n.Qw, 1) + ' m³/h e ' + fmt(n.Hw, 1) + ' mca' : ''), true) : ind('Bomba', grav ? 'sem bomba' : 'a escolher', '', grav ? 'só gravidade' : 'etapa ' + U.POS.bomba, true)) +
+        (b && !grav ? ind('Bomba', esc(b.modelo), '', esc(U.potTxt(b, n.potEixo)) + (n.Qw !== undefined ? ', trabalha em ' + fmt(n.Qw, 1) + ' m³/h e ' + fmt(n.Hw, 1) + ' mca' : ''), true) : ind('Bomba', grav ? 'sem bomba' : 'a escolher', '', grav ? 'só gravidade' : 'etapa ' + U.POS.bomba, true)) +
         '<div class="cartao ind"><div class="rot">Verificações</div><div class="v" style="margin:8px 0 4px">' + (c.er ? U.pilula('er', c.er + (c.er > 1 ? ' não atendem' : ' não atende')) : (c.al ? U.pilula('al', 'Nenhum erro') : U.pilula('ok', 'Tudo atende'))) + '</div><div class="s"><button class="bt lig min" data-ir="etapa:' + U.POS.verif + '" style="margin-left:-8px">' + (c.al ? c.al + ' a conferir, ver' : 'ver a lista') + '</button></div></div>';
       if (n.jatoUnico) h += '<div class="estado info">' + svg('in') + '<span>Rede com um só hidrante simples: cálculo com um jato. A IT 22 define os dois jatos para sistemas com mais de um hidrante simples (4.8.3).</span></div>';
     } else {
       var motivo = { branco: 'aguarda a rede', invalido: 'suspenso', incompleta: 'suspenso', aguarda: 'aguarda dados', falha: 'suspenso' }[sit.k];
       h = ['Tipo de sistema', 'Vazão dos jatos', 'Pressão mínima', 'Altura manométrica', 'Bomba', 'Verificações'].map(function (r) { return indVazio(r, motivo); }).join('');
-      if (sit.k === 'invalido') h += '<div class="estado erro">' + svg('er') + '<span><b>Resultado suspenso:</b> ' + sit.inv.length + (sit.inv.length > 1 ? ' campos com valor inválido' : ' campo com valor inválido') + ' (etapa ' + U.ETAPAS[sit.inv[0].etapa - 1] + '). Nenhum número é mostrado até a correção.</span><button class="bt" data-corrigir="' + sit.inv[0].c + '">Ir corrigir</button></div>';
+      if (sit.k === 'invalido') h += '<div class="estado erro">' + svg('er') + '<span><b>Resultado suspenso:</b> ' + sit.inv.length + (sit.inv.length > 1 ? ' campos com valor inválido' : ' campo com valor inválido') + ' (etapa ' + U.ETAPAS[sit.inv[0].etapa - 1] + '). Nenhum número é mostrado até a correção.</span><button class="bt" data-corrigir="' + esc(sit.inv[0].c) + '">Ir corrigir</button></div>';
       if (sit.k === 'incompleta') h += '<div class="estado erro">' + svg('er') + '<span><b>Rede incompleta:</b> ' + esc(sit.av[0].msg) + ' Corrija o nó ou lance o trecho que falta.</span><button class="bt" data-corrigir="trechos.' + sit.av[0].i + '.' + sit.av[0].campo + '">Ir corrigir</button></div>';
-      if (sit.k === 'aguarda') { var ets = []; sit.falta.forEach(function (f) { if (ets.indexOf(U.ETAPAS[f.etapa - 1]) < 0) ets.push(U.ETAPAS[f.etapa - 1]); }); h += '<div class="estado info">' + svg('in') + '<span>O resultado aparece quando o cálculo tiver todos os dados. Falta preencher: ' + ets.join(', ') + '.</span><button class="bt" data-corrigir="' + sit.falta[0].c + '">Ir preencher</button></div>'; }
+      if (sit.k === 'aguarda') { var ets = []; sit.falta.forEach(function (f) { if (ets.indexOf(U.ETAPAS[f.etapa - 1]) < 0) ets.push(U.ETAPAS[f.etapa - 1]); }); h += '<div class="estado info">' + svg('in') + '<span>O resultado aparece quando o cálculo tiver todos os dados. Falta preencher: ' + ets.join(', ') + '.</span><button class="bt" data-corrigir="' + esc(sit.falta[0].c) + '">Ir preencher</button></div>'; }
       if (sit.k === 'falha') h += '<div class="estado erro">' + svg('er') + '<span><b>O cálculo não fechou:</b> ' + esc(vir(sit.msg)) + '</span></div>';
       if (sit.k === 'branco') h += '<div class="estado info">' + svg('in') + '<span>O resumo aparece aqui quando a rede tiver hidrante ligado ao reservatório e os dados das etapas 1 a ' + U.POS.hidr + ' estiverem preenchidos.</span></div>';
     }
@@ -185,12 +188,17 @@
     var t = U.textoFala(); clearTimeout(tFala);
     tFala = setTimeout(function () { if (t === ultFala) return; ultFala = t; var el = document.getElementById('fala'); if (el) el.textContent = t; }, 900);
   };
+  function nomeRed(c) { var o = U.pegaObj(c.replace(/\.redP$/, '')) || {}; return /^cotasExtras/.test(c) ? 'Pavimento ' + o.nome : 'Hidrante ' + (o.id || o.no); }
   U.rodape = function () {
     var pe = document.getElementById('pe'); pe.hidden = S.tela !== 'projeto' || !S.aberto; if (pe.hidden) return;
     var n = S.etapa, e = S.et[n - 1], prox = n < U.POS.rel && (U.aberta(n + 1) || (n === U.POS.edif && U.soTipo())), falta = e.completa ? (n === U.POS.rel ? '' : 'Etapa completa.') : 'Falta: ' + e.falta + '.';
     if (n === U.POS.verif && S.sit.k === 'ok' && !e.completa) falta = 'Há ' + e.falta.replace(/^(\d+) ite(ns|m) não atende(m)?$/, function (t, q) { return q + (q > 1 ? ' itens que não atendem' : ' item que não atende'); }) + '. O relatório sai com ressalva.';
     if (n === U.POS.bomba && !e.completa && prox) falta += ' As verificações já podem ser vistas.';
-    pe.innerHTML = '<button class="bt" data-ir="etapa:' + Math.max(1, n - 1) + '"' + (n === 1 ? ' disabled' : '') + '>Voltar</button><span class="falta">' + esc(falta) + '</span>' +
+    /* 2.6.4 (FC-017): falta só a pressão de saída regulada (um ou vários .redP vazios, nenhum erro de valor na etapa): atalho para o menu da válvula redutora */
+    var vzR = n === U.POS.hidr && !e.completa ? S.sit.campos.filter(function (c) { return c.etapa === n && c.n === 'vazio'; }) : [], atalho = '';
+    if (vzR.length && e.erros === 0 && vzR.every(function (c) { return /\.redP$/.test(c.c); }))
+      atalho = '<button type="button" class="bt lig min" data-corrigir="' + vzR[0].c + '" data-acao="red-rodape" aria-haspopup="dialog" aria-label="Abrir a válvula redutora' + (vzR.length === 1 ? ', ' + esc(nomeRed(vzR[0].c)) : '') + '">Abrir a válvula redutora</button>';
+    pe.innerHTML = '<button class="bt" data-ir="etapa:' + Math.max(1, n - 1) + '"' + (n === 1 ? ' disabled' : '') + '>Voltar</button><span class="falta">' + esc(falta) + '</span>' + atalho +
       (n === U.POS.rel ? '' : '<button class="bt pri" data-acao="proximo"' + (prox ? '' : ' aria-disabled="true"') + '>Próximo: ' + U.ETAPAS[n] + '</button>');
   };
 })();

@@ -298,7 +298,7 @@
       conf(P + 'AMT (mca)', n.AMT, 27.85, 0.01); conf(P + 'Qt (L/min)', n.Qt, 307.6, 0.1); conf(P + 'estática no térreo', n.estaticaMax.P, 82.8, 0.05); conf(P + 'ponto de trabalho Q (m³/h)', n.Qw, 19.39, 0.01); conf(P + 'ponto de trabalho H (mca)', n.Hw, 31.22, 0.01);
       n = R.escola.numeros; P = 'Escola E-1: ';
       conf(P + 'Pd (mca)', n.Pd, 34.19, 0.01); conf(P + 'AMT (mca)', n.AMT, 33.79, 0.01); conf(P + 'H da bomba na nominal', n.Hb, 34.3, 0.1); conf(P + 'ponto de trabalho Q (m³/h)', n.Qw, 18.1, 0.06); conf(P + 'ponto de trabalho H (mca)', n.Hw, 34.2, 0.06);
-      n = R.igreja_B.numeros; P = 'Igreja com o caminho B no arquivo, pela Tabela 2: ';
+      n = R.igreja_B.numeros; P = 'Igreja com pressão no esguicho no arquivo, pela Tabela 2: ';
       conf(P + 'P na válvula de H-1 (mca)', n.Pvcrit, 30.00, 0.02); conf(P + 'Qt (L/min)', n.Qt, 300.78, 0.02); conf(P + 'AMT (mca)', n.AMT, 31.99, 0.02);
       var g = REF.gabaritoPR; n = R.igreja_pr.numeros; P = 'Paraná (gabarito independente): ';
       conf(P + 'P na válvula de H-1 (mca)', n.Pvcrit, g.Pv1, 0.001); conf(P + 'Qt (L/min)', n.Qt, g.Qt, 0.01); conf(P + 'AMT (mca)', n.AMT, g.AMT, 0.001);

@@ -82,7 +82,7 @@
     function X(n) { return 60 + pos[n].x * dx; } function Y(n) { return 34 + pos[n].y * dy; }
     var par = {}, nomePar = '';
     if (sit.k === 'ok') { var R = sit.R; [R.par.tronco, R.par.ramalCrit, R.par.ramalOut].forEach(function (l) { l.forEach(function (e) { par[e.t.nome] = 1; }); }); nomePar = R.numeros.par; }
-    var dr = dadosRede(F, sit), g = '', nos = '', hit = '', tri = function (x, y) { return '<path class="al-m" d="M' + (x - 8) + ' ' + (y + 7) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 8) + ' ' + (y + 7) + 'Z" fill="var(--fc-erro)"/><text class="al-t" x="' + x + '" y="' + (y + 5) + '" text-anchor="middle">!</text>'; };
+    var dr = dadosRede(F, sit), g = '', nos = '', hit = '', hT = [], hN = [], tri = function (x, y) { return '<path class="al-m" d="M' + (x - 8) + ' ' + (y + 7) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 8) + ' ' + (y + 7) + 'Z" fill="var(--fc-erro)"/><text class="al-t" x="' + x + '" y="' + (y + 5) + '" text-anchor="middle">!</text>'; };
     F.trechos.forEach(function (t, i) {
       if (!ori[i]) return; var d = ori[i].m, p = ori[i].j; if (!pos[d] || !pos[p]) return;
       var solto = !est.alc[d], noPar = par[nome(t)], cor = solto ? 'var(--fc-erro)' : (rec[i] ? 'var(--fc-texto-3)' : (noPar ? 'var(--fc-fogo)' : 'var(--fc-agua)'));
@@ -91,7 +91,7 @@
         '<text x="' + ((xm + x2) / 2) + '" y="' + (y2 - 9) + '" text-anchor="middle">' + esc(nome(t)) + '</text><text class="s" x="' + ((xm + x2) / 2) + '" y="' + (y2 + 17) + '" text-anchor="middle">DN' + esc(t.dn) + ', ' + esc(t.L) + ' m</text>';
       var rt = dr && dr.tr[i];
       if (rt && (rt.vAl || rt.pAl)) g += tri((xm + x2) / 2, y2 + 33);
-      hit += '<path class="hit" d="M' + x1 + ' ' + y1 + 'H' + xm + 'V' + y2 + 'H' + x2 + '" data-card="' + esc(JSON.stringify(cartaoTrecho(t, rt))) + '"/>';
+      hT.push([pos[d].x, pos[d].y, '<path class="hit" tabindex="-1" role="img" aria-label="Trecho ' + esc(nome(t)) + ', DN' + esc(t.dn) + '" d="M' + x1 + ' ' + y1 + 'H' + xm + 'V' + y2 + 'H' + x2 + '" data-card="' + esc(JSON.stringify(cartaoTrecho(t, rt))) + '"/>']);
     });
     Object.keys(pos).forEach(function (n) {
       var x = X(n), yy = Y(n), solto = !est.alc[n];
@@ -102,9 +102,14 @@
       else nos += '<circle cx="' + x + '" cy="' + yy + '" r="7" fill="' + (solto ? 'var(--fc-erro)' : 'var(--fc-agua)') + '"/><text x="' + x + '" y="' + (yy - 14) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
       var dn_ = dr && dr.nos[n];
       if (dn_ && dn_.al) nos += tri(x + (hid[n] ? 62 : 16), yy - (hid[n] ? 14 : 24));
-      if (!(rr && n === F.recalque.no)) hit += '<rect class="hit" x="' + (x - 24) + '" y="' + (yy - 20) + '" width="' + (hid[n] ? 76 : 48) + '" height="40" rx="10" data-card="' + esc(JSON.stringify(cartaoNo(n, F, dr))) + '"/>';
+      if (!(rr && n === F.recalque.no)) hN.push([pos[n].x, pos[n].y, '<rect class="hit" tabindex="-1" role="img" aria-label="' + esc(n === 'RI' ? 'Reservatório RI' : n === 'BI' ? 'Bomba BI' : hid[n] ? 'Hidrante ' + n : 'Nó ' + n) + '" x="' + (x - 24) + '" y="' + (yy - 20) + '" width="' + (hid[n] ? 76 : 48) + '" height="40" rx="10" data-card="' + esc(JSON.stringify(cartaoNo(n, F, dr))) + '"/>']);
     });
-    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Desenho esquemático da rede, gerado dos trechos">' + g + nos + hit + '</svg>' +
+    /* 2.6.4: ordem de leitura do desenho (da RI para os hidrantes, depois a coluna de cima para baixo): trechos e depois nós. */
+    var ord = function (a, b) { return a[0] - b[0] || a[1] - b[1]; };
+    hit = hT.sort(ord).concat(hN.sort(ord)).map(function (e) { return e[2]; }).join('');
+    /* 2.6.4: roving tabindex, uma só parada de Tab no desenho (o primeiro elemento); com menos de dois elementos não há por que parar. */
+    hit = hit.split(' tabindex="-1"').length > 2 ? hit.replace(' tabindex="-1"', ' tabindex="0"') : hit.replace(/ tabindex="-1"/g, '');
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="Desenho esquemático da rede, gerado dos trechos">' + g + nos + hit+ '</svg>' +
       '<div class="leg"><span><i style="background:var(--fc-agua)"></i>tubo</span>' + (nomePar ? '<span><i style="background:var(--fc-fogo)"></i>' + (sit.R.numeros.jatoUnico ? 'caminho do jato (' : 'par mais desfavorável (') + esc(nomePar) + ')</span>' : '') + (rr ? '<span><i style="background:var(--fc-texto-3)"></i>tracejado cinza: ramo do recalque, fora do cálculo</span>' : '') + (est.avisos.length ? '<span><i style="background:var(--fc-erro)"></i>tracejado vermelho: sem ligação ao reservatório</span>' : '') + (dr && dr.alerta ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--fc-erro)"/></svg>acima do limite do estado</span>' : '') + '<span>RI reservatório, BI bomba, H hidrante</span></div>';
   }
   U.arvore = arvore;
@@ -139,7 +144,7 @@
     }
     var c = 'nos.' + n, prim = !vistos[n], m = prim ? U.msg(c) : null, idc = U.idDe(c) + (prim ? '' : '-l' + i); vistos[n] = 1;
     var opc = !V.ehHid(n) && (V.grafo(F)[n] || []).length < 3;
-    return '<td class="c-cota" data-rot="Cota ' + lado + '"><input class="campo num" id="' + idc + '" data-c="' + c + '" value="' + esc(U.pega(c) === undefined ? '' : U.pega(c)) + '"' + (opc ? ' placeholder="opcional"' : '') + ' inputmode="decimal" aria-label="' + esc((V.ehHid(n) ? 'Cota da válvula do hidrante ' : 'Cota do nó ') + n + ', em metros. Vale para todas as linhas com ' + n) + '"' + (m ? U.attrMsg(c, m) : '') + ' autocomplete="off">' + (m ? U.htmlMsg(c, m) : '') + '</td>';
+    return '<td class="c-cota" data-rot="Cota ' + lado + '"><input class="campo num" id="' + idc + '" data-c="' + esc(c) + '" value="' + esc(U.pega(c) === undefined ? '' : U.pega(c)) + '"' + (opc ? ' placeholder="opcional"' : '') + ' inputmode="decimal" aria-label="' + esc((V.ehHid(n) ? 'Cota da válvula do hidrante ' : 'Cota do nó ') + n + ', em metros. Vale para todas as linhas com ' + n) + '"' + (m ? U.attrMsg(c, m) : '') + ' autocomplete="off">' + (m ? U.htmlMsg(c, m) : '') + '</td>';
   }
 
   /** Fator C só deste trecho: no modo personalizado, campo abaixo do tipo de tubo; no padrão, só o aviso quando o arquivo traz um C próprio. */
@@ -178,7 +183,7 @@
     F.trechos.forEach(function (t, i) { h += linha(t, i, avs, dns, vistos); });
     h += '</tbody></table></div><div class="rodape-tab"><button class="bt" data-acao="linha">Adicionar trecho</button><span class="peq" style="margin-left:auto"><span class="kbd">Enter</span> na última linha cria um trecho novo. A cota é do nó: muda em todas as linhas em que ele aparece.</span></div></div>';
     if (F.fonte.modo === 'bomba') h += '<div class="cartao bloco" id="cartao-recalque" style="margin-top:16px"><h2 class="t3">Dispositivo de recalque</h2>' + U.marcar('recalque.ativo', 'Registrar o dispositivo de recalque (entrada na fachada, no muro ou no passeio).') + '<p class="peq">Opcional. O recalque recebe água da viatura do Corpo de Bombeiros. Não é dimensionado: aqui fica só o registro do dispositivo, que vai para o relatório.</p>' + (F.recalque.ativo ? U.cartaoRecalque() : '') + '</div>';   /* 2.5.2: saiu da etapa Bomba e automação */
-    h += '<div class="cartao bloco des" style="margin-top:16px"><h2 class="t3">Desenho da rede</h2><p class="peq" style="margin-bottom:8px">Esquema sem escala, para conferir a ligação dos trechos com o isométrico da prancha.</p><div id="des-rede">' + arvore() + '</div><div id="cartao-mouse" role="tooltip" hidden></div></div>';
+    h += '<div class="cartao bloco des" style="margin-top:16px"><h2 class="t3">Desenho da rede</h2><p class="peq" style="margin-bottom:8px">Esquema sem escala, para conferir a ligação dos trechos com o isométrico da prancha.</p><div id="des-rede">' + arvore() + '</div><div id="cartao-mouse" role="tooltip" hidden></div><div id="cm-folga" aria-hidden="true"></div></div>';
     h += '<div class="cartao bloco" id="cartao-planilha" style="margin-top:16px"><h2 class="t3">Planilha da rede</h2><div id="plan-rede">' + planilha(F, sit) + '</div></div>';
     return h;
   };
@@ -195,9 +200,9 @@
     ids.forEach(function (id) {
       var tem = t.pecas && t.pecas[id] !== undefined, c = 'trechos.' + i + '.pecas.' + id, q = parseInt(tem ? t.pecas[id] : 0, 10), l = U.leq(id, t.dn), m = tem ? U.msg(c) : null;
       if (tem) { if (isNaN(l)) falta = true; else if (q > 0) soma += q * l; }
-      h += '<li class="' + (tem ? 'marcada' : '') + '"><label class="pc"><input type="checkbox" id="pc-' + id + '" data-pc="' + id + '"' + (tem ? ' checked' : '') + '>' + U.iconePeca(id) + '<span>' + esc(U.nomePeca(id)) + '</span></label>' +
+      h += '<li class="' + (tem ? 'marcada' : '') + '"><label class="pc"><input type="checkbox" id="pc-' + esc(id) + '" data-pc="' + esc(id) + '"' + (tem ? ' checked' : '') + '>' + U.iconePeca(id) + '<span>' + esc(U.nomePeca(id)) + '</span></label>' +
         '<span class="leq tec">' + (isNaN(l) ? 'sem dado no DN' + esc(t.dn) : fmt(l, 2) + ' m cada') + '</span>' +
-        (tem ? '<input class="campo num qt" id="' + U.idDe(c) + '" data-c="' + c + '" value="' + esc(t.pecas[id]) + '" inputmode="numeric" aria-label="Quantidade de ' + esc(U.nomePeca(id)) + '"' + (m && m.n === 'erro' ? ' aria-invalid="true"' : '') + '>' : '<span class="qt"></span>') + '</li>';
+        (tem ? '<input class="campo num qt" id="' + U.idDe(c) + '" data-c="' + esc(c) + '" value="' + esc(t.pecas[id]) + '" inputmode="numeric" aria-label="Quantidade de ' + esc(U.nomePeca(id)) + '"' + (m && m.n === 'erro' ? ' aria-invalid="true"' : '') + '>' : '<span class="qt"></span>') + '</li>';
     });
     h += '</ul><div class="soma-pecas" id="soma-pecas">' + somaTxt(soma, falta, L, Lv) + '</div>';
     return '<h2 id="dlg-tit">Peças do trecho ' + esc(nm) + ', DN' + esc(t.dn) + '</h2>' + h + '<div class="linha-ac" style="margin-top:16px"><button class="bt pri" data-fechar="1">Fechar</button></div>';
@@ -213,7 +218,7 @@
   function fichaTubo(x) {
     var dn = []; E.dnsDoTipo(D, x.id).forEach(function (d) { var tb = E.tuboDoTipo(D, x.id, d); if (tb) dn.push('DN' + d + ' <small>' + fmt(tb.dint, 1) + '</small>'); });
     return '<span class="tb-n"><b>' + esc(x.nome) + '</b>' + (x.usuario ? ' <span class="pilula p-al">personalizado</span>' : '') + '</span>' +
-      '<span class="tb-d">' + esc(x.material) + '; junta ' + esc(x.junta) + '. <b>Fator C ' + x.C + '</b> (' + esc(x.fonteC) + ').' + (x.template ? ' Tipo do template Revit: <span class="tec">' + esc(x.id) + '</span>.' : '') + (x.nota ? ' ' + esc(x.nota) : '') + '</span>' +
+      '<span class="tb-d">' + esc(x.material) + '; junta ' + esc(x.junta) + '. <b>Fator C ' + esc(x.C) + '</b> (' + esc(x.fonteC) + ').' + (x.template ? ' Tipo do template Revit: <span class="tec">' + esc(x.id) + '</span>.' : '') + (x.nota ? ' ' + esc(x.nota) : '') + '</span>' +
       '<span class="tb-dn tec">Diâmetro interno (mm): ' + dn.join(' · ') + '</span>';
   }
   function corpoTubo(k) {
@@ -222,7 +227,7 @@
     if (!proj) h += '<li class="' + (at === '' ? 'marcada' : '') + '"><label class="tb"><input type="radio" name="tb" value=""' + (at === '' ? ' checked' : '') + '><span class="tb-f"><span class="tb-n"><b>Padrão do projeto</b></span><span class="tb-d">' + (tp0 ? esc(tp0.nome) + ', fator C ' + esc(F.C) : 'a definir') + '.</span></span></label></li>';
     D.tiposTubo.forEach(function (x) { h += '<li class="' + (at === x.id ? 'marcada' : '') + '"><label class="tb"><input type="radio" name="tb" value="' + esc(x.id) + '"' + (at === x.id ? ' checked' : '') + '><span class="tb-f">' + fichaTubo(x) + '</span></label></li>'; });
     h += '</ul>';
-    if (proj) h += '<div class="form">' + U.campo('C', 'Fator C de Hazen-Williams' + (alt ? ' <span class="pilula p-al">alterado</span>' : ''), { ex: tp0 ? String(tp0.C) : '120', num: true, aj: tp0 ? 'Preenchido pelo tubo: C ' + tp0.C + ' (' + esc(tp0.fonteC) + '). Pode alterar, com a fonte.' : '' }) +
+    if (proj) h += '<div class="form">' + U.campo('C', 'Fator C de Hazen-Williams' + (alt ? ' <span class="pilula p-al">alterado</span>' : ''), { ex: tp0 ? String(tp0.C) : '120', num: true, aj: tp0 ? 'Preenchido pelo tubo: C ' + esc(tp0.C) + ' (' + esc(tp0.fonteC) + '). Pode alterar, com a fonte.' : '' }) +
       U.escolha('tabelaLeq', 'Tabela de comprimento equivalente', Object.keys(D.leq).map(function (q) { return [q, D.leq[q].titulo]; }), { aj: 'Uma só tabela por projeto.' }) + '</div>';
     return h + '<div class="linha-ac" style="margin-top:16px"><button class="bt pri" data-fechar="1">Fechar</button></div>';
   }
@@ -279,14 +284,30 @@
     clearTimeout(cartaoT);
     box.innerHTML = '<b class="cm-t">' + esc(dados[0]) + '</b><dl>' + dados[1].map(function (l) { return '<div' + (l[2] ? ' class="al"' : '') + '><dt>' + esc(l[0]) + '</dt><dd>' + esc(l[1]) + (l[2] ? ' <span class="al-m" aria-hidden="true">▲</span><span class="so-leitor">acima do limite</span>' : '') + '</dd></div>'; }).join('') + '</dl>';
     box.hidden = false;
-    var r = pai.getBoundingClientRect(), x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
+    var folga = document.getElementById('cm-folga'); if (folga) folga.style.height = '0px';
+    var r = pai.getBoundingClientRect(), x, y, h = 0;
+    if (ev) { x = ev.clientX - r.left + 14; y = ev.clientY - r.top + 14; }
+    else {   box.style.left = '0px'; box.style.top = '0px'; h = box.offsetHeight;   /* mede o cartão com a largura natural; foco do teclado: abaixo do elemento, ou acima quando não cabe, sem cobri-lo */
+      var e = el.getBoundingClientRect(), m = el.tagName === 'path' ? el.getScreenCTM() : null, a0, a1, H = r.height - 4, dB = 8, dA = 8;
+      if (m) {   /* trecho: o retângulo do traçado é grande demais, o cartão fica junto ao meio dele, fora do rótulo que acompanha o trecho */
+        var q = el.getPointAtLength(el.getTotalLength() / 2), ps = el.ownerSVGElement.createSVGPoint(); ps.x = q.x; ps.y = q.y; ps = ps.matrixTransform(m);
+        x = ps.x - r.left + 12; a0 = ps.y - r.top - 6; a1 = ps.y - r.top + 6; dB = 30; dA = 26;
+      } else { x = e.left - r.left; a0 = e.top - r.top; a1 = e.bottom - r.top; }
+      y = a1 + dB;
+      if (y + h > H) {
+        y = a0 - h - dA;
+        if (y < 4 && folga) { folga.style.height = (h + 12) + 'px'; r = pai.getBoundingClientRect(); y = r.height - h - 4; }   /* nenhum lado cabe: abre uma folga no fim do cartão do desenho */
+      }
+    }
     x = Math.max(4, Math.min(x, r.width - box.offsetWidth - 4)); y = Math.max(4, Math.min(y, r.height - box.offsetHeight - 4));
     box.style.left = x + 'px'; box.style.top = y + 'px';
+    if (!ev) { var cb = box.getBoundingClientRect(); if (cb.bottom > innerHeight - 4) window.scrollBy(0, cb.bottom - innerHeight + 8); else if (cb.top < 4) window.scrollBy(0, cb.top - 8); }   /* o cartão por foco sempre cabe na janela */
   }
   function cartaoEsconde(logo) {
     var box = document.getElementById('cartao-mouse'); if (!box) return;
-    clearTimeout(cartaoT); if (logo) { box.hidden = true; return; }
-    cartaoT = setTimeout(function () { box.hidden = true; }, 160);
+    var fo = document.getElementById('cm-folga'), fecha = function () { box.hidden = true; if (fo) fo.style.height = '0px'; };
+    clearTimeout(cartaoT); if (logo) { fecha(); return; }
+    cartaoT = setTimeout(fecha, 160);
   }
   document.addEventListener('pointerover', function (ev) {
     var h = ev.target.closest && ev.target.closest('#des-rede .hit'); if (h) cartaoMostra(h, ev);
@@ -302,4 +323,35 @@
     var h = ev.target.closest && ev.target.closest('#des-rede .hit'); if (h) cartaoMostra(h, ev); else if (!(ev.target.closest && ev.target.closest('#cartao-mouse'))) cartaoEsconde(true);
   });
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') cartaoEsconde(true); });
+
+  /** 2.6.4: o mesmo cartão pelo foco do teclado. Roving tabindex: uma parada de Tab; setas, Home e End percorrem os elementos na ordem do desenho.
+   *  O cartão abre só com foco por teclado (:focus-visible), de modo que o clique do mouse segue como antes. */
+  function hitsDes(el) { var d = el.closest('#des-rede'); return d ? Array.prototype.slice.call(d.querySelectorAll('.hit')) : []; }
+  /** Trecho focado: um halo largo na cor do foco do desenho, pintado sob o desenho (rótulos e nós ficam por cima). */
+  function halo(h) {
+    var o = document.getElementById('foco-halo'); if (o) o.remove();
+    if (!h || h.tagName !== 'path') return;
+    var n = document.createElementNS('http://www.w3.org/2000/svg', 'path'); n.setAttribute('id', 'foco-halo'); n.setAttribute('d', h.getAttribute('d')); n.setAttribute('fill', 'none'); n.setAttribute('stroke', 'var(--fc-foco-des)');
+    n.setAttribute('stroke-width', '9'); n.setAttribute('stroke-linejoin', 'round'); n.setAttribute('pointer-events', 'none'); h.ownerSVGElement.insertBefore(n, h.ownerSVGElement.firstChild);
+  }
+  document.addEventListener('focusin', function (ev) {
+    var h = ev.target.closest && ev.target.closest('#des-rede .hit'); if (!h) return;
+    hitsDes(h).forEach(function (x) { x.setAttribute('tabindex', x === h ? '0' : '-1'); });
+    var vis = false; try { vis = h.matches(':focus-visible'); } catch (e) { vis = true; }
+    if (!vis) return;
+    h.setAttribute('aria-describedby', 'cartao-mouse'); halo(h); cartaoMostra(h, null);
+  });
+  document.addEventListener('focusout', function (ev) {
+    var h = ev.target.closest && ev.target.closest('#des-rede .hit'); if (!h) return;
+    h.removeAttribute('aria-describedby'); halo(null);
+    var p = ev.relatedTarget; if (!(p && p.closest && p.closest('#des-rede .hit'))) cartaoEsconde(true);
+  });
+  document.addEventListener('keydown', function (ev) {
+    var h = ev.target.closest && ev.target.closest('#des-rede .hit'); if (!h || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    var l = hitsDes(h), i = l.indexOf(h), j = -1;
+    if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') j = Math.min(i + 1, l.length - 1);
+    else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') j = Math.max(i - 1, 0);
+    else if (ev.key === 'Home') j = 0; else if (ev.key === 'End') j = l.length - 1; else return;
+    ev.preventDefault(); if (j !== i) l[j].focus(); else cartaoMostra(h, null);
+  });
 })();

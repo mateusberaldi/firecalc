@@ -10,11 +10,13 @@
   S.cadRel = null; S.cadGrupo = 'tiposTubo';
   function salva() { E.defineCadastros(U.cad); if (!X.guarda(CH, U.cad)) U.avisa('Este navegador não deixou guardar a biblioteca. Baixe o arquivo para não perder o cadastro.'); }
   function redesenha() { if (S.aberto) U.mudou(); else U.desenhar(); }
+  /** 2.6.4: nome completo da bomba (fabricante e modelo). O catálogo da base guarda o modelo sem o fabricante; a biblioteca guarda com ele. */
+  function nomeBomba(b) { var m = String(b.modelo || ''), f = String(b.fabricante || ''); return f && m.indexOf(f + ' ') !== 0 ? f + ' ' + m : m; }
   /** Item de bomba do arquivo de lote para a leitura do cadastro à mão (mesmas regras). */
   function leBombaLote(x, aceitas) {
     var pts = Array.isArray(x.pts) ? x.pts.map(function (p) { return Array.isArray(p) && p.length === 2 ? p[0] + ';' + p[1] : ''; }).join('\n') : '';
     var r = U.leBomba({ fab: x.fabricante, mod: x.modelo, cv: x.cv, rotor: x.rotor, so: x.shutoff, hs: x.hsucMax, fonte: x.fonte, jockey: !!x.jockey, pts: pts }); if (r.erro) return r;
-    if (X.todas().concat(aceitas).some(function (b) { return b.modelo === r.bomba.modelo; })) return { erro: 'Já existe uma bomba com este fabricante e modelo.' };
+    if (X.todas().concat(aceitas).some(function (b) { return nomeBomba(b) === r.bomba.modelo; })) return { erro: 'Já existe uma bomba com este fabricante e modelo.' };
     var n = 1, ids = {}; X.todas().concat(aceitas).forEach(function (b) { ids[b.id] = 1; }); while (ids['usr-' + n]) n++; r.bomba.id = 'usr-' + n;
     return r;
   }
@@ -81,7 +83,9 @@
   }
   U.dialogoIA = function (escopo) {
     var d = document.getElementById('dlg'), bombas = escopo === 'bombas', passos = PASSOS_IA.slice(), estado = function (t) { var e = document.getElementById('ia-estado'); if (e) e.textContent = t; };
-    if (bombas) passos[6] = 'Em "Importar arquivo (.json)", no cartão "Minha biblioteca: inclusão em lote", escolha o arquivo. A ferramenta mostra o que entrou e o que foi recusado, com o motivo.';
+    if (bombas) passos[6] = 'Em "Importar arquivo (.json)", no cartão "Minha biblioteca: inclusão em lote", escolha o arquivo. Em "Minha biblioteca de bombas", o botão "Trazer de um arquivo" faz o mesmo. As duas rotas mostram o que entrou e o que foi recusado, com o motivo.';
+    /** O toque na margem interna do menu também tem o diálogo como alvo; só o toque fora do retângulo do menu (no fundo) fecha (FC-010). */
+    function foraDoMenu(ev, d) { var r = d.getBoundingClientRect(); return ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom; }
     d.dataset.modo = 'ia'; d.setAttribute('aria-labelledby', 'dlg-tit');
     d.innerHTML = '<h2 id="dlg-tit">Gerar o JSON com uma IA</h2><ol class="ia-passos">' + passos.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ol>' +
       '<label class="cmp larga"><span class="rt">Prompt</span><textarea class="campo ia-prompt" id="ia-prompt" readonly rows="11">' + esc(CAD.promptIA(escopo)) + '</textarea></label>' +
@@ -93,7 +97,7 @@
         else copiaTexto(CAD.promptIA(escopo), function () { estado('Prompt copiado.'); }, function () { estado('Não foi possível copiar. Selecione o texto do prompt e copie.'); });
         return;
       }
-      if (ev.target.closest('[data-fechar]') || ev.target === d) d.close();
+      if (ev.target.closest('[data-fechar]') || (ev.target === d && foraDoMenu(ev, d))) d.close();
     };
     d.oninput = null; d.onchange = null;
     d.onclose = function () { d.dataset.modo = ''; var b = document.getElementById('ia-' + escopo + '-abrir'); if (b) b.focus(); };
@@ -123,7 +127,7 @@
     else if (m === 'ia-bombas') U.dialogoIA('bombas');
     else if (m === 'abrir') document.getElementById('cad-arq').click();
     else if (m === 'baixar') U.baixa('minha_biblioteca.firecalc.json', new Blob([JSON.stringify(loteDe(U.cad, U.bib), null, 1)], { type: 'application/json' }));
-    else if (m === 'tirar') { var g = t.dataset.g, x = U.cad[g][+t.dataset.v]; if (!x) return; U.cad[g].splice(+t.dataset.v, 1); salva(); S.cadRel = null; redesenha(); U.avisa('Item retirado da biblioteca. Projeto que usava o item volta a pedir a escolha.'); }
+    else if (m === 'tirar') { var g = t.dataset.g, x = U.cad[g][+t.dataset.v]; if (!x) return; U.cad[g].splice(+t.dataset.v, 1); salva(); S.cadRel = null; redesenha(); U.avisa(g === 'esguichos' ? 'Esguicho retirado da biblioteca. O projeto aberto que o usa guarda a cópia e segue igual.' : 'Item retirado da biblioteca. Projeto que usava o item volta a pedir a escolha.'); }
     else if (m === 'usar-mang') { var mg = U.cad.mangueiras[+t.dataset.v]; if (!mg || !S.aberto) return; var c = { Q: mg.Q.slice(), J: mg.J.slice(), fonte: mg.fonte }; if (mg.modelo) c.modelo = mg.modelo; S.F.mangueirasUsuario = S.F.mangueirasUsuario || {}; S.F.mangueirasUsuario[mg.dn] = c; U.mudou(); U.avisa('Mangueira de ' + mg.dn + ' mm da biblioteca em uso no projeto aberto.'); }
     else if (m === 'incluir') {
       var it = {}; document.querySelectorAll('#cad-um [data-ci]').forEach(function (e) { it[e.dataset.ci] = e.value; });

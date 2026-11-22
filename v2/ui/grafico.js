@@ -31,16 +31,16 @@
    *  2.6.0: sem os rótulos "ligação reta" e fonte do catálogo na legenda; com {card: true} vai dentro de um cartão (sem margem) e, sem bomba escolhida,
    *  mostra só a curva do sistema e o ponto de projeto. */
   U.graficoBomba = function (opt) {
-    var sit = S.sit, b = U.bombaDe(S.F.bomba.id), card = !!(opt && opt.card); if (sit.k !== 'ok' || S.F.fonte.modo === 'gravidade' || (!b && !card)) return '';
-    var n = sit.R.numeros, pts = b ? b.pts.map(function (p) { return [p[1], p[0]]; }).sort(function (a, c) { return a[0] - c[0]; }) : [], qmax = b ? pts[pts.length - 1][0] : n.Qth * 1.5;
+    var sit = S.sit, esc0 = U.bombaDe(S.F.bomba.id), vb = opt && opt.ver && U.verBombaEf ? U.verBombaEf() : null, b = vb || esc0, card = !!(opt && opt.card); if (sit.k !== 'ok' || S.F.fonte.modo === 'gravidade' || (!b && !card)) return '';
+    var n = sit.R.numeros, pt = vb ? M.pontoTrabalho(sit.R.ctx, sit.R.par, vb) : { semCruzamento: n.Qw === undefined, Qth: n.Qw, H: n.Hw }, pts = b ? b.pts.map(function (p) { return [p[1], p[0]]; }).sort(function (a, c) { return a[0] - c[0]; }) : [], qmax = b ? pts[pts.length - 1][0] : n.Qth * 1.5;
     var PAs = [], k; for (k = 1; k <= 40; k++) PAs.push(n.PA * 2.2 * k / 40);
     var sis = M.curvaSistema(sit.R.ctx, sit.R.par, PAs).map(function (p) { return [p.Qth, p.AMT]; }).filter(function (p) { return p[0] > 0; });
-    var series = b ? [{ pts: [[0, b.shutoff]].concat(pts.slice(0, 1)), cor: 'var(--fc-agua)', traco: true }, { pts: pts, cor: 'var(--fc-agua)', rot: 'bomba', pontos: true }] : [];
+    var series = b ? [{ pts: [[0, b.shutoff]].concat(pts.slice(0, 1)), cor: 'var(--fc-agua)', traco: true }, { pts: pts, cor: 'var(--fc-agua)', rot: vb ? 'em visualização: ' + vb.modelo : 'bomba', pontos: true }] : [];
     series.push({ pts: sis, cor: 'var(--fc-texto-2)', rot: 'sistema' });
-    return '<div class="des"' + (card ? '' : ' style="margin-top:14px"') + '>' + U.grafico({ xmax: Math.max(qmax, n.Qth, n.Qw || 0) * 1.12, ymax: Math.max(b ? b.shutoff : 0, n.AMT) * 1.1, xl: 'Vazão (m³/h)', yl: 'Altura (mca)', aria: (b ? 'Curva da bomba ' + b.modelo + ' contra a curva do sistema' : 'Curva do sistema e ponto de projeto'),
+    return '<div class="des"' + (card ? '' : ' style="margin-top:14px"') + '>' + (vb ? '<p class="peq"><button type="button" class="bt lig min bt-voltar" data-vb="' + esc(S.F.bomba.id) + '" id="vb-voltar">Voltar à bomba escolhida</button></p>' : '') + U.grafico({ xmax: Math.max(qmax, n.Qth, pt.semCruzamento ? 0 : pt.Qth || 0) * 1.12, ymax: Math.max(b ? b.shutoff : 0, n.AMT) * 1.1, xl: 'Vazão (m³/h)', yl: 'Altura (mca)', aria: (b ? 'Curva da bomba ' + b.modelo + (vb ? ' (em visualização, não é a escolhida)' : '') + ' contra a curva do sistema' : 'Curva do sistema e ponto de projeto'),
       series: series,
       cruz: { x: n.Qth, y: n.AMT, rx: fmt(n.Qth, 2) + ' m³/h', ry: fmt(n.AMT, 2) + ' mca', rot: 'ponto de projeto' },
-      marcas: b && n.Qw !== undefined ? [{ x: n.Qw, y: n.Hw, rot: 'ponto de trabalho: ' + fmt(n.Qw, 1) + ' m³/h e ' + fmt(n.Hw, 1) + ' mca', cor: 'var(--fc-sucesso, #1B7F3B)' }] : [] }) + '</div>';
+      marcas: b && !pt.semCruzamento && pt.Qth !== undefined ? [{ x: pt.Qth, y: pt.H, rot: 'ponto de trabalho: ' + fmt(pt.Qth, 1) + ' m³/h e ' + fmt(pt.H, 1) + ' mca', cor: 'var(--fc-sucesso, #1B7F3B)' }] : [] }) + '</div>';
   };
   /** 2.6.0: curva da bomba de pressurização escolhida (pontos do catálogo mais a pressão a vazão nula) e o ponto de partida: a vazão que ela dá na altura em que liga. */
   U.graficoJockey = function () {

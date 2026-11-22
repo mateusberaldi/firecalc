@@ -2,7 +2,7 @@
 
 Programa de dimensionamento de hidrantes e mangotinhos para o Paraná (NPT 022 do CBMPR) e para São Paulo (IT 22 do CBPMESP). É um arquivo HTML único: abre no navegador, funciona sem internet e não envia nenhum dado do projeto para fora do computador.
 
-Versão **2.6.3** (20/11/2026); o que mudou está em [NOTAS_DA_VERSAO.md](NOTAS_DA_VERSAO.md).
+Versão **2.6.4** (21/11/2026); o que mudou está em [NOTAS_DA_VERSAO.md](NOTAS_DA_VERSAO.md).
 
 ## O que ele faz
 
@@ -35,7 +35,7 @@ Os números do cálculo dos oito casos de exemplo de `casos/` são conferidos pe
 | `firecalc.html` | O programa montado (não editar à mão; sai do `montar.sh`). |
 | `montar.sh` | Monta o programa a partir do código. |
 | `v2/ui/`, `v2/build_v2.py` | Fonte da interface (telas, estado, validação, componentes, gráficos e estilo) e o script que embute tudo num arquivo. |
-| `ui/` | Interface da versão 1.0.0, usada pelo autoteste "Testar meu computador". |
+| `ui/ui.js` | Fonte do autoteste "Testar meu computador", embutido no programa por `v2/build_v2.py`. |
 | `motor.js` | Motor de cálculo (rede, pares de hidrantes, bomba, verificações). |
 | `exporta.js`, `exporta_docx.js` | Relatório em planilha e memorial em .docx. |
 | `dados.json` | Base de dados (tubos, peças, esguichos, mangueiras, bombas, normas, ocupações), com a fonte de cada dado. `dados.js` é gerado a partir dele. |
