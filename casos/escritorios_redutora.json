@@ -21,9 +21,20 @@
  "fonte": {
   "modo": "bomba",
   "zX": -2.81,
-  "zCheio": -0.8099999999999999,
+  "zCheio": -0.81,
   "rtiEfetiva": 35,
-  "nota": "Área e RTI dadas no caso (10.700 m2, coluna 2, tipo 3, RTI 35 m3). Variante do caso dos escritórios: a válvula redutora de pressão no hidrante do 2º subsolo resolve a estática de 102,0 mca. A regulagem de 60 mca é um valor de exemplo, sem catálogo. Rede inteira: os pontos do térreo e dos subsolos são os hidrantes H8, H9 e H10, num ramal que sai do nó C, logo depois da bomba."
+  "xModo": "calc",
+  "saida": "lateral",
+  "dnSuc": 80,
+  "resForma": "ret",
+  "zFundo": -3.28,
+  "resC": 5.0,
+  "resL": 3.5,
+  "tipo": "inferior",
+  "tipologia": "ret",
+  "topoReserva": -0.81,
+  "succao": "negativa",
+  "nota": "Área e RTI dadas no caso (10.700 m2, coluna 2, tipo 3, RTI 35 m3). Variante do caso dos escritórios: a válvula redutora de pressão no hidrante do 2º subsolo resolve a estática de 102,0 mca. A regulagem de 60 mca é um valor de exemplo, sem catálogo. Rede inteira: os pontos do térreo e dos subsolos são os hidrantes H8, H9 e H10, num ramal que sai do nó C, logo depois da bomba. Reservatório inferior retangular de 5 x 3,5 m, saída lateral por tubo de DN80 e fundo na cota -3,28 m, tudo adotado para o exemplo, de modo que o nível X (fundo mais B, D e A, Tabela B.1 e B.3.3 a B.3.8 do Anexo B da IT 22 do CBPMESP) fique em -2,81 m e a reserva em 35 m3."
  },
  "nos": {
   "H6": {
@@ -39,7 +50,7 @@
    "z": 0.4
   },
   "RI": {
-   "z": -0.8099999999999999
+   "z": -3.28
   },
   "C": {
    "z": 0.4
@@ -58,6 +69,9 @@
   },
   "H10": {
    "z": -4.8
+  },
+  "RC": {
+   "z": 1.0
   }
  },
  "trechos": [
@@ -153,6 +167,12 @@
     "cot90_medio": 1,
     "angulo": 1
    }
+  },
+  {
+   "nome": "BI-RC",
+   "dn": 65,
+   "L": 12,
+   "pecas": {}
   }
  ],
  "hidrantes": [
@@ -197,9 +217,10 @@
  },
  "saidas": 7,
  "recalque": {
-  "tipo": "muro",
-  "z": 1.0,
+  "no": "RC",
   "dn": 65,
-  "L": 12
+  "z": 1.0,
+  "L": 12,
+  "tipo": "muro"
  }
 }

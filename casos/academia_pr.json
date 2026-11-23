@@ -22,11 +22,22 @@
   "zX": 12.46,
   "zCheio": 13.96,
   "rtiEfetiva": 8,
-  "elevado": true
+  "xModo": "calc",
+  "saida": "lateral",
+  "dnSuc": 65,
+  "resForma": "ret",
+  "zFundo": 12.065,
+  "resC": 2.6,
+  "resL": 2.05,
+  "tipo": "inferior",
+  "tipologia": "ret",
+  "topoReserva": 13.96,
+  "succao": "afogada",
+  "nota": "Reservatório inferior retangular de 2,6 x 2,05 m, saída lateral por tubo de DN65 e fundo na cota 12,065 m, tudo adotado para o exemplo, de modo que o nível X (fundo mais B, D e A, Tabela B.1 e B.3.3 a B.3.8 do Anexo B da NPT 022 do CBMPR) fique em 12,46 m e a reserva em 8 m3."
  },
  "nos": {
   "RI": {
-   "z": 12.46
+   "z": 12.065
   },
   "BI": {
    "z": 11.38

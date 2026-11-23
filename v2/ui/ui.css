@@ -431,10 +431,12 @@ div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
 .bt.alt:hover{background:var(--fc-fogo-fundo)}
 .form.dados-ed{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .form.dados-ed.c3{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)}
+.form.dados-ed.c4{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
 .campo.destaque{height:48px;font-size:17px;font-weight:600;border-width:2px;padding:0 12px}
 .cmp:has(.destaque) .rt{font-size:14px}
 #dlg[data-modo="sistema"]{padding:20px 22px;width:min(1000px,94vw);margin-top:5vh;max-height:88vh;overflow:auto}
-@media (max-width:640px){.form.dados-ed,.form.dados-ed.c3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.form.dados-ed.c4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.form.dados-ed.c4>:first-child{grid-column:1/-1}}
+@media (max-width:640px){.form.dados-ed,.form.dados-ed.c3,.form.dados-ed.c4{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:480px){.sbt{gap:10px;padding:12px}.sv{width:72px;height:48px}.sbt .opl{flex-wrap:wrap;gap:0 8px}}
 
 /* 2.6.0: Abastecimento. Botões com desenho, menu sobreposto, cartão de dados e comentários. */
@@ -505,6 +507,7 @@ div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
 #cartao-mouse dd{margin:0;text-align:right;font-family:var(--fc-tec-fam);white-space:nowrap}
 #cartao-mouse .al dd,#cartao-mouse .al dt{color:var(--fc-erro-texto);font-weight:700}
 .al-m{color:var(--fc-erro-texto);font-size:11px}
+.parc{display:inline-block;margin-left:4px;padding:0 6px;border:1px dashed var(--fc-texto-2);border-radius:8px;font-size:11px;font-weight:600;color:var(--fc-texto-2);white-space:nowrap}
 .tab-res{width:100%;border-collapse:collapse;font-size:13px}
 .tab-res th,.tab-res td{padding:8px 10px;border-bottom:1px solid var(--fc-borda);text-align:left;white-space:nowrap}
 .tab-res th.r,.tab-res td.r{text-align:right}

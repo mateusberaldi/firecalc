@@ -156,6 +156,58 @@
     return { colunas: r.colunas, precisaCarga: precisa, faixa: ft, msg: '', fonte: fonte };
   }
 
+  // ---------------------------------------------------------------- exigência de hidrantes pelo decreto (SP)
+  /** 2.7.0 (FC-041): o que o Decreto 69.118/24 (Anexo A, Tabela 5 e Tabelas 6) indica para hidrantes e mangotinhos, por divisão, área, altura e carga de incêndio.
+   *  Função pura: não muda tipo, reserva nem número do cálculo; só aponta o que o decreto indica (R36, apoio ao cálculo). Dado em D.exigenciaSP (arquivo-fonte do dado de exigência).
+   *  area em m², altura em m (0 é térrea), carga em MJ/m²; vazio é undefined, null ou NaN. Devolve {estado, tab, pag, nota, regra, msg, ressalva, falta}, com estado em
+   *  'indica', 'nao_indica', 'verifique' ou 'falta'. Comparações sem arredondar: até 750 m² e até 12 m ficam na Tabela 5; acima de qualquer um dos dois, na tabela da divisão. */
+  function exigenciaHidranteSP(D, div, area, altura, carga) {
+    var X = D && D.exigenciaSP; if (!X) return null;
+    var e = div ? X.divisoes[div] : null, L = X.limite;
+    function res(estado, tab, pag, msg, ressalva, falta) { return { estado: estado, tab: tab, pag: pag, nota: e ? e.nota : '', regra: e ? e.regra : '', msg: msg, ressalva: ressalva || '', falta: falta || '' }; }
+    if (!e) return res('falta', '', 0, 'Escolha a divisão de ocupação para ver o que o decreto indica.', '', 'divisao');
+    var temA = typeof area === 'number' && isFinite(area) && area > 0, temH = typeof altura === 'number' && isFinite(altura) && altura >= 0, temC = typeof carga === 'number' && isFinite(carga);
+    var RESS = 'O dimensionamento abaixo vale se o projeto adotar o sistema.', COM = 'O decreto remete esta divisão à análise do Corpo de Bombeiros. Verifique.';
+    var IND = temH ? 'O decreto indica hidrantes e mangotinhos para esta divisão, área e altura.' : 'O decreto indica hidrantes e mangotinhos para esta divisão e área.';
+    function verifique(msg) { return res('verifique', e.tab, e.pag, msg); }
+    function falta(oque) { return res('falta', '', 0, 'Informe ' + (oque === 'area' ? 'a área' : 'a altura') + ' da edificação para ver o que o decreto indica.', '', oque); }
+    function tabela5(msg) { var r = res('nao_indica', '5', L.pag, msg, RESS); r.nota = ''; r.regra = ''; return r; }   // 2.7.0, rodada 2: pela Tabela 5 valem só as notas dela; a nota e a regra da divisão são das Tabelas 6
+    switch (e.regra) {
+      case 'cond_unifamiliar': return verifique('Casa unifamiliar fica fora do regulamento. Em condomínio horizontal acima de ' + L.area + ' m² ou de ' + L.altura + ' m, o decreto indica hidrantes. Verifique.');
+      case 'qualquer_area': return e.cel === 'X' ? res('indica', e.tab, e.pag, 'O decreto indica hidrantes e mangotinhos para esta divisão.') : res('nao_indica', e.tab, e.pag, 'O decreto não indica hidrantes e mangotinhos para esta divisão.', RESS);
+      case 'verifique_it': return verifique('A exigência depende de dados da instrução técnica desta divisão. Verifique.');
+      case 'extensao_tunel': return verifique('O decreto indica hidrantes e mangotinhos para esta divisão conforme a extensão do túnel. Verifique.');
+      case 'volume': return verifique('O decreto indica hidrantes e mangotinhos para esta divisão conforme o volume armazenado (tanques acima de 20 m³, gases acima de 10 m³, fracionados acima de 20 m³ ou 12.480 kg). Verifique.');
+      case 'comissao': return verifique(COM);
+      case 'area_ou_altura': return verifique('O decreto indica hidrantes e mangotinhos para esta divisão conforme a área ou a altura da edificação. Verifique.');
+    }
+    if (!temA) return falta('area');
+    if (e.regra === 'comissao_l1') {   // L-1 até 100 m² e 12 m cai na Tabela 5 (coluna L1); acima disso o decreto manda à Comissão Técnica (Tabela 6L)
+      if (area > 100) return verifique(COM);
+      if (!temH) return falta('altura');
+      return altura > L.altura ? verifique(COM) : tabela5('Com área até 100 m² e altura até ' + L.altura + ' m, o decreto não indica hidrantes e mangotinhos para esta divisão.');
+    }
+    if (area <= L.area) {
+      if (!temH) return falta('altura');
+      if (altura <= L.altura) return tabela5('Com área até ' + L.area + ' m² e altura até ' + L.altura + ' m, o decreto não indica hidrantes e mangotinhos para esta divisão.');
+    }
+    // Tabelas 6: a linha de hidrantes é a mesma nas seis colunas de altura; a altura só pesa no limite de 12 m e na nota geral c de F-7
+    if (e.regra === 'f7_altura6') {
+      if (!temH) return falta('altura');
+      return altura > 6 ? verifique('O decreto não indica hidrantes para F-7, mas acima de 6 m a ocupação temporária vai à análise do Corpo de Bombeiros. Verifique.') : res('nao_indica', e.tab, e.pag, 'O decreto não indica hidrantes e mangotinhos para esta divisão.', RESS);
+    }
+    if (e.cel === '-') return res('nao_indica', e.tab, e.pag, 'O decreto não indica hidrantes e mangotinhos para esta divisão.', RESS);
+    if (e.regra === 'isencao_it22') return verifique('O decreto indica hidrantes, com isenção possível conforme o processo e a carga de incêndio. Verifique.');
+    if (e.regra === 'isencao_it22_carga100') return temC && carga > X.isencaoIT22.E12 ? res('indica', e.tab, e.pag, IND) : verifique('O decreto indica hidrantes. Com carga de incêndio até ' + X.isencaoIT22.E12 + ' MJ/m², pode haver isenção. Verifique.');
+    if (e.regra === 'isencao_e13') return res('indica', e.tab, e.pag, IND, 'Ginásio poliesportivo ou piscina coberta pode ter isenção. Veja a Ajuda.');
+    return res('indica', e.tab, e.pag, IND);
+  }
+  /** Citação do resultado de exigenciaHidranteSP (item da verificação V35): tabela, página e nota do Anexo A do decreto. */
+  function citacaoExigenciaSP(ex) {
+    var c = ex.tab ? 'Decreto 69.118/24, Anexo A, Tabela ' + ex.tab + ' (p. ' + ex.pag + ')' + (ex.nota ? ', nota ' + ex.nota : '') : 'Decreto 69.118/24, art. 22, § 4º';
+    return c + (/^isencao/.test(ex.regra) ? '; IT 22/2025, Anexo E (p. 21)' : '');
+  }
+
   // ---------------------------------------------------------------- jatos (caminhos A e B)
   /** Perda unitária (m/m) pelo catálogo da mangueira. 40 mm e 65 mm: Kidde Sintex N tipo 2;
    *  outras: cadastro do usuário em D.mangueirasUsuario[dn] = {Q: [...], J: [...]} (L/min e m/m, em ordem crescente de vazão). */
@@ -281,10 +333,19 @@
     var est = saida === 'cima' ? 'negativa' : g <= 0 ? 'afogada' : g <= lim + 1e-9 ? 'positiva' : 'negativa';
     return { g: g, lim: lim, estado: est, vmax: est === 'negativa' ? 2 : 3, npshObrigatorio: est === 'negativa' || !!PR };
   }
+  /** 2.7.0 (FC-026): referência da altura da água de onde a bomba aspira. Com bomba de incêndio é o nível X (zX); na bomba de reforço do elevado é a referência
+   *  da altura do elevado (B.2.1: a cota do nó RI mais a carga própria da taça seca ou da torre, que é zero nos demais), a mesma que o Abastecimento mostra. */
+  function alturaRef(ctx) { return ctx.modo === 'reforco' ? ctx.z('RI') + (ctx.hProp || 0) : ctx.zX; }
+  /** 2.7.0 (FC-026): trechos da sucção da bomba de reforço. Com o nó BI na rede, os que levam de RI a BI (como na bomba de incêndio); sem ele, só o primeiro que sai de RI
+   *  (o DN da saída do elevado), que dá a velocidade e, na falta de trecho próprio da sucção, uma perda a favor da segurança. */
+  function sucReforco(ctx, par) {
+    if (ctx.grafo.nos.indexOf('BI') >= 0) return ctx.grafo.caminho('BI') || [];
+    return par.tronco.length ? [par.tronco[0]] : [];
+  }
   /** Sucção do projeto pelas cotas do motor: o nível de onde se conta a reserva vem do cálculo do Abastecimento (fonte.nivelX.nivelReserva: o maior
-   *  entre X e o piso); sem ele (X informado à mão ou arquivo antigo), do próprio X. O topo é o da reserva (tomada de consumo) ou o nível normal. */
+   *  entre X e o piso, ou o próprio X quando a água do poço mais fundo que o mínimo conta, D-024); sem ele (X informado à mão ou arquivo antigo), do próprio X. O topo é o da reserva (tomada de consumo) ou o nível normal. */
   function succaoProjeto(ctx) {
-    var f = ctx.proj.fonte || {}, g = ctx.z('BI') - ctx.zX, nr = f.nivelX && typeof f.nivelX.nivelReserva === 'number' ? f.nivelX.nivelReserva : ctx.zX;
+    var f = ctx.proj.fonte || {}, ref = alturaRef(ctx), g = ctx.z('BI') - ref, nr = f.nivelX && typeof f.nivelX.nivelReserva === 'number' ? f.nivelX.nivelReserva : ref;
     var topo = typeof f.topoReserva === 'number' ? f.topoReserva : f.zCheio, lim = typeof topo === 'number' && topo > nr ? Math.min(2, (topo - nr) / 3) : 0;
     return estadoSuccao(g, lim, f.saida, ctx.norma.id === 'PR');
   }
@@ -468,9 +529,20 @@
   // A regulagem substitui a pressão do ponto na estática (V05) e na dinâmica máxima (V04) quando é menor que a de montante.
   // Não entra na hipótese de cálculo: vazão, par e altura manométrica não mudam.
   function redutoraDe(o) { return o && o.redutora && typeof o.redutora.P === 'number' && isFinite(o.redutora.P) ? o.redutora : null; }
+  /** Pressão mínima na válvula entre os jatos dados: a da Tabela 2 (SP) ou a que o esguicho pede na válvula (PR: curva do esguicho mais a mangueira). */
+  function pminJatos(js) { var m = 0; js.forEach(function (j) { var p = j.caminho === 'A' ? j.Pmin : j.PvMin; if (p > m) m = p; }); return m; }
+  /** 2.7.0 (FC-031): pressão mínima na válvula de um hidrante (o maior entre os seus jatos), dado o nó. Única regra, usada pela verificação V33, pelo quadro, pela planilha e pelo desenho. */
+  function pminHidrante(ctx, no) { return pminJatos(ctx.jatos.filter(function (j) { return j.no === no; })); }
+  /** 2.7.0 (FC-031): hidrantes cuja pressão dinâmica na válvula (campo din de pressoesHidrantes, já com a redutora) fica abaixo do mínimo. Tolerância de 1e-6 mca, a mesma da V01:
+   *  o hidrante do par fica no mínimo por construção, com ruído de ponto flutuante (igual ao mínimo não alerta). A estática não entra. Devolve [{ id, no, din, Pmin, falta }]. */
+  function abaixoDoMinimo(din, pmin) { return din < pmin - 1e-6; }
+  function abaixoMinimo(ctx, par) {
+    var l = [];
+    pressoesHidrantes(ctx, par).forEach(function (o) { var pm = pminHidrante(ctx, o.no); if (abaixoDoMinimo(o.din, pm)) l.push({ id: o.id, no: o.no, din: o.din, Pmin: pm, falta: pm - o.din }); });
+    return l;
+  }
   function verificaRedutoras(ctx, par, shutoff) {
     var proj = ctx.proj, zc = proj.fonte && proj.fonte.zCheio, lista = [], pior = 'OK', ordem = { OK: 0, INFO: 1, ALERTA: 2, ERRO: 3 };
-    function pminJatos(js) { var m = 0; js.forEach(function (j) { var p = j.caminho === 'A' ? j.Pmin : j.PvMin; if (p > m) m = p; }); return m; }
     function ponto(nome, z, rd, hid) {
       var js = hid ? ctx.jatos.filter(function (j) { return j.hid === hid; }) : ctx.jatos;
       var r = { nome: nome, z: z, P: rd.P, fonte: rd.fonte || '', Pmin: pminJatos(js), montante: zc === undefined ? null : shutoff + (zc - z), avisos: [], situacao: 'OK' };
@@ -597,6 +669,9 @@
     V.push(vf('V21', mistura ? 'ERRO' : 'OK', 'Uma tabela de Leq por projeto', 'tabela ' + proj.tabelaLeq, norma));
     // --- V32 (2.6.0, gravidade): sem bomba, o desnível do reservatório elevado tem de dar a pressão mínima no hidrante mais desfavorável
     if (modo === 'gravidade' && num.AMT !== undefined) V.push(vf('V32', num.AMT > 1e-9 ? 'ERRO' : 'OK', 'Desnível do reservatório elevado contra a pressão mínima', num.AMT > 1e-9 ? 'faltam ' + num.AMT.toFixed(2) + ' mca por gravidade' : 'sobram ' + (-num.AMT).toFixed(2) + ' mca por gravidade', norma, norma.itens && norma.itens.V01));
+    // --- V33 (2.7.0, FC-031): hidrante com pressão na válvula abaixo do mínimo do tipo. Só gera item quando há alerta (como a V30).
+    var abx = abaixoMinimo(ctx, par);
+    if (abx.length) V.push(vf('V33', 'ALERTA', 'Pressão mínima na válvula de cada hidrante', abx.map(function (a) { return a.id + ' ' + a.din.toFixed(2) + ' mca (mínimo ' + a.Pmin.toFixed(2) + ')'; }).join('; '), norma, norma.itens && norma.itens.V01));
     if (proj.norma === 'PR') {
       V.push(vf('V23', proj.hidrantes.length > 1 || tipo.exp > 1 ? 'OK' : 'ERRO', 'Ponto único de hidrante exige duas expedições', proj.hidrantes.length + ' hidrantes', norma));
       if (modo === 'gravidade') { /* 2.6.0: o ramal de retorno é de teste da bomba; na gravidade não há bomba */ }
@@ -622,11 +697,19 @@
       V.push(vf('V29', (nx.bomba && nx.exata === false) || als.length ? 'ALERTA' : 'OK', nx.bomba ? 'Nível X calculado pela Tabela B.1' + (nx.exata === false ? ' (DN' + nx.dn + ' fora da tabela: linha do DN' + nx.dnTab + ')' : '') : 'Referência da altura do reservatório elevado',
         (nx.bomba ? 'X = ' : 'cota ') + nx.X.toFixed(3) + ' m' + (nx.hProp > 0 ? '; carga própria ' + nx.hProp.toFixed(2) + ' mca' : '') + (nx.reserva !== undefined ? '; reserva ' + nx.reserva.toFixed(2) + ' m³ em ' + nx.altura.toFixed(3) + ' m de água' : '') + (als.length ? '; ' + als.join('; ') : ''), norma, itX));
     }
+    // --- V34 (2.7.0, FC-027): piscina como reservatório inferior (só em SP, IT 22, B.1.4): a reserva efetiva garantida permanentemente por declaração do responsável pelo uso. Sem a marcação, ERRO; só gera item com piscina.
+    if (proj.fonte && proj.fonte.tipologia === 'piscina' && proj.norma === 'SP') V.push(vf('V34', proj.fonte.declaracao === true ? 'OK' : 'ERRO', 'Piscina como reservatório: declaração do responsável pelo uso', proj.fonte.declaracao === true ? 'declaração do responsável pelo uso marcada' : 'sem a declaração do responsável pelo uso', norma, 'B.1.4'));
+    // --- V35 (2.7.0, FC-041): o que o Decreto 69.118/24 indica para hidrantes, só em SP. OK quando indica; ALERTA nos demais casos; sem dado para decidir (falta), sem item. Não muda número.
+    if (proj.norma === 'SP' && proj.sistema && proj.sistema.divisao) {
+      var exs = exigenciaHidranteSP(D, proj.sistema.divisao, proj.sistema.area, proj.sistema.altura, proj.sistema.carga);
+      if (exs && exs.estado !== 'falta') V.push(vf('V35', exs.estado === 'indica' ? 'OK' : 'ALERTA', 'Exigência de hidrantes pelo decreto',
+        proj.sistema.divisao + (proj.sistema.area > 0 ? ', ' + proj.sistema.area + ' m²' : '') + (typeof proj.sistema.altura === 'number' ? ', ' + proj.sistema.altura + ' m de altura' : '') + '. ' + exs.msg + (exs.ressalva && exs.estado === 'indica' ? ' ' + exs.ressalva : ''), norma, citacaoExigenciaSP(exs)));
+    }
     // --- V30 (2.6.0): tipo adotado inferior ao que a tabela indica para a coluna e a área. Tipo igual ou superior não gera item.
     if (cls && proj.sistema && proj.sistema.tipo) {
       var idsT = norma.tipos.map(function (t) { return t.id; }), iAd = idsT.indexOf(tipo.id), iTb = idsT.indexOf(cls.tipo === '4' ? '4-40' : cls.tipo);
       var rpV = reservaPedida(D, proj.norma, proj.sistema, tipo.id);
-      if (iAd >= 0 && iTb >= 0 && iAd < iTb && !(rpV && rpV.admitido)) V.push(vf('V30', 'ERRO', 'Tipo de sistema contra a tabela', 'tipo ' + tipo.id + ' adotado; a tabela pede o tipo ' + cls.tipo, norma, proj.norma === 'PR' ? 'Tabela 2' : 'Tabela 3'));
+      if (iAd >= 0 && iTb >= 0 && iAd < iTb && !(rpV && rpV.admitido)) V.push(vf('V30', 'ERRO', 'Tipo de sistema contra a tabela', 'tipo ' + tipo.id + ' adotado; a tabela indica o tipo ' + cls.tipo, norma, proj.norma === 'PR' ? 'Tabela 2' : 'Tabela 3'));
     }
     // --- RTI
     if (cls && proj.fonte && proj.fonte.rtiEfetiva !== undefined) {
@@ -646,25 +729,29 @@
       if (!pt.semCruzamento) { num.Qw = pt.Qth; num.Hw = pt.H; num.PAw = pt.PA; }
       if (b.potEixo && b.potEixo.pts) { var pe = leCurva(b.potEixo.pts, par.Qt * CV); if (pe !== null) num.potEixo = { P: pe, un: b.potEixo.unidade, Q: par.Qt * CV }; }   // potência no eixo, lida da curva do catálogo (não é a do motor)
       V.push(vf('V11', b.shutoff <= norma.pmax ? 'OK' : 'ALERTA', 'Shut-off da bomba', b.shutoff + ' mca (recomendado até ' + norma.pmax + ')', norma));
-      if (modo === 'bomba') {
-        var su = succaoProjeto(ctx), neg = su.estado === 'negativa';   // 2.6.0: três estados pela C.1.12 no lugar de "eixo acima de X"
-        num.sucNegativa = neg; ctx.succao = su;   // o estado fica no contexto do resultado (R.ctx.succao): a lista de números segue a da 2.5.4
-        var vs = vel(par.Qt, ctx.suc.length ? ctx.suc[0].t.dint : 0), lim = neg ? norma.vmaxSucNeg : norma.vmaxSucPos;
+      // 2.7.0 (FC-026): a bomba de reforço do elevado passa a ter V07 e V08 (mesmas regras da bomba de incêndio, H-030; estado pela C.1.12 contra a referência da altura, B.2.1).
+      // Sem V09 e sem V31 no reforço (a escorva e o tipo do sistema são da bomba de incêndio). Sem a cota do eixo (nó BI) o estado não existe: vale o limite da sucção negativa e o NPSH não se calcula.
+      var refo = modo === 'reforco', biR = proj.nos && proj.nos.BI, temBI = !refo || !!(biR && typeof biR.z === 'number' && isFinite(biR.z)), sucL = refo ? sucReforco(ctx, par) : ctx.suc;
+      if (modo === 'bomba' || (refo && sucL.length)) {
+        var su = temBI ? succaoProjeto(ctx) : null, neg = su ? su.estado === 'negativa' : true;   // 2.6.0: três estados pela C.1.12 no lugar de "eixo acima de X"
+        if (su) { num.sucNegativa = neg; ctx.succao = su; }   // o estado fica no contexto do resultado (R.ctx.succao): a lista de números segue a da 2.5.4
+        var vs = vel(par.Qt, sucL.length ? sucL[0].t.dint : 0), lim = neg ? norma.vmaxSucNeg : norma.vmaxSucPos;
         num.vSuc = vs;
-        V.push(vf('V07', vs <= lim ? 'OK' : 'ERRO', 'Velocidade na sucção na vazão nominal', vs.toFixed(2) + ' m/s (limite ' + lim + ')', norma));
-        V.push(vf('V09', neg ? 'ALERTA' : 'OK', neg ? 'Sucção negativa: escorva e manovacuômetro (C.2.6, C.1.17)' : su.estado === 'positiva' ? 'Sucção positiva por tolerância (C.1.12)' : 'Bomba afogada',
+        V.push(vf('V07', vs <= lim ? 'OK' : 'ERRO', 'Velocidade na sucção na vazão nominal', vs.toFixed(2) + ' m/s (limite ' + lim + (su ? '' : ', sem a cota do eixo da bomba') + ')', norma));
+        if (!refo) V.push(vf('V09', neg ? 'ALERTA' : 'OK', neg ? 'Sucção negativa: escorva e manovacuômetro (C.2.6, C.1.17)' : su.estado === 'positiva' ? 'Sucção positiva por tolerância (C.1.12)' : 'Bomba afogada',
           neg ? (su.g > 0 ? 'eixo ' + su.g.toFixed(2) + ' m acima de X' : 'tomada por cima, eixo ' + (-su.g).toFixed(3) + ' m abaixo de X') + (proj.fonte.saida === 'cima' && su.g > 0 ? '; tomada por cima' : '')
             : su.estado === 'positiva' ? 'eixo ' + su.g.toFixed(2) + ' m acima de X (tolerância até ' + su.lim.toFixed(2) + ' m)' : 'eixo ' + (-su.g).toFixed(3) + ' m abaixo de X', norma));
         // V31 (2.6.0): em SP, bomba com sucção negativa só nos tipos 1, 2 e 3 (IT 22, C.2.6). O PR não tem a restrição.
-        if (neg && proj.norma === 'SP' && /^(4|5)/.test(tipo.id)) V.push(vf('V31', 'ERRO', 'Bomba acima do nível da água só nos tipos 1, 2 e 3', 'tipo ' + tipo.id + ' com sucção negativa', norma, 'C.2.6'));
-        if (su.npshObrigatorio || su.estado === 'positiva') {   // 2.6.0: NPSH calculado na negativa, no PR em qualquer estado e, em SP, como informação na positiva por tolerância (sem V08). 2.5.4: o disponível é
+        if (!refo && neg && proj.norma === 'SP' && /^(4|5)/.test(tipo.id)) V.push(vf('V31', 'ERRO', 'Bomba acima do nível da água só nos tipos 1, 2 e 3', 'tipo ' + tipo.id + ' com sucção negativa', norma, 'C.2.6'));
+        if (!su && refo && proj.norma === 'PR') V.push(vf('V08', 'ALERTA', 'NPSH disponível: informar a cota do eixo da bomba de reforço', 'sem a cota do eixo não há altura de aspiração', norma));
+        if (su && (su.npshObrigatorio || su.estado === 'positiva')) {   // 2.6.0: NPSH calculado na negativa, no PR em qualquer estado e, em SP, como informação na positiva por tolerância (sem V08). 2.5.4: o disponível é
           // calculado a 1,0 Q e a 1,5 Q (perda na sucção em cada vazão; a altura manométrica é a mesma). O projetista escolhe com qual dos dois o requerido
           // da bomba escolhida é comparado (bomba.npshQ = 1.5; sem o campo, 1,0 Q, a vazão de projeto). A escolha comanda a V08, a planilha e o memorial.
-          var amb = ambiente(D, proj.ambiente.altitude, proj.ambiente.temperatura), Q15 = 1.5 * par.Qt, hs = hfSoma(ctx.suc, Q15), hg = ctx.z('BI') - ctx.zX;
+          var amb = ambiente(D, proj.ambiente.altitude, proj.ambiente.temperatura), Q15 = 1.5 * par.Qt, hs = hfSoma(sucL, Q15), hg = ctx.z('BI') - alturaRef(ctx);
           num.Patm = amb.Patm; num.Pvap = amb.Pvap; num.Q15 = Q15; num.hfSuc15 = hs; num.hAsp = hg;
           num.NPSHd = amb.Patm - amb.Pvap - hg - hs;
-          num.vSuc15 = vel(Q15, ctx.suc[0].t.dint);
-          num.hfSuc1 = hfSoma(ctx.suc, par.Qt); num.NPSHd1 = amb.Patm - amb.Pvap - hg - num.hfSuc1;
+          num.vSuc15 = vel(Q15, sucL[0].t.dint);
+          num.hfSuc1 = hfSoma(sucL, par.Qt); num.NPSHd1 = amb.Patm - amb.Pvap - hg - num.hfSuc1;
           var h15 = alturaBomba(b.pts, Q15 * CV); num.atende15 = !h15.extrapolado && h15.H >= par.AMT - 1e-9; num.H15 = h15.H;   // só informação: a bomba entrega a altura a 1,5 Q?
           var a15 = b.npshQ === 1.5, Qv = a15 ? Q15 : par.Qt, NPSHdv = a15 ? num.NPSHd : num.NPSHd1, hsv = a15 ? hs : num.hfSuc1, qtx = a15 ? '1,5 Q' : '1,0 Q';
           num.Qverif = a15 ? 1.5 : 1;
@@ -728,8 +815,44 @@
     num.erros = erros;
     return { numeros: num, verificacoes: V, par: par, pares: pares.map(function (p) { return { par: nomePar(p), AMT: p.AMT, Qt: p.Qt, PA: p.PA, A: p.A }; }), erros: erros, ctx: ctx };
   }
+  /** 2.7.0 (FC-030): cálculo parcial da rede, para a planilha e o desenho da etapa Rede antes de o projeto fechar o cálculo. É o mesmo cálculo de calcular() (montaGrafo, montaJato,
+   *  listaPares, parPorHidrante, avaliaPar), só que exige o que a rede usa (norma, tipo do sistema, fator C, trechos, cotas e hidrantes) e dispensa bomba, nível X e Abastecimento completo.
+   *  Em modo bomba a carga na saída (Pd mais a cota de BI) não depende da cota de BI nem de X, que se cancelam; por isso a falta delas não é impedimento (a cota ausente vale 0 nos dois termos).
+   *  Devolve { ok, falta, erros, par, ctx, numeros }, sem verificações; o resultado é só da planilha e do desenho da etapa Rede e nunca vai a verificação, relatório, memorial nem exportação.
+   *  Com o projeto completo, par, vazões e pressões saem idênticos aos de calcular() (mesmas funções, mesma ordem de contas). */
+  function calcularRede(proj, D) {
+    var falta = [], erros = [], p, vazio = { ok: false, falta: falta, erros: [], par: null, ctx: null, numeros: {} };
+    try { p = resolve(proj, D); } catch (e) { p = Object.assign({}, proj); delete p.bomba; delete p.jockey; }
+    try {
+      var norma = D.normas[p.norma]; if (!norma) return vazio;
+      var modo = (p.fonte && p.fonte.modo) || 'bomba', raiz = modo === 'bomba' ? 'BI' : 'RI';
+      var cls = p.sistema ? classifica(D, p.norma, p.sistema.coluna, p.sistema.area) : null;
+      var tipoId = (p.sistema && p.sistema.tipo) || (cls && cls.tipo);
+      var tipo = norma.tipos.filter(function (t) { return t.id === tipoId; })[0]; if (!tipo) return vazio;
+      var grafo = montaGrafo(D, p, raiz); erros = erros.concat(grafo.erros);
+      var ctx = { proj: p, norma: norma, D: D, grafo: grafo, raiz: raiz, modo: modo, tipo: tipo,
+        z: function (n) { var v = p.nos[n]; if (!v) { if (falta.indexOf(n) < 0) falta.push(n); return 0; } return v.z; } };
+      ctx.zX = p.fonte && typeof p.fonte.zX === 'number' ? p.fonte.zX : 0;
+      if (modo === 'gravidade' && (p.trechos || []).some(function (t) { return String(t.nome || '').split('-').indexOf('BI') >= 0; })) erros.push('Neste abastecimento não há bomba: troque BI por outro nome');
+      ctx.hProp = modo !== 'bomba' && p.fonte && p.fonte.hProp > 0 ? p.fonte.hProp : 0;
+      ctx.suc = modo === 'bomba' ? grafo.caminho('RI') || [] : [];
+      ctx.jatos = [];
+      var lanc = dadosLancamento(p, norma, tipo); ctx.lanc = lanc;
+      p.hidrantes.forEach(function (h) {
+        if (!grafo.caminho(h.no)) { erros.push('Hidrante ' + h.id + ' sem caminho até ' + raiz); return; }
+        for (var i = 0; i < tipo.exp; i++) ctx.jatos.push(montaJato(D, p, norma, h, tipo, i, lanc));
+      });
+      if (!ctx.jatos.length || erros.length) return { ok: false, falta: falta, erros: erros, par: null, ctx: ctx, numeros: {} };
+      var pares = listaPares(ctx).sort(function (x, y) { return (y.AMT - x.AMT) || (y.Qt - x.Qt); });
+      var parMaisDesf = parPorHidrante(ctx, pares) || pares[0], par = parMaisDesf;
+      if (p.parForcado) { var pf = pares.filter(function (q) { return nomePar(q) === p.parForcado; })[0]; if (pf) par = pf; }
+      var bloq = falta.filter(function (n) { return !(modo === 'bomba' && (n === 'BI' || n === 'RI')); });
+      var num = { par: nomePar(par), A: par.A, parcial: true }; if (par.unico) num.jatoUnico = true;
+      return { ok: !bloq.length, falta: bloq, erros: erros, par: par, ctx: ctx, numeros: num };
+    } catch (e) { return { ok: false, falta: falta, erros: erros.concat([e.message]), par: null, ctx: null, numeros: {} }; }
+  }
   function vf(id, sit, titulo, valor, norma, item) { return { id: id, situacao: sit, titulo: titulo, valor: valor, item: item || (norma.itens && norma.itens[id]) || '' }; }
 
-  return { J: J, vel: vel, interp: interp, alturaBomba: alturaBomba, leCurva: leCurva, vazaoJockey: vazaoJockey, ambiente: ambiente, classifica: classifica, reservaPedida: reservaPedida, sugereColuna: sugereColuna, faixa: faixa,
-    montaGrafo: montaGrafo, pressaoGravidade: pressaoGravidade, estadoSuccao: estadoSuccao, retornoTeste: retornoTeste, curvaSistema: curvaSistema, pontoTrabalho: pontoTrabalho, calcular: calcular, pressoesHidrantes: pressoesHidrantes, pressoesNos: pressoesNos, cascata: cascata, redutoraDe: redutoraDe, avaliaPar: avaliaPar, mangueiraJ: mangueiraJ, esguichoP: esguichoP, ateEsguicho: ateEsguicho, esguichoPadrao: esguichoPadrao, dadosLancamento: dadosLancamento, pontoParana: pontoParana, prepTrecho: prepTrecho, achaTubo: achaTubo, leqPeca: leqPeca, CV: CV, BAR: BAR, ITER: ITER };
+  return { J: J, vel: vel, interp: interp, alturaBomba: alturaBomba, leCurva: leCurva, vazaoJockey: vazaoJockey, ambiente: ambiente, classifica: classifica, reservaPedida: reservaPedida, sugereColuna: sugereColuna, exigenciaHidranteSP: exigenciaHidranteSP, citacaoExigenciaSP: citacaoExigenciaSP, faixa: faixa,
+    montaGrafo: montaGrafo, pressaoGravidade: pressaoGravidade, estadoSuccao: estadoSuccao, retornoTeste: retornoTeste, curvaSistema: curvaSistema, pontoTrabalho: pontoTrabalho, calcular: calcular, calcularRede: calcularRede, pminHidrante: pminHidrante, abaixoDoMinimo: abaixoDoMinimo, abaixoMinimo: abaixoMinimo, pressoesHidrantes: pressoesHidrantes, pressoesNos: pressoesNos, cascata: cascata, redutoraDe: redutoraDe, avaliaPar: avaliaPar, mangueiraJ: mangueiraJ, esguichoP: esguichoP, ateEsguicho: ateEsguicho, esguichoPadrao: esguichoPadrao, dadosLancamento: dadosLancamento, pontoParana: pontoParana, prepTrecho: prepTrecho, achaTubo: achaTubo, leqPeca: leqPeca, CV: CV, BAR: BAR, ITER: ITER };
 });

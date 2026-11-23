@@ -9,8 +9,12 @@
   else raiz.FireCadastros = f(raiz.FireValida);
 })(typeof self !== 'undefined' ? self : this, function (V) {
   'use strict';
-  var ORDEM = ['tubos', 'tiposTubo', 'C', 'pecas', 'esguichos', 'mangueiras', 'ocupacoes', 'bombas'];
-  var NOME = { tubos: 'Tubos', tiposTubo: 'Tipos de tubo', C: 'Fator C', pecas: 'Peças e comprimento equivalente', esguichos: 'Esguichos', mangueiras: 'Mangueiras', ocupacoes: 'Ocupações', bombas: 'Bombas' };
+  var ORDEM = ['tubos', 'tiposTubo', 'C', 'pecas', 'esguichos', 'mangueiras', 'ocupacoes', 'bombas', 'reservatorios'];
+  var NOME = { tubos: 'Tubos', tiposTubo: 'Tipos de tubo', C: 'Fator C', pecas: 'Peças e comprimento equivalente', esguichos: 'Esguichos', mangueiras: 'Mangueiras', ocupacoes: 'Ocupações', bombas: 'Bombas', reservatorios: 'Reservatórios' };
+  /** 2.7.0 (FC-024): tipos de caixa da biblioteca de reservatórios (os do Abastecimento, menos a piscina) e as medidas internas de cada um, em metros.
+   *  Sem dado de catálogo embutido (D-027): o item é sempre do usuário. */
+  var TIPOS_RES = [['ret', 'Retangular'], ['cil', 'Cilíndrico'], ['tronco', 'Caixa de polietileno ou fibra'], ['taca', 'Taça'], ['torre', 'Torre'], ['standpipe', 'Standpipe']];
+  var MEDIDAS_RES = { comprimento: 'o comprimento interno', largura: 'a largura interna', diametro: 'o diâmetro interno', diametroBase: 'o diâmetro interno da base', diametroTopo: 'o diâmetro interno do topo', altura: 'a altura', diametroColuna: 'o diâmetro interno da coluna' };
   var MARCA = ' (personalizado)';
   function vazia() { var o = {}; ORDEM.forEach(function (g) { if (g !== 'bombas') o[g] = []; }); return o; }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -18,6 +22,34 @@
   function nu(v) { return typeof v === 'number' ? v : V.num(v); }
   function slug(s) { return tx(s).normalize('NFD').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
   function lista(v) { return Array.isArray(v) ? v : tx(v).split(/[;,]/).map(function (x) { return x.trim(); }).filter(function (x) { return x; }); }
+  function chaveRes(x) { return tx(x.fabricante).replace(/\s+/g, ' ').toLowerCase() + '|' + tx(x.modelo).replace(/\s+/g, ' ').toLowerCase(); }
+  function medidaRes(x, k, obrigatoria) {
+    var v = x[k]; if (v === undefined || v === null || tx(v) === '') return obrigatoria ? { erro: 'Informe ' + MEDIDAS_RES[k] + ', em metros.' } : { v: null };
+    var n = nu(v); if (typeof n !== 'number' || !isFinite(n) || !(n > 0)) return { erro: 'Medida inválida em ' + k + ': use um número maior que zero, em metros.' };
+    return { v: n };
+  }
+  /** Reservatório da biblioteca. Fabricante e modelo pedem-se sempre; a fonte é opcional (sem fonte o item entra e fica marcado). Medidas em metros, volume nominal em m³. */
+  function validaReservatorio(x, lib) {
+    var fab = tx(x.fabricante), mod = tx(x.modelo), tipo = tx(x.tipo).toLowerCase(), it = { usuario: true, fabricante: fab, modelo: mod, tipo: tipo }, ms = [], i, r;
+    if (!fab) return { erro: 'Informe o fabricante.' };
+    if (!mod) return { erro: 'Informe o modelo.' };
+    if (!TIPOS_RES.some(function (q) { return q[0] === tipo; })) return { erro: 'Informe o tipo da caixa: ' + TIPOS_RES.map(function (q) { return q[0]; }).join(', ') + '.' };
+    var vNom = x.volumeNominal === undefined || x.volumeNominal === null || tx(x.volumeNominal) === '' ? null : nu(x.volumeNominal);
+    if (vNom !== null && (typeof vNom !== 'number' || !isFinite(vNom) || !(vNom > 0))) return { erro: 'Volume nominal inválido: use um número maior que zero, em metros cúbicos.' };
+    if (tipo === 'ret') { var c = medidaRes(x, 'comprimento', false), l = medidaRes(x, 'largura', false); if (c.erro) return c; if (l.erro) return l; if (c.v === null && l.v === null) { if (vNom === null) return { erro: 'Informe o comprimento e a largura, ou o volume nominal.' }; } else if (c.v === null || l.v === null) return { erro: 'Informe o comprimento e a largura juntos.' }; else { it.comprimento = c.v; it.largura = l.v; } }
+    else if (tipo === 'cil') { r = medidaRes(x, 'diametro', false); if (r.erro) return r; if (r.v === null) { if (vNom === null) return { erro: 'Informe o diâmetro, ou o volume nominal.' }; } else it.diametro = r.v; }
+    else if (tipo === 'tronco') ms = ['diametroBase', 'diametroTopo', 'altura'];
+    else if (tipo === 'taca') {
+      var cf = tx(x.cubaForma).toLowerCase() || 'cil'; if (cf !== 'cil' && cf !== 'tronco') return { erro: 'Informe a forma da cuba: cil ou tronco.' };
+      it.cubaForma = cf; ms = cf === 'tronco' ? ['diametroBase', 'diametroTopo', 'altura'] : ['diametro'];
+    } else ms = ['diametro'];
+    for (i = 0; i < ms.length; i++) { r = medidaRes(x, ms[i], true); if (r.erro) return r; it[ms[i]] = r.v; }
+    if (tipo === 'taca') { r = medidaRes(x, 'diametroColuna', false); if (r.erro) return r; if (r.v !== null) it.diametroColuna = r.v; }
+    if (vNom !== null) it.volumeNominal = vNom;
+    if ((lib.reservatorios || []).some(function (q) { return chaveRes(q) === chaveRes(it); })) return { erro: 'Já existe um reservatório com este fabricante e modelo.' };
+    it.fonte = tx(x.fonte);
+    return { item: it };
+  }
   /** Guarda as listas da base, uma vez só, antes de qualquer acréscimo. */
   function guardaBase(D) {
     if (D._base) return D._base;
@@ -29,6 +61,7 @@
   function valida(g, x, D, lib) {
     var B = guardaBase(D), f = tx(x && x.fonte); lib = lib || vazia();
     if (!x || typeof x !== 'object') return { erro: 'Item sem dados.' };
+    if (g === 'reservatorios') return validaReservatorio(x, lib);
     if (!f) return { erro: 'Falta a fonte: norma e item, ou catálogo e página.' };
     if (g === 'tubos') {
       var norma = tx(x.norma), classe = tx(x.classe) || 'única', dn = nu(x.dn), di = nu(x.dint), de = nu(x.dext), pa = nu(x.parede), dnsT = D.leq.A.dns || [];
@@ -124,13 +157,14 @@
     opc = opc || {}; var r = { lib: clone(libAtual || vazia()), bombas: [], entraram: [], recusados: [] }, o;
     Object.keys(vazia()).forEach(function (g) { if (!Array.isArray(r.lib[g])) r.lib[g] = []; });
     try { o = JSON.parse(texto); } catch (e) { r.erro = 'O arquivo não é um .json válido: ' + e.message; return r; }
-    if (!o || typeof o !== 'object' || Array.isArray(o)) { r.erro = 'O arquivo precisa ter os grupos do modelo (tubos, tiposTubo, C, pecas, esguichos, mangueiras, ocupacoes, bombas).'; return r; }
+    if (!o || typeof o !== 'object' || Array.isArray(o)) { r.erro = 'O arquivo precisa ter os grupos do modelo (tubos, tiposTubo, C, pecas, esguichos, mangueiras, ocupacoes, bombas, reservatorios).'; return r; }
     var achou = false;
     ORDEM.forEach(function (g) {
       var l = o[g]; if (l === undefined) return; achou = true;
       if (!Array.isArray(l)) { r.recusados.push({ grupo: g, nome: '(grupo inteiro)', motivo: 'O grupo precisa ser uma lista de itens.' }); return; }
       l.forEach(function (x, i) {
         var nm = x && typeof x === 'object' ? tx(x.nome || x.modelo || x.material || x.id || (x.norma && x.dn ? x.norma + ' DN' + x.dn : '') || x.div) || 'item ' + (i + 1) : 'item ' + (i + 1), v;
+        if (g === 'reservatorios' && x && typeof x === 'object' && tx(x.fabricante) && tx(x.modelo)) nm = tx(x.fabricante) + ' ' + tx(x.modelo);
         if (x && typeof x === 'object' && x._exemplo) { r.recusados.push({ grupo: g, nome: nm, motivo: 'Exemplo do modelo: apague a linha "_exemplo" para o item valer.' }); return; }
         if (g === 'bombas') { v = opc.leBomba ? opc.leBomba(x, r.bombas) : { erro: 'Inclusão de bomba indisponível aqui.' }; if (v.erro) r.recusados.push({ grupo: g, nome: nm, motivo: v.erro }); else { r.bombas.push(v.bomba); r.entraram.push({ grupo: g, nome: v.bomba.modelo }); } return; }
         if (g === 'mangueiras') { v = opc.leMangueira ? opc.leMangueira(x) : { erro: 'Inclusão de mangueira indisponível aqui.' }; if (v.erro) r.recusados.push({ grupo: g, nome: nm, motivo: v.erro }); else if (r.lib.mangueiras.some(function (q) { return +q.dn === v.dn && (q.modelo || '') === (v.mangueira.modelo || ''); })) r.recusados.push({ grupo: g, nome: nm, motivo: 'Esta mangueira já está na biblioteca.' }); else { r.lib.mangueiras.push(Object.assign({ dn: v.dn, usuario: true }, v.mangueira)); r.entraram.push({ grupo: g, nome: nm }); } return; }
@@ -138,7 +172,7 @@
         if (v.erro) r.recusados.push({ grupo: g, nome: nm, motivo: v.erro }); else { r.lib[g].push(v.item); r.entraram.push({ grupo: g, nome: nm }); }
       });
     });
-    if (!achou) r.erro = 'Nenhum grupo do modelo foi encontrado no arquivo (tubos, tiposTubo, C, pecas, esguichos, mangueiras, ocupacoes, bombas).';
+    if (!achou) r.erro = 'Nenhum grupo do modelo foi encontrado no arquivo (tubos, tiposTubo, C, pecas, esguichos, mangueiras, ocupacoes, bombas, reservatorios).';
     return r;
   }
   /** Modelo comentado para a inclusão em lote: um exemplo de cada grupo. Chave começada por "_" é comentário e é ignorada; item com "_exemplo" não entra. */
@@ -152,14 +186,23 @@
       esguichos: [{ _exemplo: true, _como: 'Ponto do catálogo: vazão em L/min na pressão em mca, com o alcance em metros.', modelo: 'Fabricante modelo 1 1/2"', Q: 300, P: 50, alcance: 18, fonte: 'Catálogo do fabricante, edição e página' }],
       mangueiras: [{ _exemplo: true, _como: 'Pelo menos 3 pontos [vazão em L/min, perda em kPa por metro], crescentes.', dn: 40, modelo: 'Fabricante modelo, tipo 2', pts: [[150, 1.0], [200, 1.8], [300, 4.2]], fonte: 'Catálogo do fabricante, edição e página' }],
       ocupacoes: [{ _exemplo: true, _como: 'Só para divisão que a tabela da norma não enquadra. Colunas da tabela de reserva: 1-t1, 1-t2, 2, 3, 4. cmin e cmax em MJ/m²; vazio vale qualquer carga.', norma: 'SP', div: 'M-9', desc: 'Ocupação especial com parecer do Corpo de Bombeiros', colunas: ['2'], cmin: null, cmax: null, fonte: 'Parecer técnico, número e data' }],
-      bombas: [{ _exemplo: true, _como: 'Pelo menos 3 pontos [vazão em m³/h, altura em mca], com vazão crescente e altura decrescente. shutoff é a pressão a vazão nula.', fabricante: 'Fabricante', modelo: 'Modelo 7,5 cv', cv: 7.5, rotor: 150, shutoff: 60, hsucMax: 8, jockey: false, pts: [[10, 55], [20, 48], [30, 38]], fonte: 'Catálogo do fabricante, edição e página' }]
+      bombas: [{ _exemplo: true, _como: 'Pelo menos 3 pontos [vazão em m³/h, altura em mca], com vazão crescente e altura decrescente. shutoff é a pressão a vazão nula.', fabricante: 'Fabricante', modelo: 'Modelo 7,5 cv', cv: 7.5, rotor: 150, shutoff: 60, hsucMax: 8, jockey: false, pts: [[10, 55], [20, 48], [30, 38]], fonte: 'Catálogo do fabricante, edição e página' }],
+      reservatorios: [{ _exemplo: true, _como: 'Medidas internas em metros e volume nominal em m³. Tipo: ret (comprimento e largura), cil, torre ou standpipe (diametro), tronco (diametroBase, diametroTopo e altura) ou taca (cubaForma cil ou tronco, as medidas da cuba e, opcional, diametroColuna). Em ret e cil o volumeNominal pode ficar no lugar das medidas. A fonte é opcional, mas sem ela o item fica marcado.', fabricante: 'Fabricante', modelo: 'Caixa 5000 L', tipo: 'tronco', diametroBase: 2.1, diametroTopo: 2.4, altura: 1.4, volumeNominal: 5, fonte: 'Catálogo do fabricante, edição e página' }]
     };
     if (!grupos) return m;
     var o = { _leia: m._leia }; grupos.forEach(function (g) { if (m[g]) o[g] = m[g]; }); return o;
   }
   /** 2.6.0: nome do arquivo do modelo e prompt pronto para gerar o JSON com uma IA a partir do PDF de um catálogo. escopo = 'bombas' (só o grupo bombas) ou 'lote' (todos os grupos). */
-  function arquivoModelo(escopo) { return escopo === 'bombas' ? 'modelo_bombas.firecalc.json' : 'modelo_biblioteca.firecalc.json'; }
+  function arquivoModelo(escopo) { return escopo === 'bombas' ? 'modelo_bombas.firecalc.json' : escopo === 'reservatorios' ? 'modelo_reservatorios.firecalc.json' : 'modelo_biblioteca.firecalc.json'; }
   function promptIA(escopo) {
+    if (escopo === 'reservatorios') return ['Transcreva os dados do catálogo anexo (PDF) para o modelo JSON anexo (' + arquivoModelo(escopo) + ').', '', 'Regras:',
+      '1. Use somente números impressos no catálogo. Não estime, não interpole e não complete medida que falta. Se um dado não está no catálogo, deixe o item de fora.',
+      '2. Preencha só o grupo reservatorios do modelo. Apague os outros grupos.',
+      '3. Apague as chaves que começam com "_" (_leia, _como, _exemplo) do arquivo e de cada item.',
+      '4. Em todo item, "fonte" é o nome do arquivo do PDF e a página, no formato "Catalogo.pdf, p. 12".',
+      '5. Tipo da caixa: ret, cil, tronco, taca, torre ou standpipe, como no modelo. Medidas internas em metros e decimal com ponto. O volumeNominal vai em m³ (litros divididos por 1000).',
+      '6. Use a medida interna. Se o catálogo traz só a medida externa, deixe o item de fora.',
+      '7. Responda com o JSON num bloco de código. Depois do bloco, liste em poucas linhas o que não achou no catálogo e o que ficou duvidoso, com a página.'].join('\n');
     var so = escopo === 'bombas';
     return ['Transcreva os dados do catálogo anexo (PDF) para o modelo JSON anexo (' + arquivoModelo(escopo) + ').', '', 'Regras:',
       '1. Use somente números impressos no catálogo. Não estime, não interpole e não complete ponto que falta. Se um dado não está no catálogo, deixe o item de fora.',
@@ -184,5 +227,5 @@
     Object.keys(u).forEach(function (g) { if (u[g].length) tem = true; });
     return tem ? clone(u) : null;
   }
-  return { ORDEM: ORDEM, NOME: NOME, MARCA: MARCA, vazia: vazia, valida: valida, aplica: aplica, importa: importa, modeloLote: modeloLote, promptIA: promptIA, arquivoModelo: arquivoModelo, usados: usados, guardaBase: guardaBase };
+  return { ORDEM: ORDEM, NOME: NOME, TIPOS_RES: TIPOS_RES, MARCA: MARCA, vazia: vazia, valida: valida, aplica: aplica, importa: importa, modeloLote: modeloLote, promptIA: promptIA, arquivoModelo: arquivoModelo, usados: usados, guardaBase: guardaBase };
 });

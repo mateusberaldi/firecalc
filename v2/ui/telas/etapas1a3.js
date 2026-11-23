@@ -78,24 +78,33 @@
   };
   /* 2.5.3: Edificação e sistema numa etapa só. 2.6.0: sem "Tipo adotado" e sem "Por que isso?"; os botões de escolha do sistema levam o SVG e os
    * quatro parâmetros; "Alterar sistema" substitui o enquadramento manual; a confirmação do tipo sai do cartão e vem como aviso no "Próximo". */
+  /** 2.7.0 (FC-041): o que o Decreto 69.118/24 indica para hidrantes e mangotinhos (só SP). Uma linha de resultado e, se houver, uma de ressalva; a norma fica em Verificações e Ajuda. */
+  function cartaoEnquadramento() {
+    var F = S.F, V = U.V, x = M.exigenciaHidranteSP(D, F.sistema.divisao, V.num(F.sistema.area), V.num(F.sistema.altura), V.num(F.sistema.carga));
+    if (!x) return '';
+    var corpo = x.estado === 'falta' ? '<p class="peq" id="enq-res">' + esc(x.msg) + '</p>' : U.aviso(x.estado === 'verifique' ? 'al' : 'in', '<span id="enq-res" data-estado="' + x.estado + '">' + esc(x.msg) + '</span>') + (x.ressalva ? '<p class="peq" id="enq-ress">' + esc(x.ressalva) + '</p>' : '');
+    return '<div class="cartao bloco" id="cartao-enquadramento"><h2 class="t3">Enquadramento</h2>' + corpo + '</div>';
+  }
   U.telas[U.POS.edif] = function () {
     var F = S.F, N = U.norma(), h = U.cab(U.POS.edif, 'Edificação e sistema', '');
     if (!N) return h + U.aviso('in', 'Escolha a norma na etapa Identificação para ver a classificação. <button class="bt lig min" data-corrigir="norma">Ir para a norma</button>');
-    var g = S.sit.ctx.sugestao, cols = COLS[F.norma], tab = F.norma === 'SP' ? 'IT 22, Tabela 3' : 'NPT 022, Tabela 4', pedeCarga = S.sit.ctx.precisaCarga || !U.V.vazio(F.sistema.carga);
+    var g = S.sit.ctx.sugestao, cols = COLS[F.norma], tab = F.norma === 'SP' ? 'IT 22, Tabela 3' : 'NPT 022, Tabela 4', sp = F.norma === 'SP', pedeCarga = S.sit.ctx.precisaCarga || !U.V.vazio(F.sistema.carga) || (sp && F.sistema.divisao === 'J-2');   /* 2.7.0 (FC-041): J-2 em SP também pede a carga (opcional) */
     var tt = tipoTabela(), area = tt.area, cl = tt.cl, tabT = tt.id, to = U.tipoObj(), man = !!F.sistema.tipoManual, rel = man && tabT ? posTipo(F.sistema.tipoManual) - posTipo(tabT) : 0, rpm = man && to ? rtiDe(to) : null; if (rel < 0 && rpm && rpm.admitido) rel = 0;
-    h += '<div class="cartao bloco"><h2 class="t3">Dados da edificação</h2><div class="form dados-ed' + (pedeCarga ? ' c3' : '') + '">' +
+    h += '<div class="cartao bloco"><h2 class="t3">Dados da edificação</h2><div class="form dados-ed' + (sp && pedeCarga ? ' c4' : sp || pedeCarga ? ' c3' : '') + '">' +
       U.escolha('sistema.divisao', 'Divisão de ocupação', D.ocupacao.divisoes.map(function (d) { return [d.div, d.div + ', ' + d.desc]; }), { vazio: 'Escolha a divisão', cls: 'destaque' }) +
       U.campo('sistema.area', 'Área da edificação', { un: 'm²', ex: '1000', num: true, cls: 'destaque' }) +
+      (sp ? U.campo('sistema.altura', 'Altura da edificação', { un: 'm', ex: '9', num: true, cls: 'destaque' }) : '') +
       (pedeCarga ? U.campo('sistema.carga', 'Carga de incêndio', { un: 'MJ/m²', ex: '700', num: true, cls: 'destaque' }) : '') + '</div></div>';
+    if (sp && F.sistema.divisao) h += cartaoEnquadramento();
     h += '<div class="cartao bloco" id="cartao-sistema"><div class="cab-ac"><h2 class="t3">Sistema</h2><button type="button" class="bt alt" data-acao="alterar" aria-haspopup="dialog">Alterar sistema</button></div>';
     if (F.sistema.colManual && F.sistema.coluna) {   // projeto de versão anterior com o enquadramento trocado à mão
       h += U.aviso('al', 'Enquadramento trocado à mão: <b>' + esc(cols[F.sistema.coluna] || F.sistema.coluna) + '</b> da ' + tab + (g && g.colunas ? ', no lugar de ' + g.colunas.map(function (k) { return cols[k] || k; }).join(' ou ') + ', que é o que a tabela indica para ' + esc(F.sistema.divisao) : '') + '. Justifique no memorial. <button class="bt lig min" data-acao="colauto">Voltar ao que a tabela indica</button>');
-    } else if (!F.sistema.divisao) h += '<p class="peq">Escolha a divisão de ocupação. O sistema exigido aparece aqui.</p>';
+    } else if (!F.sistema.divisao) h += '<p class="peq">Escolha a divisão de ocupação. O sistema indicado pela tabela aparece aqui.</p>';
     else if (!g || !g.colunas) h += U.aviso('al', esc(g ? g.msg : 'A tabela não traz esta divisão.') + (g && g.fonte ? ' <span class="peq">Fonte: ' + esc(g.fonte) + '.</span>' : ''));
     else if (!(area > 0)) h += '<p class="peq">Informe a área da edificação para ver o tipo de sistema e a reserva de incêndio.</p>';
     else if (g.colunas.length === 1) {
       var s1 = solucao(g.colunas[0], area);
-      h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b>' + (g.precisaCarga ? ', com carga de incêndio ' + esc(g.faixa) + ',' : '') + ' a norma pede:</p>' + (s1.t ? '<div class="opcoes sist">' + botaoSist(s1.t, s1.cl, { tag: 'div', atual: true }) + '</div>' : '');
+      h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b>' + (g.precisaCarga ? ', com carga de incêndio ' + esc(g.faixa) + ',' : '') + ' a tabela indica:</p>' + (s1.t ? '<div class="opcoes sist">' + botaoSist(s1.t, s1.cl, { tag: 'div', atual: true }) + '</div>' : '');
     } else {
       h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b> a norma aceita duas soluções. Escolha a que o projeto vai usar:</p><div class="opcoes sist">' + g.colunas.map(function (k) {
         var s = solucao(k, area); return s.t ? botaoSist(s.t, s.cl, { atual: F.sistema.coluna === k && !man, attr: ' data-acao="coluna" data-v="' + esc(k) + '"' }) : ''; }).join('') + '</div>' +

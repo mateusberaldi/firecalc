@@ -5,7 +5,7 @@
   'use strict';
   var D = FIREDADOS, M = FireMotor, E = FireEstado, V = FireValida, FT = FireFormato, fmt = FT.fmt, esc = FT.esc, vir = FT.vir;
   D.bombasBase = D.bombas.slice();
-  var U = window.FireUI = { D: D, M: M, E: E, V: V, fmt: fmt, esc: esc, vir: vir, telas: {}, VERSAO: 'FireCalc 2.6.4' };
+  var U = window.FireUI = { D: D, M: M, E: E, V: V, fmt: fmt, esc: esc, vir: vir, telas: {}, VERSAO: 'FireCalc 2.7.0' };
   var IC = U.IC = {
     ok: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="var(--fc-superficie)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     er: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="var(--fc-superficie)" stroke-width="1.8" stroke-linecap="round"/></svg>',

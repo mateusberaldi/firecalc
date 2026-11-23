@@ -295,7 +295,7 @@
       n = R.escritorios.numeros; P = 'Escritórios: ';
       conf(P + 'Qt (L/min)', n.Qt, 408.71, 0.05); conf(P + 'Pd (mca)', n.Pd, 73.99, 0.01); conf(P + 'AMT (mca)', n.AMT, 77.95, 0.01); conf(P + 'estática no 2º subsolo', n.estaticaMax.P, 102.0, 0.1); conf(P + 'NPSHd (mca)', n.NPSHd, 4.28, 0.01); conf(P + 'jockey na partida (L/min)', n.Qjl, 16.1, 0.1); conf(P + 'recalque só registrado, sem conta (0 = não calculado)', n.PR === undefined ? 0 : 1, 0, 0); conf(P + 'ponto de trabalho Q (m³/h)', n.Qw, 26.39, 0.01); conf(P + 'ponto de trabalho H (mca)', n.Hw, 85.91, 0.01);
       n = R.edificio_alto.numeros; P = 'Edifício alto: ';
-      conf(P + 'AMT (mca)', n.AMT, 27.85, 0.01); conf(P + 'Qt (L/min)', n.Qt, 307.6, 0.1); conf(P + 'estática no térreo', n.estaticaMax.P, 82.8, 0.05); conf(P + 'ponto de trabalho Q (m³/h)', n.Qw, 19.39, 0.01); conf(P + 'ponto de trabalho H (mca)', n.Hw, 31.22, 0.01);
+      conf(P + 'AMT (mca)', n.AMT, 30.79, 0.01); conf(P + 'Qt (L/min)', n.Qt, 307.6, 0.1); conf(P + 'estática no térreo', n.estaticaMax.P, 82.8, 0.05); conf(P + 'ponto de trabalho Q (m³/h)', n.Qw, 18.65, 0.01); conf(P + 'ponto de trabalho H (mca)', n.Hw, 31.45, 0.01);   /* 2.7.0 (FC-005): nó RI em 48,065 m, AMT do exemplo mais 2,935 mca */
       n = R.escola.numeros; P = 'Escola E-1: ';
       conf(P + 'Pd (mca)', n.Pd, 34.19, 0.01); conf(P + 'AMT (mca)', n.AMT, 33.79, 0.01); conf(P + 'H da bomba na nominal', n.Hb, 34.3, 0.1); conf(P + 'ponto de trabalho Q (m³/h)', n.Qw, 18.1, 0.06); conf(P + 'ponto de trabalho H (mca)', n.Hw, 34.2, 0.06);
       n = R.igreja_B.numeros; P = 'Igreja com pressão no esguicho no arquivo, pela Tabela 2: ';

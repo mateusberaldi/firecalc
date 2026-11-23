@@ -33,7 +33,7 @@ html = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FireCalc 2.6.4</title>
+<title>FireCalc 2.7.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,''' + urllib.parse.quote(fav.replace('"', "'"), safe="/=:'") + '''">
 <style>''' + css + '''</style>
 </head>

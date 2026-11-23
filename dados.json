@@ -1207,7 +1207,7 @@
       "50": 4.2,
       "65": 5.2,
       "80": 6.3,
-      "100": 6.4,
+      "100": 8.4,
       "150": 12.5
      }
     },
@@ -1636,7 +1636,7 @@
  ],
  "mangueira": {
   "modelo": "Kidde Sintex N tipo 2, 40 mm",
-  "fonte": "Mangueira Kiddle.pdf, p. 1",
+  "fonte": "Kiddle Sintex N Tipo 2.pdf, p. 1",
   "leitura_kpa_m": {
    "Q": [
     150,
@@ -1672,7 +1672,7 @@
  },
  "mangueira65": {
   "modelo": "Kidde Sintex N tipo 2, 65 mm",
-  "fonte": "Mangueira Kiddle.pdf, p. 1",
+  "fonte": "Kiddle Sintex N Tipo 2.pdf, p. 1",
   "leitura_kpa_m": {
    "Q": [
     300,
@@ -34120,6 +34120,428 @@
     }
    ],
    "fonte": "Esguichos Reunidas.pdf, pp. 5 e 6"
+  }
+ },
+ "exigenciaSP": {
+  "limite": {
+   "area": 750,
+   "altura": 12,
+   "tab": "5",
+   "pag": 21,
+   "fonte": "Decreto 69.118/24, Anexo A, Tabela 5 (p. 21) e títulos das Tabelas 6: área até 750 m² e altura até 12,00 m na Tabela 5; acima, Tabelas 6"
+  },
+  "divisoes": {
+   "A-1": {
+    "tab": "6A",
+    "pag": 22,
+    "cel": "X",
+    "nota": "",
+    "regra": "cond_unifamiliar"
+   },
+   "A-2": {
+    "tab": "6A",
+    "pag": 22,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "A-3": {
+    "tab": "6A",
+    "pag": 22,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "B-1": {
+    "tab": "6B",
+    "pag": 23,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "B-2": {
+    "tab": "6B",
+    "pag": 23,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "C-1": {
+    "tab": "6C",
+    "pag": 24,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "C-2": {
+    "tab": "6C",
+    "pag": 24,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "C-3": {
+    "tab": "6C",
+    "pag": 24,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "D-1": {
+    "tab": "6D",
+    "pag": 25,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "D-2": {
+    "tab": "6D",
+    "pag": 25,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "D-3": {
+    "tab": "6D",
+    "pag": 25,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "D-4": {
+    "tab": "6D",
+    "pag": 25,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "E-1": {
+    "tab": "6E",
+    "pag": 26,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "E-2": {
+    "tab": "6E",
+    "pag": 26,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "E-3": {
+    "tab": "6E",
+    "pag": 26,
+    "cel": "X",
+    "nota": "",
+    "regra": "isencao_e13"
+   },
+   "E-4": {
+    "tab": "6E",
+    "pag": 26,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "E-5": {
+    "tab": "6E",
+    "pag": 26,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "E-6": {
+    "tab": "6E",
+    "pag": 26,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-1": {
+    "tab": "6F.1",
+    "pag": 27,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-2": {
+    "tab": "6F.1",
+    "pag": 27,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-3": {
+    "tab": "6F.2",
+    "pag": 28,
+    "cel": "X",
+    "nota": "",
+    "regra": "isencao_e13"
+   },
+   "F-4": {
+    "tab": "6F.2",
+    "pag": 28,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-5": {
+    "tab": "6F.3",
+    "pag": 29,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-6": {
+    "tab": "6F.3",
+    "pag": 29,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-7": {
+    "tab": "6F.4",
+    "pag": 30,
+    "cel": "-",
+    "nota": "",
+    "regra": "f7_altura6"
+   },
+   "F-8": {
+    "tab": "6F.3",
+    "pag": 29,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-9": {
+    "tab": "6F.2",
+    "pag": 28,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-10": {
+    "tab": "6F.4",
+    "pag": 30,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "F-11": {
+    "tab": "6F.5",
+    "pag": 31,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "G-1": {
+    "tab": "6G.1",
+    "pag": 32,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "G-2": {
+    "tab": "6G.1",
+    "pag": 32,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "G-3": {
+    "tab": "6G.2",
+    "pag": 33,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "G-4": {
+    "tab": "6G.2",
+    "pag": 33,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "G-5": {
+    "tab": "6G.3",
+    "pag": 34,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "H-1": {
+    "tab": "6H.1",
+    "pag": 35,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "H-2": {
+    "tab": "6H.1",
+    "pag": 35,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "H-3": {
+    "tab": "6H.2",
+    "pag": 36,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "H-4": {
+    "tab": "6H.2",
+    "pag": 36,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "H-5": {
+    "tab": "6H.3",
+    "pag": 37,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "H-6": {
+    "tab": "6H.3",
+    "pag": 37,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "I-1": {
+    "tab": "6I.1",
+    "pag": 38,
+    "cel": "X",
+    "nota": "5",
+    "regra": "isencao_it22"
+   },
+   "I-2": {
+    "tab": "6I.1",
+    "pag": 38,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "I-3": {
+    "tab": "6I.2",
+    "pag": 39,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "J-1": {
+    "tab": "6J.1",
+    "pag": 40,
+    "cel": "-",
+    "nota": "",
+    "regra": ""
+   },
+   "J-2": {
+    "tab": "6J.1",
+    "pag": 40,
+    "cel": "X",
+    "nota": "7",
+    "regra": "isencao_it22_carga100"
+   },
+   "J-3": {
+    "tab": "6J.2",
+    "pag": 41,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "J-4": {
+    "tab": "6J.2",
+    "pag": 41,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "K-1": {
+    "tab": "6K",
+    "pag": 42,
+    "cel": "X",
+    "nota": "3,4",
+    "regra": "area_ou_altura"
+   },
+   "L-1": {
+    "tab": "6L",
+    "pag": 43,
+    "cel": "",
+    "nota": "",
+    "regra": "comissao_l1"
+   },
+   "L-2": {
+    "tab": "6L",
+    "pag": 43,
+    "cel": "",
+    "nota": "",
+    "regra": "comissao"
+   },
+   "L-3": {
+    "tab": "6L",
+    "pag": 43,
+    "cel": "",
+    "nota": "",
+    "regra": "comissao"
+   },
+   "M-1": {
+    "tab": "6M.1",
+    "pag": 43,
+    "cel": "",
+    "nota": "",
+    "regra": "extensao_tunel"
+   },
+   "M-2": {
+    "tab": "6M.2",
+    "pag": 44,
+    "cel": "X",
+    "nota": "3,4",
+    "regra": "volume"
+   },
+   "M-3": {
+    "tab": "6M.3",
+    "pag": 45,
+    "cel": "X",
+    "nota": "",
+    "regra": ""
+   },
+   "M-4": {
+    "tab": "6M.4",
+    "pag": 46,
+    "cel": "-",
+    "nota": "",
+    "regra": "qualquer_area"
+   },
+   "M-5": {
+    "tab": "6M.5",
+    "pag": 47,
+    "cel": "X",
+    "nota": "3",
+    "regra": "verifique_it"
+   },
+   "M-6": {
+    "tab": "",
+    "pag": 0,
+    "cel": "",
+    "nota": "",
+    "regra": "comissao"
+   },
+   "M-7": {
+    "tab": "6M.4",
+    "pag": 46,
+    "cel": "X",
+    "nota": "",
+    "regra": "qualquer_area"
+   }
+  },
+  "isencaoIT22": {
+   "E11": 200,
+   "E12": 100,
+   "fonte": "IT 22/2025, Anexo E, E.1.1 a E.1.4 (p. 21)"
   }
  }
 }

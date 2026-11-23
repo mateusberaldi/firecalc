@@ -160,7 +160,7 @@
   /** Bomba KSB: o que foi lido da folha de curvas (potência no eixo, NPSH requerido). */
   function catalogoKsb() {
     var F = S.F, b = U.bombaDe(F.bomba.id), n = S.sit.k === 'ok' ? S.sit.R.numeros : null, h = ''; if (!b || b.fabricante !== 'KSB') return '';
-    if (b.npsh && n && n.NPSHrForaDaCurva) {
+    if (b.npsh && n && n.NPSHrForaDaCurva && U.npshObr()) {
       var qs = b.npsh.map(function (p) { return p[1]; }), fx = fmt(Math.min.apply(null, qs), 1) + ' a ' + fmt(Math.max.apply(null, qs), 1) + ' m³/h';
       h += U.aviso('al', 'A ' + (n.Qverif === 1.5 ? '1,5 vez a vazão de projeto' : 'vazão de projeto') + ' (' + fmt((n.Qverif === 1.5 ? n.Q15 : n.Qt) * 0.06, 2) + ' m³/h)' + ' fica fora da faixa da curva de NPSH do catálogo (' + fx + '): não há leitura. Informe o valor do fabricante no cartão Bomba escolhida.');
     }
@@ -175,8 +175,8 @@
    *  bomba escolhida mostra só a bomba: altura na vazão de projeto, ponto de trabalho, shut-off e, com sucção negativa, o NPSH requerido dela e a
    *  escolha de com qual NPSH disponível ele é comparado (1,0 Q ou 1,5 Q). A escolha comanda a verificação, a planilha e o memorial. */
   U.cartoesBomba = function (n) {
-    var F = S.F, b = U.bombaDe(F.bomba.id), neg = n.NPSHd !== undefined, v15 = neg && b && n.Qverif === 1.5, v1 = neg && b && n.Qverif === 1, h = '<div class="grade g-bomba" id="bomba-cards">';
-    var marca = function (usa) { return usa ? 'usado na verificação da bomba escolhida' : ''; };
+    var F = S.F, b = U.bombaDe(F.bomba.id), neg = n.NPSHd !== undefined, obr = neg && U.npshObr(), v15 = obr && b && n.Qverif === 1.5, v1 = obr && b && n.Qverif === 1, h = '<div class="grade g-bomba" id="bomba-cards">';
+    var marca = function (usa) { return usa ? 'usado na verificação da bomba escolhida' : !obr && neg ? U.pilula('in') : ''; };   /* 2.7.0 (FC-021): sucção positiva por tolerância em SP: só informação, sem pedir o requerido */
     h += '<div class="cartao bloco" id="card-nec"><h2 class="t3">Ponto de projeto (necessário)</h2>' +
       (neg ? '<p class="kv-tit">Na vazão de projeto (1,0 Q)</p>' : '') + '<dl class="kv kv-l" id="nec-l1">' +
       U.kv('Vazão de projeto', fmt(n.Qth, 2), 'm³/h', fmt(n.Qt, 1) + ' L/min, ' + (n.jatoUnico ? 'um jato' : 'dois jatos')) +
@@ -195,13 +195,15 @@
         (folga !== null ? U.kv('Altura da bomba na vazão de projeto', fmt(n.Hb, 2), 'mca', (folga >= 0 ? 'folga de ' + fmt(folga, 2) + ' mca sobre a necessária' : fmt(-folga, 2) + ' mca abaixo da necessária'), folga >= 0 ? 'ok' : 'er') : '') +
         (n.Qw !== undefined ? U.kv('Ponto de trabalho nesta rede', fmt(n.Qw, 1) + ' m³/h', '', fmt(n.Hw, 1) + ' mca') : '') +
         U.kv('Pressão a vazão nula (shut-off)', fmt(b.shutoff, b.shutoff % 1 ? 1 : 0), 'mca') + '</dl>';
-      if (neg) h += U.npshBomba(n);
+      if (obr) h += U.npshBomba(n);
       if (folga !== null) h += '<div id="card-bomba-sit">' + (folga < 0 ? U.aviso('er', '<b>A bomba escolhida não entrega a altura necessária:</b> faltam ' + fmt(-folga, 2) + ' mca na vazão de projeto. Escolha outra bomba ou reveja a rede.') :
         hb.extrapolado ? U.aviso('al', 'A altura da bomba nessa vazão foi estimada pelo prolongamento da curva do catálogo. Confira com o fabricante.') : '<p class="peq">' + U.pilula('ok', 'Entrega a altura necessária') + '</p>') + '</div>';
     }
     return h + '</div></div>';
   };
   /** Linha de baixo do cartão da bomba escolhida: o NPSH requerido da bomba (ou o valor da curva KSB), a escolha da vazão de comparação e o resultado. */
+  /** 2.7.0 (FC-021): o NPSH é conferido (campo do requerido, escolha de vazão e Atende ou Cavita) só quando o estado da sucção o obriga; na positiva por tolerância em SP é informação. */
+  U.npshObr = function () { var s = V.succaoDe(S.F); return !!(s && s.npshObrigatorio); };
   U.npshBomba = function (n) {
     var q15 = n.Qverif === 1.5, h = '<div class="form form-npsh" id="bomba-l2">';
     h += n.NPSHrCurva ? '<dl class="kv kv-1">' + U.kv('NPSH requerido', fmt(n.NPSHr, 2), 'mca', 'da curva do catálogo, a ' + fmt((q15 ? n.Q15 : n.Qt) * 0.06, 2) + ' m³/h') + '</dl>' : U.campo('bomba.npshr', 'NPSH requerido', { un: 'mca', num: true });
@@ -228,7 +230,7 @@
   }
   /** 2.6.4 (FC-033): bombas da lista sugerida na vazão de projeto (as mesmas da tabela) e, quando aparece, as da lista a 1,5 Q. */
   function candBombas(n, q) { return D.bombas.filter(function (b) { return !b.jockey; }).map(function (b) { return { b: b, h: M.alturaBomba(b.pts, q) }; }).filter(function (x) { return !x.h.extrapolado && x.h.H >= n.AMT; }).sort(function (x, y) { return (x.h.H - y.h.H) || ((x.b.cv || 0) - (y.b.cv || 0)); }).slice(0, N_SUGERIDAS); }
-  function mostra15(n) { return n.NPSHd !== undefined && (n.Qverif === 1.5 || (n.NPSHr !== undefined && n.NPSHd1 < n.NPSHr - 1e-9)); }
+  function mostra15(n) { return n.NPSHd !== undefined && U.npshObr() && (n.Qverif === 1.5 || (n.NPSHr !== undefined && n.NPSHd1 < n.NPSHr - 1e-9)); }
   /** Bomba em visualização (S.verBomba): só vale na etapa Bomba, sobre a mesma escolha de quando foi pedida, e enquanto estiver numa das listas. Sem isso volta à escolhida. */
   U.verBombaEf = function () {
     var sit = S.sit, id = S.verBomba; if (!id) return null;

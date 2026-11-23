@@ -8,7 +8,7 @@
     V05: 'Pressão estática máxima (bomba fechada e reservatório cheio)', V06: 'Velocidade da água na rede', V07: 'Velocidade da água na sucção', V08: 'NPSH disponível contra o requerido', V09: 'Posição da bomba em relação ao nível da água',
     V10: 'Altura da bomba na vazão de projeto', V11: 'Pressão a vazão nula da bomba (shut-off)', V12: 'Volume da reserva de incêndio', V13: 'Duração da reserva', V14: 'Bomba de pressurização (jockey)',
     V15: 'Vazão da bomba de pressurização na partida', V16: 'Pressão a vazão nula da bomba de pressurização', V17: 'Ajuste dos pressostatos', V18: 'Diâmetro mínimo da rede', V19: 'Altura da válvula do hidrante',
-    V20: 'Pressão necessária na entrada do recalque', V21: 'Tabela de comprimento equivalente', V23: 'Ponto único de hidrante', V30: 'Tipo de sistema contra a tabela', V24: 'Ramal de retorno para testes', V25: 'Válvula redutora de pressão (regulagem declarada)', V29: 'Nível X e reserva efetiva pela Tabela B.1' };
+    V20: 'Pressão necessária na entrada do recalque', V21: 'Tabela de comprimento equivalente', V23: 'Ponto único de hidrante', V30: 'Tipo de sistema contra a tabela', V24: 'Ramal de retorno para testes', V25: 'Válvula redutora de pressão (regulagem declarada)', V29: 'Nível X e reserva efetiva pela Tabela B.1', V34: 'Piscina como reservatório: declaração do responsável pelo uso', V35: 'Exigência de hidrantes pelo decreto', V33: 'Pressão mínima na válvula de cada hidrante' };
   /* O que fazer e para onde ir, por verificação: [frases], [[rótulo do botão, etapa, campo opcional]]. */
   var FAZER = {
     V29: [['Conferir o DN da sucção: fora da Tabela B.1 a ferramenta usa a linha do DN imediatamente maior, a favor da segurança.'], [['o abastecimento', U.POS.abast]]],
@@ -23,7 +23,7 @@
     V10: [['Escolher uma bomba que, na vazão de projeto, entregue altura igual ou maior que a altura manométrica, com essa vazão dentro da faixa da curva do catálogo.'], [['a bomba', 7, 'bomba.id']]],
     V11: [['Conferir a pressão a vazão nula da bomba com o limite de pressão dos componentes.'], [['a bomba', 7, 'bomba.id']]],
     V12: [['Aumentar a reserva de incêndio efetiva até o volume da tabela.'], [['a reserva', U.POS.abast]]],
-    V30: [['Adotar o tipo que a tabela pede para esta área, ou um tipo superior, no botão Alterar sistema.'], [['o sistema', U.POS.edif]]],
+    V30: [['Adotar o tipo que a tabela indica para esta área, ou um tipo superior, no botão Alterar sistema.'], [['o sistema', U.POS.edif]]],
     V14: [['Lançar a bomba de pressurização (jockey).'], [['a bomba de pressurização', 7, 'jockey.id']]],
     V15: [['Escolher uma bomba de pressurização menor: no ponto de partida ela não pode passar de 20 L/min.'], [['a bomba de pressurização', 7, 'jockey.id']]],
     V16: [['Escolher uma bomba de pressurização com pressão a vazão nula igual ou maior que a da principal.'], [['a bomba de pressurização', 7, 'jockey.id']]],
@@ -33,6 +33,9 @@
     V21: [['Usar peças de uma só tabela de comprimento equivalente.'], [['a rede', U.POS.rede]]],
     V23: [['Usar hidrante de duas expedições (tipo superior) ou lançar um segundo hidrante.'], [['a rede', U.POS.rede]]],
     V25: [['Usar regulagem entre a pressão mínima do tipo de sistema (Tabela 2) e 100 mca, com a fonte do catálogo.', 'Tirar a válvula redutora de hidrante que entra no par de cálculo: ela fica nos pontos de pressão alta, não nos mais desfavoráveis.'], [['as válvulas redutoras', 5]]],
+    V35: [['Conferir a divisão, a área e a altura informadas. Se o decreto não indica hidrantes e o projeto adota o sistema, o dimensionamento segue valendo. Nos casos marcados para verificar, ver o verbete Exigência pelo decreto na Ajuda e consultar o Corpo de Bombeiros.'], [['a edificação', U.POS.edif]]],
+    V34: [['Marcar a declaração do responsável pelo uso garantindo a reserva efetiva permanentemente, ou trocar o tipo do reservatório.'], [['o abastecimento', U.POS.abast]]],
+    V33: [['Rever a rede, a altura do reservatório ou a regulagem da válvula redutora do hidrante indicado: a pressão na válvula precisa chegar ao mínimo do tipo de sistema.'], [['a rede', U.POS.rede], ['os hidrantes', U.POS.hidr]]],
     V24: [['Lançar o ramal de retorno. Se, com o registro todo aberto, a vazão não chegar a 75% da nominal, aumentar o diâmetro ou tirar peças do ramal. Acima da nominal, quem ajusta o ensaio é o registro de regulagem.'], [['o ramal de retorno', 7, 'retorno.trechos.0.dn']]]
   };
   /* Frase do resultado. Onde o texto do motor é telegráfico, a tela escreve a frase inteira com os mesmos números. */
@@ -45,13 +48,13 @@
     if (v.id === 'V10' && n.Hb !== undefined) return (n.Hb >= n.AMT ? 'A bomba entrega ' : 'A bomba só entrega ') + fmt(n.Hb, 2) + ' mca na vazão de projeto (' + fmt(n.Qth, 2) + ' m³/h); o sistema pede ' + fmt(n.AMT, 2) + ' mca' + (n.Hb >= n.AMT ? '' : ': faltam ' + fmt(n.AMT - n.Hb, 2) + ' mca');
     if (v.id === 'V05' && n.estaticaMax) return fmt(n.estaticaMax.P, 1) + ' mca em ' + n.estaticaMax.nome + '; o limite é ' + fmt(N.pmax, 0) + ' mca';
     if (v.id === 'V25' && n.redutoras) return n.redutoras.map(function (r) { return r.nome + ': ' + (r.montante === null ? 'regulagem de ' : 'de ' + fmt(r.montante, 1) + ' para ') + fmt(r.P, 1) + ' mca' + (r.avisos.length ? ' (' + vir(r.avisos.join('; ')) + ')' : ''); }).join('; ') + '. Critério da ferramenta: pressão de saída declarada';
-    if (v.id === 'V12' && n.rtiTabela !== undefined) return 'Reserva de ' + fmt(n.rtiEfetiva, 1) + ' m³; a tabela pede ' + fmt(n.rtiTabela, 0) + ' m³';
+    if (v.id === 'V12' && n.rtiTabela !== undefined) return 'Reserva de ' + fmt(n.rtiEfetiva, 1) + ' m³; a tabela indica ' + fmt(n.rtiTabela, 0) + ' m³';
     if (v.id === 'V01') return vir(v.valor).replace(/^Q /, 'Vazão de ').replace('; P ', '; pressão de ');
     return vir(v.valor);
   }
   var COMTIT = { V02: 1, V06: 1, V09: 1, V14: 1 };   // verificações em que o texto do motor traz informação a mais (trecho, situação da sucção, exigência)
   function item(x, aberto) {
-    var v = x.v, N = U.norma(), f = FAZER[v.id], h = '<div class="ver" id="ver-' + v.id + '"><div><span class="nm">' + esc(VT[v.id] || v.titulo) + '</span><span class="cod">' + v.id + '</span><div class="val">' + esc(valor(x)) + '. <span class="peq">' + (COMTIT[v.id] ? esc(vir(v.titulo)) + '. ' : '') + (v.item ? (/^(regra da ferramenta|didático)/.test(v.item) ? '' : (N.id === 'SP' ? 'IT 22, ' : 'NPT 022, ')) + esc(v.item) : '') + '</span></div>' + (x.nota ? '<p class="peq" style="margin-top:4px">' + esc(x.nota) + '</p>' : '') + '</div><div>' + (x.cf ? U.pilula('ok', 'Conferido') : U.pilula(x.s)) + '</div>';
+    var v = x.v, N = U.norma(), f = FAZER[v.id], h = '<div class="ver" id="ver-' + v.id + '"><div><span class="nm">' + esc(VT[v.id] || v.titulo) + '</span><span class="cod">' + v.id + '</span><div class="val">' + esc(v.id === 'V35' ? valor(x).replace(/\.$/, '') : valor(x)) + '. <span class="peq">' + (COMTIT[v.id] ? esc(vir(v.titulo)) + '. ' : '') + (v.item ? (/^(regra da ferramenta|didático|Decreto)/.test(v.item) ? '' : (N.id === 'SP' ? 'IT 22, ' : 'NPT 022, ')) + esc(v.item) : '') + '</span></div>' + (x.nota ? '<p class="peq" style="margin-top:4px">' + esc(x.nota) + '</p>' : '') + '</div><div>' + (x.cf ? U.pilula('ok', 'Conferido') : U.pilula(x.s)) + '</div>';
     if (aberto && f) h += '<div class="fazer"><b>O que fazer</b>' + (f[0].length > 1 ? '<ol>' + f[0].map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol>' : f[0][0]) + '<div class="ac">' + f[1].map(function (b, k) { return '<button class="bt' + (k === 0 && x.s === 'er' ? ' pri' : '') + '" ' + (b[2] ? 'data-corrigir="' + b[2] + '"' : 'data-ir="etapa:' + b[1] + '"') + '>Ir corrigir: ' + b[0] + '</button>'; }).join('') + '</div></div>';
     if (aberto && x.s === 'al') h += U.botaoConf(x);
     return h + '</div>';

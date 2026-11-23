@@ -17,7 +17,7 @@
   function novo() {
     return { base: {}, ident: { obra: '', endereco: '', municipio: '', uf: '', rt: '', registro: '', art: '', escritorio: '', cnpj: '' },
       norma: '', tabelaLeq: 'A', tubo: { norma: 'NBR 5580', classe: 'leve' }, tipoTubo: 'HID_Galvanizado_Classe_Leve_Roscado_BSP', C: '120', Cfonte: '',
-      sistema: { divisao: '', area: '', carga: '', coluna: '', tipoManual: '', esg4: '40' }, conf: { coluna: false, tipo: false, lista: false },
+      sistema: { divisao: '', area: '', altura: '', carga: '', coluna: '', tipoManual: '', esg4: '40' }, conf: { coluna: false, tipo: false, lista: false },
       trechos: [], nos: {}, hidrantes: [], cotasExtras: [],
       fonte: fonteNova(), ambiente: { altitude: '', temperatura: '' },
       bomba: { id: '', npshr: '', npshQ: '1' }, conferidos: {}, jockey: { id: '' }, saidas: '', recalque: { ativo: false, no: '', tipo: '', z: '', dn: 65, L: '' },
@@ -78,7 +78,7 @@
     F.norma = p.norma || ''; F.tabelaLeq = p.tabelaLeq || 'A'; if (p.tubo) F.tubo = { norma: p.tubo.norma, classe: p.tubo.classe }; F.C = txt(p.C === undefined ? 120 : p.C);
     /* 2.5.0: tipo de tubo com nome comercial; arquivo antigo (norma e classe) vira o tipo equivalente */
     var mig = []; F.tipoTubo = p.tipoTubo && tipoTubo(D, p.tipoTubo) ? p.tipoTubo : ((D.tipoTuboAntigo || {})[F.tubo.norma + '|' + F.tubo.classe] || F.tipoTubo); F.Cfonte = p.Cfonte || ''; sincTubo(F, D);
-    F.sistema = { divisao: s.divisao || '', area: txt(s.area), carga: txt(s.carga), coluna: s.coluna || '', tipoManual: s.tipoManual || '', esg4: s.esg4 || (s.tipo === '4-65' ? '65' : '40') };
+    F.sistema = { divisao: s.divisao || '', area: txt(s.area), altura: txt(s.altura), carga: txt(s.carga), coluna: s.coluna || '', tipoManual: s.tipoManual || '', esg4: s.esg4 || (s.tipo === '4-65' ? '65' : '40') };
     if (s.tipo && !F.sistema.tipoManual) {   // tipo explícito do arquivo: vale como escolha à mão quando difere da tabela (ou quando não há coluna)
       var cl = s.coluna && s.area ? M.classifica(D, F.norma, s.coluna, s.area) : null;
       if (!cl || tipoDe(cl.tipo, F.sistema.esg4) !== s.tipo) F.sistema.tipoManual = s.tipo;
@@ -158,7 +158,9 @@
     } else { delete P.bombasUsuario; delete P.mangueirasUsuario; delete P.cadastrosUsuario; }
     P.nome = F.ident.obra || P.nome || 'Projeto'; P.norma = F.norma; P.tabelaLeq = F.tabelaLeq; sincTubo(F, D); P.tipoTubo = F.tipoTubo; P.tubo = { norma: F.tubo.norma, classe: F.tubo.classe }; poe(P, 'C', n(F.C)); if (cAlterado(F, D) && !vazio(F.Cfonte)) P.Cfonte = String(F.Cfonte).trim(); else delete P.Cfonte;
     var tf = tipoFinal(F, D, M), s = {};
-    if (F.sistema.coluna && n(F.sistema.area) > 0) { s.coluna = F.sistema.coluna; s.area = n(F.sistema.area); }
+    if (n(F.sistema.area) > 0) s.area = n(F.sistema.area);   /* 2.7.0 (FC-041): a área vai também sem coluna da tabela (A-1, M-1, M-4...), para o enquadramento pelo decreto */
+    if (F.sistema.coluna && n(F.sistema.area) > 0) s.coluna = F.sistema.coluna;
+    if (n(F.sistema.altura) !== undefined) s.altura = n(F.sistema.altura);   /* 2.7.0 (FC-041): altura da edificação, opcional, só lida em SP (V35) */
     if (tf) s.tipo = tf;
     if (F.sistema.divisao) { s.divisao = F.sistema.divisao; if (n(F.sistema.carga) !== undefined) s.carga = n(F.sistema.carga); }
     if (tolerante) { if (F.sistema.tipoManual) s.tipoManual = F.sistema.tipoManual; s.esg4 = F.sistema.esg4; }
@@ -190,14 +192,14 @@
     if (F.cotasExtras.length) P.cotasExtras = F.cotasExtras.map(function (c) { var o = { nome: c.nome }; poe(o, 'z', n(c.z)); poeRed(o, c); return o; }); else delete P.cotasExtras;
     var f = Object.assign({}, P.fonte); f.modo = F.fonte.modo; poe(f, 'zX', F.fonte.modo === 'bomba' ? n(F.fonte.zX) : undefined); poe(f, 'zCheio', n(F.fonte.zCheio)); poe(f, 'rtiEfetiva', n(F.fonte.rtiEfetiva));
     if (F.fonte.elevado) f.elevado = true; else delete f.elevado;
-    /* 2.5.1: dados do nível X calculado. Arquivo de versão anterior, sem mudança de modo, é gravado como veio. */
-    var fo = F.fonte; ['xModo', 'saida', 'dnSuc', 'resForma', 'poco', 'anti', 'zXFonte', 'nivelX', 'tipo', 'tipologia', 'elevModo', 'cubaForma', 'hProp', 'topoReserva', 'succao'].concat(XK).forEach(function (k) { delete f[k]; });
+    /* 2.5.1: dados do nível X calculado (o único modo desde a 2.7.0, FC-048). */
+    var fo = F.fonte; ['xModo', 'saida', 'dnSuc', 'resForma', 'poco', 'anti', 'zXFonte', 'nivelX', 'tipo', 'tipologia', 'elevModo', 'cubaForma', 'hProp', 'topoReserva', 'succao', 'declaracao'].concat(XK).forEach(function (k) { delete f[k]; });
     if (fo.xModo === 'calc') {
-      f.xModo = 'calc'; if (fo.saida) f.saida = fo.saida; if (+fo.dnSuc) f.dnSuc = +fo.dnSuc; f.resForma = fo.resForma || 'ret'; XK.forEach(function (k) { poe(f, k, n(fo[k])); }); if (fo.poco) f.poco = true; if (fo.anti) f.anti = true;
+      f.xModo = 'calc'; if (fo.saida) f.saida = fo.saida; if (+fo.dnSuc) f.dnSuc = +fo.dnSuc; f.resForma = fo.resForma || 'ret'; XK.forEach(function (k) { poe(f, k, n(fo[k])); }); if (fo.poco) f.poco = true; if (fo.anti) f.anti = true; if (fo.declaracao && fo.tip === 'piscina') f.declaracao = true;   /* 2.7.0 (FC-027): só a piscina grava a declaração, e só marcada */
+      if (!(fo.anti && fo.saida === 'cima' && F.norma === 'SP')) delete f.antiBocal;   /* 2.7.0 (FC-029): o diâmetro do bocal só vale (e só é gravado) com antivórtice na tomada por cima em SP */
       if (fo.tipo) { f.tipo = fo.tipo; if (fo.tip) f.tipologia = fo.tip; if (fo.tipo === 'elevado' && fo.elevModo) f.elevModo = fo.elevModo; if (fo.cubaForma === 'tronco') f.cubaForma = 'tronco'; }
       var nx = V.nivelX(F); if (nx.ok) { if (nx.hProp > 0) f.hProp = nx.hProp; if (nx.topoReserva !== null && nx.topoReserva !== undefined) f.topoReserva = nx.topoReserva; if (nx.succao) f.succao = nx.succao.estado; if (!tolerante) { delete nx.ok; delete nx.falta; f.nivelX = nx; } }   /* 2.6.0: o arquivo guarda a carga própria com o nó RI na base */
-    } else if (fo.xModo === 'manual') { if (fo.saida) f.saida = fo.saida;   /* 2.6.0: a tomada por cima é sempre negativa também com X à mão */
-      if (fo.xOrigem !== 'antigo') { f.xModo = 'manual'; if (fo.tipo) { f.tipo = fo.tipo; if (fo.tip) f.tipologia = fo.tip; if (fo.tipo === 'elevado' && fo.elevModo) f.elevModo = fo.elevModo; } } if (!vazio(fo.zXFonte) && fo.zXFonte !== X_ANTIGO) f.zXFonte = String(fo.zXFonte).trim(); }
+    }
     P.fonte = f;
     P.ambiente = {}; poe(P.ambiente, 'altitude', n(F.ambiente.altitude)); poe(P.ambiente, 'temperatura', n(F.ambiente.temperatura));
     if (F.bomba.id && F.fonte.modo !== 'gravidade') { P.bomba = Object.assign({}, P.bomba && P.bomba.id === F.bomba.id ? P.bomba : {}, { id: F.bomba.id }); poe(P.bomba, 'npshr', n(F.bomba.npshr) > 0 ? n(F.bomba.npshr) : undefined); if (F.bomba.npshQ === '1.5') P.bomba.npshQ = 1.5; else delete P.bomba.npshQ; }   /* 2.5.4: zero ou negativo não vai para o cálculo (o campo pede conferência); vazão da comparação do NPSH escolhida pelo projetista */ else delete P.bomba;
@@ -209,7 +211,7 @@
     if (F.norma === 'PR' && F.retorno.ativo && (tolerante || (n(F.retorno.zDescarga) !== undefined && F.retorno.trechos.every(function (t) { return n(t.L) > 0; })))) { P.retorno = { trechos: F.retorno.trechos.map(function (t) { var o = { dn: t.dn, pecas: numMapa(t.pecas) }, ft = tolerante ? null : tuboDoTipo(D, F.tipoTubo, t.dn); if (ft) o.tubo = { norma: ft.norma, classe: ft.classe }; poe(o, 'L', n(t.L)); poe(o, 'C', n(t.C)); return o; }) }; poe(P.retorno, 'zDescarga', n(F.retorno.zDescarga)); } else delete P.retorno;
     if (F.norma === 'PR' && (F.retornoTeste || P.retorno)) P.retornoTeste = true; else delete P.retornoTeste;
     poe(P, 'parForcado', F.parForcado || undefined);
-    if (tolerante) { P.identificacao = clone(F.ident); P.confirmacoes = clone(F.conf); delete P.origemRede; P.versaoFireCalc = '2.6.4'; if (F.conferidos && Object.keys(F.conferidos).length) P.conferidos = clone(F.conferidos); else delete P.conferidos; }
+    if (tolerante) { P.identificacao = clone(F.ident); P.confirmacoes = clone(F.conf); delete P.origemRede; P.versaoFireCalc = '2.7.0'; if (F.conferidos && Object.keys(F.conferidos).length) P.conferidos = clone(F.conferidos); else delete P.conferidos; }
     else { delete P.identificacao; delete P.confirmacoes; delete P.origemRede; delete P.versaoFireCalc; delete P.conferidos; }
     return P;
   }
@@ -260,29 +262,31 @@
   /** O fator C do projeto difere do C da Tabela 1 para o material do tubo escolhido. */
   function cAlterado(F, D) { var tp = tipoTubo(D, F.tipoTubo), c = num(F.C); return !!tp && !vazio(F.C) && !isNaN(c) && Math.abs(c - tp.C) > 1e-9; }
   /* ---- 2.5.1: Abastecimento antes da Rede, nível X calculado ---- */
-  var XK = ['zFundo', 'resC', 'resL', 'resD', 'resVol', 'zTomada', 'pocoProf', 'antiH', 'zFundoCuba', 'zBase', 'zSaida', 'troncoDb', 'troncoDt', 'troncoH', 'colD', 'pocoLado', 'zConsumo'], X_ANTIGO = 'Arquivo de versão anterior: nível X informado pelo projetista';
-  /** Abastecimento de projeto novo: nível X calculado (xModo 'calc'). xModo 'manual' = X informado à mão, com a fonte (arquivos de 2.0 a 2.5.0 abrem assim). */
-  function fonteNova() { return { modo: '', zX: '', zCheio: '', rtiEfetiva: '', elevado: false, xModo: 'calc', saida: '', zFundo: '', dnSuc: '', resForma: 'ret', resC: '', resL: '', resD: '', resVol: '', zTomada: '', poco: false, pocoProf: '', anti: false, antiH: '', zXFonte: '', zXAnt: '',
-      tipo: '', tip: '', elevModo: '', zFundoCuba: '', zBase: '', zSaida: '', troncoDb: '', troncoDt: '', troncoH: '', colD: '', cubaForma: 'cil', pocoLado: '', pocoProfAuto: true, pocoLadoAuto: true, zConsumo: '' }; }
-  /** Lê do arquivo (f = fonte do .json) os dados novos do Abastecimento. Arquivo sem xModo e com dado é de versão anterior: o X digitado continua valendo, como informado. */
+  var XK = ['zFundo', 'resC', 'resL', 'resD', 'resVol', 'zTomada', 'pocoProf', 'antiH', 'antiBocal', 'zFundoCuba', 'zBase', 'zSaida', 'troncoDb', 'troncoDt', 'troncoH', 'colD', 'pocoLado', 'zConsumo', 'zRaso', 'resArea'];   /* 2.7.0 (FC-027): fundo raso e área do espelho d'água da piscina */
+  /** Abastecimento de projeto novo: nível X calculado (xModo 'calc'), o único modo desde a 2.7.0 (FC-048, D-024). */
+  function fonteNova() { return { modo: '', zX: '', zCheio: '', rtiEfetiva: '', elevado: false, xModo: 'calc', saida: '', zFundo: '', dnSuc: '', resForma: 'ret', resC: '', resL: '', resD: '', resVol: '', zTomada: '', poco: false, pocoProf: '', anti: false, antiH: '', antiBocal: '',
+      tipo: '', tip: '', elevModo: '', zFundoCuba: '', zBase: '', zSaida: '', troncoDb: '', troncoDt: '', troncoH: '', colD: '', cubaForma: 'cil', pocoLado: '', pocoProfAuto: true, pocoLadoAuto: true, zConsumo: '', zRaso: '', resArea: '', declaracao: false }; }
+  /** Texto da recusa de arquivo sem a geometria do reservatório (FC-048, D-024); a tela o mostra depois de "Arquivo inválido: ". */
+  var SEM_GEOMETRIA = 'o projeto não traz a geometria do reservatório (tipo, cotas e medidas do Abastecimento).';
+  /** Lê do arquivo (f = fonte do .json) os dados do Abastecimento. Arquivo com dado e sem xModo calc não tem a geometria do reservatório: é recusado (FC-048, D-024). */
   function abreAbast(F, f, temDado) {
     var fo = F.fonte, modo = fo.modo;
     /* 2.6.0: fonte e tipologia. Arquivo antigo: bomba é inferior; reforço e gravidade são elevado. Bomba com a marca "elevado" (combinação contraditória da 2.5.4) abre como inferior, sem a marca. */
     fo.tipo = f.tipo || (modo === 'bomba' ? 'inferior' : modo ? 'elevado' : ''); fo.tip = f.tipologia || (fo.tipo ? (f.resForma === 'cil' ? 'cil' : 'ret') : '');
     fo.elevModo = f.elevModo || (fo.tipo === 'elevado' ? (modo === 'reforco' ? 'reforco' : modo === 'gravidade' ? 'gravidade' : '') : ''); fo.cubaForma = f.cubaForma || 'cil';
     if (modo === 'bomba' && f.elevado && !f.tipo) F._aviso = F.norma === 'SP' ? 'A marca de reservatório elevado não vale com bomba puxando de reservatório inferior; a dispensa da bomba de pressurização em SP saiu.' : 'A marca de reservatório elevado não vale com bomba puxando de reservatório inferior; ela saiu.';
-    if (f.xModo === 'calc') { fo.xModo = 'calc'; fo.saida = f.saida || ''; fo.dnSuc = +f.dnSuc || ''; fo.resForma = f.resForma || 'ret'; XK.forEach(function (k) { fo[k] = txt(f[k]); }); fo.poco = !!f.poco; fo.anti = !!f.anti; fo.pocoProfAuto = vazio(fo.pocoProf); fo.pocoLadoAuto = vazio(fo.pocoLado); }
-    else if (f.xModo === 'manual') { fo.xModo = 'manual'; fo.zXFonte = f.zXFonte || ''; }
-    else if (temDado) { fo.xModo = 'manual'; fo.xOrigem = 'antigo'; fo.zXFonte = f.zXFonte || ''; }
+    if (f.xModo === 'calc') { fo.xModo = 'calc'; fo.saida = f.saida || ''; fo.dnSuc = +f.dnSuc || ''; fo.resForma = f.resForma || 'ret'; XK.forEach(function (k) { fo[k] = txt(f[k]); }); fo.poco = !!f.poco; fo.anti = !!f.anti; fo.declaracao = !!f.declaracao; fo.pocoProfAuto = vazio(fo.pocoProf); fo.pocoLadoAuto = vazio(fo.pocoLado); }
+    else if (temDado) throw new Error(SEM_GEOMETRIA);
     return F;
   }
   /** 2.6.0: campos do Abastecimento que valem em cada rota (tipo da fonte e tipologia do reservatório). Serve ao menu e à troca de tipo. */
-  var ROT_ROTULOS = { saida: 'saída da água', zFundo: 'cota do fundo', zFundoCuba: 'cota do fundo da cuba', zBase: 'cota da base', zSaida: 'cota da saída na base', zTomada: 'cota real da tomada', resC: 'comprimento', resL: 'largura', resD: 'diâmetro', troncoDb: 'diâmetro da base da caixa', troncoDt: 'diâmetro do topo da caixa', troncoH: 'altura da caixa', colD: 'diâmetro da coluna', resVol: 'volume nominal', poco: 'poço de sucção', pocoProf: 'profundidade do poço', pocoLado: 'lado do poço', anti: 'antivórtice', antiH: 'altura do antivórtice', zConsumo: 'tomada de consumo' };
+  var ROT_ROTULOS = { saida: 'saída da água', zFundo: 'cota do fundo', zFundoCuba: 'cota do fundo da cuba', zBase: 'cota da base', zSaida: 'cota da saída na base', zTomada: 'cota real da tomada', resC: 'comprimento', resL: 'largura', resD: 'diâmetro', troncoDb: 'diâmetro da base da caixa', troncoDt: 'diâmetro do topo da caixa', troncoH: 'altura da caixa', colD: 'diâmetro da coluna', resVol: 'volume nominal', poco: 'poço de sucção', pocoProf: 'profundidade do poço', pocoLado: 'lado do poço', anti: 'antivórtice', antiH: 'altura do antivórtice', antiBocal: 'diâmetro do bocal do antivórtice', zConsumo: 'tomada de consumo', zRaso: 'cota do fundo na parte rasa', resArea: 'área do espelho d\'água', declaracao: 'declaração do responsável pelo uso' };
   function chavesDaRota(tipo, tip) {
-    var k = ['zCheio', 'dnSuc', 'zConsumo'], poco = ['poco', 'pocoProf', 'pocoLado', 'anti', 'antiH'], inf = tipo === 'inferior';
+    var k = ['zCheio', 'dnSuc', 'zConsumo'], poco = ['poco', 'pocoProf', 'pocoLado', 'anti', 'antiH', 'antiBocal'], inf = tipo === 'inferior';
     if (tip === 'ret') k = k.concat(['saida', 'zFundo', 'zTomada', 'resC', 'resL', 'resVol'], poco);
+    else if (tip === 'piscina') k = k.concat(['saida', 'zFundo', 'zTomada', 'resC', 'resL', 'resArea', 'zRaso', 'declaracao'], poco);   /* 2.7.0 (FC-027) */
     else if (tip === 'cil') k = k.concat(['saida', 'zFundo', 'zTomada', 'resD', 'resVol'], poco);
-    else if (tip === 'tronco') k = k.concat(['saida', 'zFundo', 'zTomada', 'troncoDb', 'troncoDt', 'troncoH', 'resVol'], inf ? ['anti', 'antiH'] : []);
+    else if (tip === 'tronco') k = k.concat(['saida', 'zFundo', 'zTomada', 'troncoDb', 'troncoDt', 'troncoH', 'resVol'], inf ? ['anti', 'antiH', 'antiBocal'] : []);
     else if (tip === 'taca_seca') k = k.concat(['zFundoCuba', 'zSaida', 'resD', 'troncoDb', 'troncoDt', 'troncoH', 'resVol']);
     else if (tip === 'taca_molhada') k = k.concat(['zBase', 'zFundoCuba', 'zTomada', 'colD', 'resD', 'troncoDb', 'troncoDt', 'troncoH']);
     else if (tip === 'torre') k = k.concat(['zFundo', 'zSaida', 'resD', 'resVol'], poco);
@@ -305,7 +309,8 @@
   /** Passa para a rota nova e apaga o que ela não usa (o aviso e a confirmação vêm antes, na tela). */
   function trocaRota(F, tipo, tip) {
     var f = F.fonte, novas = chavesDaRota(tipo, tip);
-    Object.keys(ROT_ROTULOS).forEach(function (k) { if (novas.indexOf(k) < 0 || (k === 'saida' && !saidaValida(tipo, tip, f[k]))) f[k] = (k === 'poco' || k === 'anti') ? false : ''; });
+    Object.keys(ROT_ROTULOS).forEach(function (k) { if (novas.indexOf(k) < 0 || (k === 'saida' && !saidaValida(tipo, tip, f[k]))) f[k] = (k === 'poco' || k === 'anti' || k === 'declaracao') ? false : ''; });
+    if (tip === 'piscina' && f.resForma === 'vol') f.resForma = 'ret'; else if (tip !== 'piscina' && f.resForma === 'area') f.resForma = 'ret';   /* 2.7.0 (FC-027): a forma de informar as medidas da rota anterior não vale na nova */
     if (f.tipo !== tipo) { if (tipo === 'elevado') { F.nos.BI = ''; f.elevModo = ''; } else f.elevModo = ''; }
     f.pocoProfAuto = f.pocoLadoAuto = true; f.tipo = tipo; f.tip = tip; if (f.cubaForma !== 'tronco') f.cubaForma = 'cil';
     return F;
@@ -332,25 +337,25 @@
   }
   /** Liga o Abastecimento à Rede (vai e volta): o DN da sucção e o DN do trecho que sai de RI são o mesmo dado.
    *  Quem mudou por último manda: trocado no Abastecimento, vai para o trecho; trocado na Rede (ou rede colada ou importada), volta para o Abastecimento.
-   *  No modo calculado, o nível X, a cota do nó RI e a reserva efetiva saem daqui e não são digitados. */
+   *  O nível X, a cota do nó RI e a reserva efetiva saem daqui e não são digitados. */
   function sincAbast(F, D, M) {
-    var f = F.fonte; if (!f || f.xModo === undefined) return F;
+    var f = F.fonte; if (!f) return F;
     /* 2.6.0: fonte.modo e fonte.elevado deixam de ser escolhidos e passam a ser derivados da fonte de pressão e do menu do reservatório elevado. */
     if (!f.tipo && f.modo) { f.tipo = f.modo === 'bomba' ? 'inferior' : 'elevado'; if (f.tipo === 'elevado' && !f.elevModo) f.elevModo = f.modo; if (!f.tip) f.tip = f.resForma === 'cil' ? 'cil' : 'ret'; }   /* quem define só o modo (arquivo antigo, testes) ganha a rota correspondente */
     if (f.tipo === 'inferior') { f.modo = 'bomba'; f.elevado = false; } else if (f.tipo === 'elevado') { f.modo = f.elevModo === 'reforco' ? 'reforco' : f.elevModo === 'gravidade' ? 'gravidade' : ''; f.elevado = true; }
-    var calc = f.xModo === 'calc', ts = trechoSuc(F), dnS = +f.dnSuc || 0;
-    if (calc && !ts && (!dnS || f.dnAuto === true)) { var sg = dnSugerido(F, D, M); if (sg && sg.dn !== dnS) { f.dnSuc = sg.dn; f.dnAuto = true; dnS = sg.dn; } }
+    var ts = trechoSuc(F), dnS = +f.dnSuc || 0;
+    if (!ts && (!dnS || f.dnAuto === true)) { var sg = dnSugerido(F, D, M); if (sg && sg.dn !== dnS) { f.dnSuc = sg.dn; f.dnAuto = true; dnS = sg.dn; } }
     if (ts) {
       var dr = +ts.dn;
-      if (f._redeManda || !calc) f.dnSuc = dr;
+      if (f._redeManda) f.dnSuc = dr;
       else if (f._dnRede === undefined || f._dnRede === null) { if (dnS) ts.dn = dnS; else f.dnSuc = dr; }
       else if (dr !== f._dnRede) f.dnSuc = dr;
       else if (dnS && dnS !== dr) ts.dn = dnS;
       f._dnRede = +ts.dn; f.dnAuto = false;
     } else f._dnRede = null;
     delete f._redeManda;
-    if (calc && f.poco) { var r0 = V.nivelX(F); if (r0.pocoProfMin !== undefined) { if (f.pocoProfAuto !== false) f.pocoProf = txt(r0.pocoProfMin); if (f.pocoLadoAuto !== false) f.pocoLado = txt(r0.pocoLadoMin); } }
-    if (calc && (f.modo || f.tipo)) {
+    if (f.poco) { var r0 = V.nivelX(F); if (r0.pocoProfMin !== undefined) { if (f.pocoProfAuto !== false) f.pocoProf = txt(r0.pocoProfMin); if (f.pocoLadoAuto !== false) f.pocoLado = txt(r0.pocoLadoMin); } }
+    if (f.modo || f.tipo) {
       var r = V.nivelX(F);
       if (f.modo === 'bomba') { f.zX = r.ok ? txt(r.X) : ''; F.nos.RI = f.zFundo; }
       else { f.zX = ''; F.nos.RI = r.ok ? txt(r.zRI) : ''; }   /* 2.6.0: o nó RI fica na saída por onde a água entra na rede (taça seca e torre: na base); a carga própria vai ao motor em fonte.hProp */
@@ -366,7 +371,7 @@
     if (F.Cfonte === undefined) F.Cfonte = '';
     F.trechos.forEach(function (t) { if (t.tipo === undefined) t.tipo = ''; });
     if (F.recalque && F.recalque.no === undefined) F.recalque.no = '';
-    if (F.fonte.xModo === undefined) { var fa = F.fonte; F.fonte = Object.assign(fonteNova(), fa); delete F.fonte.xModo; abreAbast(F, {}, !!(F.trechos.length || fa.modo || !vazio(fa.zX) || !vazio(fa.zCheio) || !vazio(fa.rtiEfetiva) || !vazio(F.nos.RI))); if (F.fonte.xModo === undefined) F.fonte.xModo = 'calc'; }   /* 2.5.1 */
+    if (F.fonte.xModo !== 'calc') throw new Error(SEM_GEOMETRIA);   /* cópia guardada no navegador por versão anterior, sem a geometria (FC-048) */
     F.hidrantes.forEach(function (h) { if (h.id !== h.no) { h._o = h._o || {}; if (!h._o.idPrancha && h.id) h._o.idPrancha = h.id; h.id = h.no; } });
     return sincTubo(F, D);
   }
@@ -402,5 +407,5 @@
       pode: function () { return { desfazer: pos > 0, refazer: pos < pilha.length - 1 }; }
     };
   }
-  return { novo: novo, abrir: abrir, autoColuna: autoColuna, sincroniza: sincroniza, contexto: contexto, paraMotor: paraMotor, migraF: migraF, tipoTubo: tipoTubo, tuboDoTipo: tuboDoTipo, dnsDoTipo: dnsDoTipo, sincTubo: sincTubo, cAlterado: cAlterado, move: move, paraArquivo: paraArquivo, avalia: avalia, esguichoAusente: esguichoAusente, textoEsguichoAusente: textoEsguichoAusente, tipoFinal: tipoFinal, tipoDe: tipoDe, orienta: orienta, Historico: Historico, txt: txt, clone: clone, defineBiblioteca: defineBiblioteca, defineCadastros: defineCadastros, carregaCadastros: carregaCadastros, renomeiaNo: renomeiaNo, lancNovo: lancNovo, esguichoDe: esguichoDe, lancAlterado: lancAlterado, lancOficial: lancOficial, fonteNova: fonteNova, chavesDaRota: chavesDaRota, camposPerdidos: camposPerdidos, trocaRota: trocaRota, ROT_ROTULOS: ROT_ROTULOS, sincAbast: sincAbast, trechoSuc: trechoSuc, primeiroTrecho: primeiroTrecho, criaSuccao: criaSuccao, dnSugerido: dnSugerido, X_ANTIGO: X_ANTIGO };
+  return { novo: novo, abrir: abrir, autoColuna: autoColuna, sincroniza: sincroniza, contexto: contexto, paraMotor: paraMotor, migraF: migraF, tipoTubo: tipoTubo, tuboDoTipo: tuboDoTipo, dnsDoTipo: dnsDoTipo, sincTubo: sincTubo, cAlterado: cAlterado, move: move, paraArquivo: paraArquivo, avalia: avalia, esguichoAusente: esguichoAusente, textoEsguichoAusente: textoEsguichoAusente, tipoFinal: tipoFinal, tipoDe: tipoDe, orienta: orienta, Historico: Historico, txt: txt, clone: clone, defineBiblioteca: defineBiblioteca, defineCadastros: defineCadastros, carregaCadastros: carregaCadastros, renomeiaNo: renomeiaNo, lancNovo: lancNovo, esguichoDe: esguichoDe, lancAlterado: lancAlterado, lancOficial: lancOficial, fonteNova: fonteNova, chavesDaRota: chavesDaRota, camposPerdidos: camposPerdidos, trocaRota: trocaRota, ROT_ROTULOS: ROT_ROTULOS, sincAbast: sincAbast, trechoSuc: trechoSuc, primeiroTrecho: primeiroTrecho, criaSuccao: criaSuccao, dnSugerido: dnSugerido };
 });

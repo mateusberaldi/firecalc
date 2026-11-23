@@ -21,7 +21,18 @@
   "zX": 0.5,
   "zCheio": 2.0,
   "rtiEfetiva": 18,
-  "nota": "zCheio adotada só para o teste; não entra nos números do gabarito"
+  "xModo": "calc",
+  "saida": "lateral",
+  "dnSuc": 80,
+  "resForma": "ret",
+  "zFundo": 0.03,
+  "resC": 4.0,
+  "resL": 3.0,
+  "tipo": "inferior",
+  "tipologia": "ret",
+  "topoReserva": 2.0,
+  "succao": "afogada",
+  "nota": "Reservatório inferior retangular de 4 x 3 m, saída lateral por tubo de DN80 e fundo na cota 0,03 m, tudo adotado para o exemplo, de modo que o nível X (fundo mais B, D e A, Tabela B.1 e B.3.3 a B.3.8 do Anexo B da IT 22 do CBPMESP) fique em 0,5 m. A cota do cheio, 2,0 m, também adotada para o exemplo, define a reserva: 12 m2 de planta por 1,5 m, entre o nível X e o cheio, dão 18 m3."
  },
  "nos": {
   "H1": {
@@ -37,7 +48,7 @@
    "z": 0
   },
   "RI": {
-   "z": 0.5
+   "z": 0.03
   }
  },
  "trechos": [

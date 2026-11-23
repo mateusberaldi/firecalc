@@ -19,10 +19,21 @@
  },
  "fonte": {
   "modo": "reforco",
+  "elevado": true,
   "zCheio": 51.0,
   "rtiEfetiva": 18,
-  "elevado": true,
-  "nota": "RTI elevada de 18 m3, dado do caso (com 5.000 m2 a tabela de RTI daria a faixa seguinte). Rede inteira: os 16 hidrantes, do H01 no 15º pavimento ao H16 no térreo."
+  "xModo": "calc",
+  "saida": "lateral",
+  "dnSuc": 65,
+  "resForma": "ret",
+  "zFundo": 48.0,
+  "resC": 2.8,
+  "resL": 2.19,
+  "tipo": "elevado",
+  "tipologia": "ret",
+  "elevModo": "reforco",
+  "topoReserva": 51.0,
+  "nota": "RTI elevada de 18 m3, dado do caso. Rede inteira: os 16 hidrantes, do H01 no 15º pavimento ao H16 no térreo. Reservatório elevado retangular de 2,8 x 2,19 m, adotado para o exemplo, com a medida que reproduz a reserva de 18 m3 entre o nó RI e o nível normal. Fundo na cota 48 m (adotado para o exemplo, com 3,0 m de lâmina como o exemplo de gravidade do Paraná) e saída lateral por tubo de DN65 (adotado para o exemplo), apoiado no fundo: o nó RI fica na face superior do tubo, em 48,065 m (B.2.1 b do Anexo B da IT 22 do CBPMESP; com o tubo apoiado no fundo vale B = 0, e não os 80 mm que a Tabela B.1 dá ao DN65). A pressão por gravidade no ponto A é a do desnível entre o nó RI e A."
  },
  "nos": {
   "H01": {
@@ -35,7 +46,7 @@
    "z": 44.6
   },
   "RI": {
-   "z": 51.0
+   "z": 48.065
   },
   "B": {
    "z": 41.5

@@ -91,6 +91,15 @@
   function arr(v, c) { var p = Math.pow(10, c); return Math.round(v * p + (v >= 0 ? 1e-7 : -1e-7)) / p; }
   /* ---- 2.6.0: cálculo da tela do Abastecimento, por tipologia. A E leva o mesmo cálculo ao motor. ---- */
   function volPrisma(a, za, zb) { return a * Math.max(0, zb - za); }
+  /** 2.7.0 (FC-027, piscina): volume de uma piscina de planta c x l com o fundo em rampa linear ao longo de c, da cota zr (parte rasa, x = 0) até zf (parte funda, x = c, zr acima de zf),
+   *  contado acima do nível s (o maior entre o nível X e o fundo) até o nível zb. A profundidade é linear por trechos entre x = 0, os pontos em que o fundo encontra s e zb, e x = c: soma exata pelos trapézios. */
+  function volRampa(c, l, zr, zf, s, zb) {
+    var fo = function (x) { return Math.max(0, zb - Math.max(s, zr + (zf - zr) * x / c)); }, xs = [0, c];
+    [(zr - zb) / (zr - zf) * c, (zr - s) / (zr - zf) * c].forEach(function (x) { if (x > 0 && x < c) xs.push(x); });
+    xs.sort(function (a, b) { return a - b; });
+    var v = 0; for (var i = 0; i + 1 < xs.length; i++) v += (fo(xs[i]) + fo(xs[i + 1])) / 2 * (xs[i + 1] - xs[i]);
+    return v * l;
+  }
   /** Volume de um tronco de cone com a base (diâmetro db) na cota z0 e o topo (dt) em z0 + H, entre as cotas za e zb. */
   function volTronco(z0, db, dt, H, za, zb) {
     za = Math.max(za, z0); zb = Math.min(zb, z0 + H); if (!(zb > za) || !(H > 0)) return 0;
@@ -108,10 +117,10 @@
     var A = t.A / 1000, B = t.B / 1000, prof = saida === 'lateral' ? B + Dm + A : saida === 'cima' ? (anti ? Math.max(B, 0.15) + hAnti : B + A) : (anti ? hAnti : A);
     return { prof: arr(prof, 3), lado: arr((saida === 'lateral' ? 6 : 6.3) * Dm, 3) };
   }
-  var TIPS_INF = ['ret', 'cil', 'tronco'], TIPS_ELE = ['ret', 'cil', 'tronco', 'taca_seca', 'taca_molhada', 'torre', 'standpipe'];
+  var TIPS_INF = ['ret', 'cil', 'tronco', 'piscina'], TIPS_ELE = ['ret', 'cil', 'tronco', 'taca_seca', 'taca_molhada', 'torre', 'standpipe'];
   /** Nível X (reservatório inferior) ou referência da altura (elevado), reserva efetiva, carga própria, poço, antivórtice e estado da sucção pelos dados de F.fonte.
    *  Inferior (B.3): saída lateral X = base + B + D + A; por cima X = base + B + A; pelo fundo X = base + A; com a cota real da tomada X = cota + A; antivórtice dispensa A (B.3.5; PR só pelo fundo,
-   *  SP também por cima, B.3.9); com poço, a base é o fundo do poço e a água do poço não conta na reserva. Elevado (B.2.1): a referência é o fundo, a face superior do tubo lateral, o fundo da cuba (taça seca),
+   *  SP também por cima, B.3.9); com poço, a base é o fundo do poço e a água do poço acima de X conta na reserva (D-024, FC-063). Elevado (B.2.1): a referência é o fundo, a face superior do tubo lateral, o fundo da cuba (taça seca),
    *  o fundo do tanque (torre) ou a face superior da saída (taça molhada e standpipe); taça seca e torre têm carga própria (referência menos a saída na base).
    *  Devolve { ok, falta[], notas[], alertas[], X (= referência no elevado), ref, zRI, hProp, nivelReserva, topoReserva, area, altura, reserva, total, succao, ... }. */
   function nivelX(F) {
@@ -120,8 +129,9 @@
     if (!tipo) { r.falta.push('a fonte de pressão'); return r; }
     var inf = tipo === 'inferior', taca = tip === 'taca_seca' || tip === 'taca_molhada', torre = tip === 'torre', sp = tip === 'standpipe';
     if ((inf ? TIPS_INF : TIPS_ELE).indexOf(tip) < 0) { r.falta.push('o tipo do reservatório'); return r; }
+    if (tip === 'piscina' && PR) { r.falta.push('outro tipo de reservatório: o programa trata a piscina só em São Paulo'); return r; }   /* 2.7.0 (FC-027): a NPT 022 não foi lida; só a IT 22 (B.1.4) admite a piscina */
     var saida = f.saida, dn = +f.dnSuc || 0, Dm = dn / 1000, zc = num(f.zCheio), zf = num(f.zFundo), zt = num(f.zTomada), real = !vazio(f.zTomada);
-    var tubo = tip === 'ret' || tip === 'cil' || tip === 'tronco';
+    var tubo = tip === 'ret' || tip === 'cil' || tip === 'tronco' || tip === 'piscina';
     if (taca || torre) saida = 'base'; else if (tip === 'tronco' && !inf) saida = 'lateral';
     if (tubo || sp) { var okS = inf ? ['lateral', 'cima', 'fundo'].concat([]) : sp ? ['base', 'acima'] : ['fundo', 'lateral']; if (inf && tip === 'tronco') okS = ['lateral', 'cima']; if (okS.indexOf(saida) < 0) r.falta.push(sp ? 'a posição da saída' : 'como a água sai do reservatório'); }
     if (!taca && !sp && isNaN(zf)) r.falta.push(torre ? 'a cota do fundo do tanque' : 'a cota do fundo do reservatório');
@@ -131,6 +141,7 @@
     if ((tip === 'taca_seca' || torre) && isNaN(zs)) r.falta.push('a cota da saída na base');
     if (!dn) r.falta.push(inf ? 'o DN da sucção' : 'o DN da saída');
     if (sp && saida === 'acima' && isNaN(zt)) r.falta.push('a cota da face superior da saída');
+    if (tip === 'piscina' && !vazio(f.zRaso)) { var zr0 = num(f.zRaso); if (isNaN(zr0) || zr0 <= zf) r.falta.push('a cota do fundo na parte rasa, acima do fundo da parte funda'); }
     if (r.falta.length) return r;
     r.dn = dn; r.D = Dm; r.fundo = zf; r.saida = saida; r.real = real; var t = linhaB1(dn);
     if (inf) {
@@ -142,6 +153,8 @@
       r.anti = !!f.anti && (saida === 'fundo' || (saida === 'cima' && !PR)); r.hAnti = 0;
       if (f.anti && !r.anti) r.alertas.push('Dispositivo antivórtice não admitido nesta tomada.');
       if (r.anti && !vazio(f.antiH)) { var ha = num(f.antiH); if (isNaN(ha) || ha < 0) { r.falta.push('a altura do dispositivo antivórtice'); return r; } r.hAnti = ha; }
+      /* 2.7.0 (FC-029): diâmetro do bocal da tomada superior com antivórtice (IT 22/2025, B.3.9: no mínimo o dobro do diâmetro da tubulação, D = DN da sucção, tolerância de 0,5 mm). Campo opcional, só confere: não entra em nenhuma conta. */
+      if (r.anti && saida === 'cima' && !vazio(f.antiBocal)) { var bo = num(f.antiBocal); if (isNaN(bo) || bo <= 0) { r.falta.push('o diâmetro do bocal do antivórtice'); return r; } if (bo < 2 * dn - 0.5) r.alertas.push('O bocal da tomada superior é menor que o dobro do diâmetro da tubulação (' + 2 * dn + ' mm).'); }
       var pm = pocoMinimos(saida, t, Dm, r.anti, r.hAnti); r.pocoProfMin = pm.prof; r.pocoLadoMin = pm.lado;
       if (f.poco && tip !== 'tronco') {
         var pp = num(f.pocoProf); if (!(pp > 0)) { r.falta.push('a profundidade do poço de sucção'); return r; }
@@ -152,7 +165,10 @@
       r.minTopo = lat ? r.base + r.B + Dm : saida === 'cima' ? r.base + (r.anti ? Math.max(r.B, 0.15) : r.B) : r.base;
       r.topo = real ? zt : r.minTopo; r.abaixo = real && zt < r.minTopo - 0.0005;
       r.X = arr(r.anti ? r.topo + r.hAnti : r.topo + r.A, 3);
-      r.nivelReserva = Math.max(r.X, zf);
+      /* 2.7.0 (FC-063, D-024): com poço de sucção mais fundo que o mínimo (X abaixo do piso), a água do poço entre X e o piso conta na capacidade efetiva (IT 22/2025, B.3.3: do nível normal ao nível X);
+       * a reserva parte de X. Sem poço (B.3.8) ou com o poço no mínimo ou mais raso, vale o maior entre X e o piso, como antes. Sem o lado do poço não há volume a somar: a água do poço não conta. */
+      var xPoco = !!r.poco && r.X < zf - 0.0005 && pl > 0;
+      r.nivelReserva = xPoco ? r.X : Math.max(r.X, zf);
     } else {
       r.nivelReserva = null;
       if (tubo) {
@@ -176,33 +192,39 @@
     }
     r.ref = r.X; if (inf) r.zRI = zf;
     r.hProp = (tip === 'taca_seca' || torre) ? arr(r.X - zs, 3) : 0;
-    r.minTopo = arr(r.minTopo, 3); r.topo = arr(r.topo, 3); r.faixa = inf ? arr(r.nivelReserva - zf, 3) : 0; r.ok = true;
+    r.minTopo = arr(r.minTopo, 3); r.topo = arr(r.topo, 3); r.faixa = inf ? arr(Math.max(r.nivelReserva - zf, 0), 3) : 0; r.ok = true;
     var z0 = taca ? zfc : (tip === 'taca_molhada' || sp) ? zb : zf, zcons = num(f.zConsumo);
     var top = !isNaN(zc) ? (!isNaN(zcons) && zcons < zc ? zcons : zc) : NaN; r.topoReserva = isNaN(top) ? null : top;
     var ar = NaN, vol = NaN, c = num(f.resC), l = num(f.resL), d = num(f.resD), v = num(f.resVol), db = num(f.troncoDb), dt = num(f.troncoDt), H = num(f.troncoH), dc = num(f.colD);
-    var forma = f.resForma === 'vol' ? 'vol' : tip;
-    if (forma === 'vol') { if (v > 0 && !isNaN(zc) && zc > z0) ar = v / (zc - z0); if (!isNaN(ar) && !isNaN(top) && top > r.nivelReserva) vol = ar * (top - r.nivelReserva); }
+    var forma = tip === 'piscina' ? (f.resForma === 'area' ? 'area' : 'piscina') : (f.resForma === 'vol' ? 'vol' : tip), piso = xPoco ? zf : r.nivelReserva;   /* piso: de onde a planta do reservatório conta; a água do poço abaixo dele entra à parte, pela planta do poço */
+    if (forma === 'vol') { if (v > 0 && !isNaN(zc) && zc > z0) ar = v / (zc - z0); if (!isNaN(ar) && !isNaN(top) && top > piso) vol = ar * (top - piso); }
     else {
       var cubaTr = tip === 'tronco' || (taca && f.cubaForma === 'tronco'), zBaseTr = tip === 'tronco' ? zf : zfc;
       if (cubaTr) { if (db > 0 && dt > 0 && H > 0 && !isNaN(top)) { vol = volTronco(zBaseTr, db, dt, H, r.nivelReserva, top); if (!(top <= zBaseTr + H + 0.0005)) r.alertas.push('O nível normal da água passa do topo da caixa.'); } }
-      else if (tip === 'ret') { if (c > 0 && l > 0) { ar = c * l; if (!isNaN(top)) vol = volPrisma(ar, r.nivelReserva, top); } }
+      else if (tip === 'ret') { if (c > 0 && l > 0) { ar = c * l; if (!isNaN(top)) vol = volPrisma(ar, piso, top); } }
+      else if (tip === 'piscina') {   /* 2.7.0 (FC-027): piscina como o retangular, com o fundo plano ou em rampa linear ao longo do comprimento (zRaso informada) ou só a área do espelho d'água (prisma acima do fundo raso, a favor da segurança) */
+        var zr = num(f.zRaso), raso = !isNaN(zr), ap = num(f.resArea); if (raso) { r.zRaso = zr; if (forma !== 'area') r.rampa = true; }
+        if (forma === 'area') { if (ap > 0) { ar = ap; if (!isNaN(top)) vol = volPrisma(ar, raso ? Math.max(piso, zr) : piso, top); } }
+        else if (c > 0 && l > 0) { ar = c * l; if (!isNaN(top)) vol = raso ? volRampa(c, l, zr, zf, piso, top) : volPrisma(ar, piso, top); }
+        if (!isNaN(ar) && !isNaN(zc)) r.total = arr(raso ? (forma === 'area' ? ar * Math.max(0, zc - Math.max(zf, zr)) : volRampa(c, l, zr, zf, zf, zc)) : ar * (zc - zf), 2);
+      }
       else if (tip === 'taca_molhada') { if (dc > 0 && d > 0 && !isNaN(top) && !isNaN(zfc)) { var cubaM = f.cubaForma === 'tronco' ? (db > 0 && dt > 0 && H > 0 ? volTronco(zfc, db, dt, H, Math.max(r.nivelReserva, zfc), top) : NaN) : volPrisma(areaCirc(d), Math.max(r.nivelReserva, zfc), top); vol = volPrisma(areaCirc(dc), r.nivelReserva, Math.min(top, zfc)) + cubaM; } }
-      else if (d > 0) { ar = areaCirc(d); if (!isNaN(top)) vol = volPrisma(ar, r.nivelReserva, top); }
+      else if (d > 0) { ar = areaCirc(d); if (!isNaN(top)) vol = volPrisma(ar, piso, top); }
     }
+    if (xPoco && !isNaN(vol) && top > zf) { var vp = pl * pl * (zf - r.X); vol += vp; r.volPoco = arr(vp, 3); }   /* a chave só existe com a água do poço contada */
     if (!isNaN(ar)) r.area = arr(ar, 4);
-    if (!isNaN(vol) && !isNaN(top) && top > r.nivelReserva) { r.altura = arr(top - r.nivelReserva, 3); r.reserva = arr(vol, 2); if (inf && !isNaN(ar) && !isNaN(zc)) r.total = arr(ar * (zc - zf), 2); }
+    if (!isNaN(vol) && !isNaN(top) && top > r.nivelReserva) { r.altura = arr(top - r.nivelReserva, 3); r.reserva = arr(vol, 2); if (inf && tip !== 'piscina' && !isNaN(ar) && !isNaN(zc)) r.total = arr(ar * (zc - zf), 2); }
     if (!isNaN(top) && !isNaN(zc) && zc <= r.nivelReserva) r.alertas.push('O nível normal da água precisa ficar acima ' + (inf ? 'do nível X.' : 'da referência da altura.'));
+    if (!isNaN(zcons) && zcons <= r.nivelReserva) r.alertas.push('A tomada de consumo precisa ficar acima ' + (inf ? 'do nível X.' : 'da referência da altura.'));
     var zbi = num(F.nos && F.nos.BI);
-    if (inf && !isNaN(zbi) && r.topoReserva !== null && r.topoReserva > r.nivelReserva) r.succao = succaoEstado(zbi - r.X, Math.min(2, (r.topoReserva - r.nivelReserva) / 3), saida, PR);
+    if (inf && !isNaN(zbi) && r.topoReserva !== null) r.succao = succaoEstado(zbi - r.X, r.topoReserva > r.nivelReserva ? Math.min(2, (r.topoReserva - r.nivelReserva) / 3) : 0, saida, PR);   /* 2.7.0 (FC-019): nível normal igual ou abaixo de X (dado inválido, com alerta): limite 0, como o motor */
     return r;
   }
-  /** 2.6.0: estado da sucção do projeto, o mesmo que o motor usa. Nível X calculado: o da função da tela; X informado à mão ou arquivo antigo:
-   *  g = eixo menos X e limite = 1/3 da altura entre X e o nível normal (até 2 m). null quando faltam cotas ou a rota não tem bomba puxando de reservatório inferior. */
+  /** 2.6.0: estado da sucção do projeto, o mesmo que o motor usa: o da função do nível X da tela.
+   *  null quando faltam cotas ou a rota não tem bomba puxando de reservatório inferior. */
   function succaoDe(F) {
     var f = F.fonte || {}; if (f.modo !== 'bomba') return null;
-    if (f.xModo === 'calc') { var r = nivelX(F); return r.ok && r.succao ? r.succao : null; }
-    var zb = num(F.nos && F.nos.BI), zx = num(f.zX), zc = num(f.zCheio); if (isNaN(zb) || isNaN(zx)) return null;
-    return succaoEstado(zb - zx, !isNaN(zc) && zc > zx ? Math.min(2, (zc - zx) / 3) : 0, f.saida, F.norma === 'PR');
+    var r = nivelX(F); return r.ok && r.succao ? r.succao : null;
   }
   function m3(v) { return v.toFixed(3).replace('.', ','); }
   /** Texto da conta do nível X, com os números. */
@@ -229,12 +251,13 @@
     p('sistema.divisao', POS.edif, vazio(F.sistema.divisao) ? Z('Escolha a divisão de ocupação da edificação.') : null);
     p('sistema.area', POS.edif, positivo(F.sistema.area, 'a área da edificação em m²', '1.000 se escreve 1000'), !temTipo);
     if (ctx.precisaCarga || !vazio(F.sistema.carga)) { var rc = vazio(F.sistema.carga) ? Z('Digite a carga de incêndio em MJ/m² (IT 14): a coluna desta divisão depende dela. Exemplo: 700') : (isNaN(num(F.sistema.carga)) || num(F.sistema.carga) < 0 ? E(SO_NUM + '700') : null); p('sistema.carga', POS.edif, rc); }
+    if (F.norma === 'SP' && !vazio(F.sistema.altura)) { var va = num(F.sistema.altura); p('sistema.altura', POS.edif, isNaN(va) ? E(SO_NUM + '9') : (va < 0 ? E('A altura da edificação não pode ser negativa. Digite 0 para edificação térrea.') : null)); }   /* 2.7.0 (FC-041): opcional; só SP lê */
     p('sistema.coluna', POS.edif, vazio(F.sistema.coluna) ? Z(vazio(F.sistema.divisao) ? 'Escolha a divisão de ocupação: o enquadramento vem da tabela da norma.' : 'Escolha uma das soluções que a tabela da norma permite para esta divisão.') : null, !temTipo);
     p('conf.tipo', POS.sistema, F.conf.tipo ? null : Z('Confirme o tipo de sistema.'));
     p('C', POS.rede, positivo(F.C, 'o fator C de Hazen-Williams', '120'), true);
     // Rede
     F.trechos.forEach(function (t, i) {
-      ['de', 'para', 'L'].forEach(function (k) { p('trechos.' + i + '.' + k, POS.rede, k !== 'L' && F.fonte.modo === 'gravidade' && String(t[k]).trim().toUpperCase() === 'BI' ? E('Neste abastecimento não há bomba: troque BI por outro nome.') : campoTrecho(F, i, k), true); });   /* 2.6.0: sem bomba, BI não é nó válido */
+      ['de', 'para', 'L'].forEach(function (k) { p('trechos.' + i + '.' + k, POS.rede, k !== 'L' && F.fonte.modo === 'gravidade' && String(t[k]).trim() === 'BI' ? E('Neste abastecimento não há bomba: troque BI por outro nome.') : campoTrecho(F, i, k), true); });   /* 2.6.0: sem bomba, BI não é nó válido; 2.7.0 (FC-020): só 'BI' exato, como o motor (nó é sensível a maiúsculas) */
       if (!vazio(t.C)) { var vc = num(t.C); p('trechos.' + i + '.C', POS.rede, isNaN(vc) ? E(SO_NUM + '120') : (vc < 60 || vc > 160 ? E('Fator C fora da faixa das tabelas (de 60 a 160). Em branco vale o fator C do projeto.') : null)); }
       Object.keys(t.pecas || {}).forEach(function (id) { p('trechos.' + i + '.pecas.' + id, POS.rede, inteiro(t.pecas[id])); });
       if (ctx.dnsDoTipo && t.tipo) { var dd = ctx.dnsDoTipo(t.tipo); if (dd.indexOf(+t.dn) < 0) p('trechos.' + i + '.tipo', POS.rede, E('Este tipo de tubo não tem DN' + t.dn + ' na tabela da base. Troque o diâmetro ou o tipo.')); }
@@ -280,45 +303,45 @@
       p('cotasExtras.' + i + '.nome', POS.hidr, vazio(c.nome) ? Z('Digite o nome do pavimento. Exemplo: 2º subsolo') : null, true);
       p('cotasExtras.' + i + '.z', POS.hidr, cota(c.z, 'a cota da válvula mais baixa do pavimento'), true);
     });
-    // Abastecimento (2.5.1: antes da Rede). Nível X calculado pela Tabela B.1 ou informado à mão, com a fonte.
-    var fo = F.fonte, calc = fo.xModo === 'calc', tipoF = fo.tipo || (fo.modo === 'bomba' ? 'inferior' : fo.modo ? 'elevado' : ''), tipF = fo.tip || (tipoF ? (fo.resForma === 'cil' ? 'cil' : 'ret') : ''), inferior = tipoF === 'inferior', elevado = tipoF === 'elevado';
+    // Abastecimento (2.5.1: antes da Rede). Nível X calculado pela Tabela B.1.
+    var fo = F.fonte, tipoF = fo.tipo || (fo.modo === 'bomba' ? 'inferior' : fo.modo ? 'elevado' : ''), tipF = fo.tip || (tipoF ? (fo.resForma === 'cil' ? 'cil' : 'ret') : ''), inferior = tipoF === 'inferior', elevado = tipoF === 'elevado';
     p('fonte.tipo', POS.abast, vazio(tipoF) ? Z('Escolha de onde vem a pressão: de um reservatório inferior com bomba, ou de um reservatório elevado.') : null, true);
-    if (!vazio(tipoF)) p('fonte.tip', POS.abast, vazio(tipF) ? Z('Escolha o tipo do reservatório.') : null, true);
+    if (!vazio(tipoF)) p('fonte.tip', POS.abast, vazio(tipF) ? Z('Escolha o tipo do reservatório.') : (tipF === 'piscina' && (PR || elevado) ? E(PR ? 'O programa trata a piscina só em São Paulo e como reservatório inferior. Escolha outro tipo.' : 'O programa trata a piscina só como reservatório inferior com bomba. Escolha outro tipo.') : null), true);
     if (elevado && !vazio(tipF)) p('fonte.elevModo', POS.abast, vazio(fo.elevModo || fo.modo) ? Z('Escolha se o reservatório elevado tem bomba de reforço ou entrega só por gravidade.') : null, true);
     if (!vazio(tipoF) && !vazio(tipF)) {
-      var nx = nivelX(F), tubo = tipF === 'ret' || tipF === 'cil' || tipF === 'tronco', ehTaca = tipF === 'taca_seca' || tipF === 'taca_molhada', ehTorre = tipF === 'torre', ehSP = tipF === 'standpipe';
-      if (calc) {
-        var saidaOk = !tubo && !ehSP ? true : (ehSP ? (fo.saida === 'base' || fo.saida === 'acima') : inferior ? (tipF === 'tronco' ? (fo.saida === 'lateral' || fo.saida === 'cima') : (fo.saida === 'lateral' || fo.saida === 'cima' || fo.saida === 'fundo')) : (tipF === 'tronco' || fo.saida === 'lateral' || fo.saida === 'fundo'));
-        if (tubo || ehSP) p('fonte.saida', POS.abast, !saidaOk ? Z('Escolha como a água sai do reservatório.') : null, true);
-        if (!ehTaca && !ehSP) p('fonte.zFundo', POS.abast, cota(fo.zFundo, ehTorre ? 'a cota do fundo do tanque' : 'a cota do fundo do reservatório'), true);
-        if (ehTaca) p('fonte.zFundoCuba', POS.abast, cota(fo.zFundoCuba, 'a cota do fundo da cuba'), true);
-        if (tipF === 'taca_molhada' || ehSP) p('fonte.zBase', POS.abast, cota(fo.zBase, 'a cota da base'), true);
-        if (tipF === 'taca_seca' || ehTorre) p('fonte.zSaida', POS.abast, cota(fo.zSaida, 'a cota da saída na base'), true);
-        p('fonte.dnSuc', POS.abast, !(+fo.dnSuc > 0) ? Z(inferior ? 'Escolha o DN da sucção.' : 'Escolha o DN da saída do reservatório.') : (nx.foraTabela ? E('A Tabela B.1 vai até DN250. Para um DN maior, informe o nível X à mão, com a fonte, no modo avançado.') : (nx.notas.length ? A(nx.notas[0]) : null)), true);
-        var usaTomada = inferior || (tubo && fo.saida === 'lateral' && tipF !== 'tronco') || tipF === 'taca_molhada' || (ehSP && fo.saida === 'acima');
-        if (usaTomada && !vazio(fo.zTomada)) { var rt = cota(fo.zTomada, 'a cota real da tomada'); if ((!rt || rt.n === 'alerta') && nx.abaixo) rt = E('A tomada fica abaixo do mínimo (' + nx.minTopo.toFixed(3).replace('.', ',') + ' m)' + (inferior ? ', que guarda a dimensão B da Tabela B.1 acima do fundo.' : ': a face superior do tubo não fica abaixo do fundo mais o diâmetro.') + ' Suba a tomada ou deixe o campo em branco.'); p('fonte.zTomada', POS.abast, rt, true); }
-        if (ehSP && fo.saida === 'acima') p('fonte.zTomada', POS.abast, cota(fo.zTomada, 'a cota da face superior da saída'), true);
-        if (fo.poco && (tipF === 'ret' || tipF === 'cil' || ehTorre)) { p('fonte.pocoProf', POS.abast, positivo(fo.pocoProf, 'a profundidade do poço de sucção em metros', '0,50'), true); if (!vazio(fo.pocoLado)) p('fonte.pocoLado', POS.abast, positivo(fo.pocoLado, 'o lado do poço em metros', '1,20')); }
-        if (inferior && fo.anti && nx.anti && !vazio(fo.antiH)) { var va = num(fo.antiH); p('fonte.antiH', POS.abast, isNaN(va) ? E(SO_NUM + '0,10') : (va < 0 ? E('A altura do dispositivo não pode ser negativa.') : null), true); }
-        if (!vazio(fo.zConsumo)) p('fonte.zConsumo', POS.abast, cota(fo.zConsumo, 'a cota da tomada de consumo'));
-        if (tipF === 'ret') { p('fonte.resC', POS.abast, positivo(fo.resC, 'o comprimento interno do reservatório em metros', '4,00')); p('fonte.resL', POS.abast, positivo(fo.resL, 'a largura interna do reservatório em metros', '3,00')); }
-        else if (tipF === 'cil' || ehTorre || ehSP) p('fonte.resD', POS.abast, positivo(fo.resD, ehSP ? 'o diâmetro interno da coluna em metros' : 'o diâmetro interno do reservatório em metros', '3,00'));
-        else if (tipF === 'tronco') { p('fonte.troncoDb', POS.abast, positivo(fo.troncoDb, 'o diâmetro interno da base da caixa em metros', '2,40')); p('fonte.troncoDt', POS.abast, positivo(fo.troncoDt, 'o diâmetro interno do topo da caixa em metros', '3,00')); p('fonte.troncoH', POS.abast, positivo(fo.troncoH, 'a altura da caixa em metros', '2,00')); }
-        else if (ehTaca) {
-          if (fo.cubaForma === 'tronco') { p('fonte.troncoDb', POS.abast, positivo(fo.troncoDb, 'o diâmetro interno da base da cuba em metros', '4,00')); p('fonte.troncoDt', POS.abast, positivo(fo.troncoDt, 'o diâmetro interno do topo da cuba em metros', '6,00')); p('fonte.troncoH', POS.abast, positivo(fo.troncoH, 'a altura da cuba em metros', '3,00')); }
-          else p('fonte.resD', POS.abast, positivo(fo.resD, 'o diâmetro interno da cuba em metros', '6,00'));
-          if (tipF === 'taca_molhada') p('fonte.colD', POS.abast, positivo(fo.colD, 'o diâmetro interno da coluna em metros', '1,20'));
-        }
-      } else {
-        p('nos.RI', POS.abast, cota(F.nos.RI, 'a cota do fundo do reservatório'), true);
-        if (inferior) { p('fonte.zX', POS.abast, cota(fo.zX, 'a cota do nível X (nível da reserva de incêndio)'), true); }
-        p('fonte.rtiEfetiva', POS.abast, positivo(fo.rtiEfetiva, 'a reserva de incêndio efetiva em m³', '18'));
+      var nx = nivelX(F), tubo = tipF === 'ret' || tipF === 'cil' || tipF === 'tronco' || tipF === 'piscina', ehTaca = tipF === 'taca_seca' || tipF === 'taca_molhada', ehTorre = tipF === 'torre', ehSP = tipF === 'standpipe';
+      var saidaOk = !tubo && !ehSP ? true : (ehSP ? (fo.saida === 'base' || fo.saida === 'acima') : inferior ? (tipF === 'tronco' ? (fo.saida === 'lateral' || fo.saida === 'cima') : (fo.saida === 'lateral' || fo.saida === 'cima' || fo.saida === 'fundo')) : (tipF === 'tronco' || fo.saida === 'lateral' || fo.saida === 'fundo'));
+      if (tubo || ehSP) p('fonte.saida', POS.abast, !saidaOk ? Z('Escolha como a água sai do reservatório.') : null, true);
+      if (!ehTaca && !ehSP) p('fonte.zFundo', POS.abast, cota(fo.zFundo, ehTorre ? 'a cota do fundo do tanque' : 'a cota do fundo do reservatório'), true);
+      if (ehTaca) p('fonte.zFundoCuba', POS.abast, cota(fo.zFundoCuba, 'a cota do fundo da cuba'), true);
+      if (tipF === 'taca_molhada' || ehSP) p('fonte.zBase', POS.abast, cota(fo.zBase, 'a cota da base'), true);
+      if (tipF === 'taca_seca' || ehTorre) p('fonte.zSaida', POS.abast, cota(fo.zSaida, 'a cota da saída na base'), true);
+      p('fonte.dnSuc', POS.abast, !(+fo.dnSuc > 0) ? Z(inferior ? 'Escolha o DN da sucção.' : 'Escolha o DN da saída do reservatório.') : (nx.foraTabela ? E('A Tabela B.1 vai até DN250. Escolha um DN até 250.') : (nx.notas.length ? A(nx.notas[0]) : null)), true);
+      var usaTomada = inferior || (tubo && fo.saida === 'lateral' && tipF !== 'tronco') || tipF === 'taca_molhada' || (ehSP && fo.saida === 'acima');
+      if (usaTomada && !vazio(fo.zTomada)) { var rt = cota(fo.zTomada, 'a cota real da tomada'); if ((!rt || rt.n === 'alerta') && nx.abaixo) rt = E('A tomada fica abaixo do mínimo (' + nx.minTopo.toFixed(3).replace('.', ',') + ' m)' + (inferior ? ', que guarda a dimensão B da Tabela B.1 acima do fundo.' : ': a face superior do tubo não fica abaixo do fundo mais o diâmetro.') + ' Suba a tomada ou deixe o campo em branco.'); p('fonte.zTomada', POS.abast, rt, true); }
+      if (ehSP && fo.saida === 'acima') p('fonte.zTomada', POS.abast, cota(fo.zTomada, 'a cota da face superior da saída'), true);
+      if (fo.poco && (tipF === 'ret' || tipF === 'cil' || tipF === 'piscina' || ehTorre)) { p('fonte.pocoProf', POS.abast, positivo(fo.pocoProf, 'a profundidade do poço de sucção em metros', '0,50'), true); if (!vazio(fo.pocoLado)) p('fonte.pocoLado', POS.abast, positivo(fo.pocoLado, 'o lado do poço em metros', '1,20')); }
+      if (inferior && fo.anti && nx.anti && !vazio(fo.antiH)) { var va = num(fo.antiH); p('fonte.antiH', POS.abast, isNaN(va) ? E(SO_NUM + '0,10') : (va < 0 ? E('A altura do dispositivo não pode ser negativa.') : null), true); }
+      if (inferior && fo.anti && nx.anti && fo.saida === 'cima' && !vazio(fo.antiBocal)) p('fonte.antiBocal', POS.abast, positivo(fo.antiBocal, 'o diâmetro do bocal em milímetros', '130'), true);   /* 2.7.0 (FC-029) */
+      if (!vazio(fo.zConsumo)) { var rc = cota(fo.zConsumo, 'a cota da tomada de consumo'); if ((!rc || rc.n === 'alerta') && nx.ok && !isNaN(num(fo.zConsumo)) && num(fo.zConsumo) <= nx.nivelReserva) rc = E('A tomada de consumo precisa ficar acima ' + (inferior ? 'do nível X calculado (' + nx.nivelReserva.toFixed(3).replace('.', ',') + ' m).' : 'da referência da altura.')); p('fonte.zConsumo', POS.abast, rc); }
+      if (tipF === 'ret') { p('fonte.resC', POS.abast, positivo(fo.resC, 'o comprimento interno do reservatório em metros', '4,00')); p('fonte.resL', POS.abast, positivo(fo.resL, 'a largura interna do reservatório em metros', '3,00')); }
+      else if (tipF === 'piscina') {   /* 2.7.0 (FC-027) */
+        if (fo.resForma === 'area') p('fonte.resArea', POS.abast, positivo(fo.resArea, 'a área do espelho d\'água em m²', '32,00'));
+        else { p('fonte.resC', POS.abast, positivo(fo.resC, 'o comprimento interno da piscina em metros', '8,00')); p('fonte.resL', POS.abast, positivo(fo.resL, 'a largura interna da piscina em metros', '4,00')); }
+        if (!vazio(fo.zRaso)) { var rr = cota(fo.zRaso, 'a cota do fundo na parte rasa'); if ((!rr || rr.n === 'alerta') && !isNaN(num(fo.zRaso)) && !isNaN(num(fo.zFundo)) && num(fo.zRaso) <= num(fo.zFundo)) rr = E('A parte rasa precisa ficar acima do fundo da parte funda. Em branco, o fundo é plano.'); p('fonte.zRaso', POS.abast, rr); }
+      }
+      else if (tipF === 'cil' || ehTorre || ehSP) p('fonte.resD', POS.abast, positivo(fo.resD, ehSP ? 'o diâmetro interno da coluna em metros' : 'o diâmetro interno do reservatório em metros', '3,00'));
+      else if (tipF === 'tronco') { p('fonte.troncoDb', POS.abast, positivo(fo.troncoDb, 'o diâmetro interno da base da caixa em metros', '2,40')); p('fonte.troncoDt', POS.abast, positivo(fo.troncoDt, 'o diâmetro interno do topo da caixa em metros', '3,00')); p('fonte.troncoH', POS.abast, positivo(fo.troncoH, 'a altura da caixa em metros', '2,00')); }
+      else if (ehTaca) {
+        if (fo.cubaForma === 'tronco') { p('fonte.troncoDb', POS.abast, positivo(fo.troncoDb, 'o diâmetro interno da base da cuba em metros', '4,00')); p('fonte.troncoDt', POS.abast, positivo(fo.troncoDt, 'o diâmetro interno do topo da cuba em metros', '6,00')); p('fonte.troncoH', POS.abast, positivo(fo.troncoH, 'a altura da cuba em metros', '3,00')); }
+        else p('fonte.resD', POS.abast, positivo(fo.resD, 'o diâmetro interno da cuba em metros', '6,00'));
+        if (tipF === 'taca_molhada') p('fonte.colD', POS.abast, positivo(fo.colD, 'o diâmetro interno da coluna em metros', '1,20'));
       }
       if (inferior) p('nos.BI', POS.abast, cota(F.nos.BI, 'a cota do eixo da bomba'), true);
       else if (fo.elevModo === 'reforco') p('nos.BI', POS.abast, cota(F.nos.BI, 'a cota do eixo da bomba de reforço'), false);
-      var rz = cota(fo.zCheio, calc ? 'a cota do nível normal da água (reservatório cheio)' : 'a cota do reservatório cheio');
-      if ((!rz || rz.n === 'alerta') && inferior && !isNaN(num(fo.zX)) && num(fo.zCheio) <= num(fo.zX)) rz = E(calc ? 'O nível normal da água precisa ficar acima do nível X calculado (' + String(fo.zX) + ' m).' : 'O nível do reservatório cheio precisa ficar acima do nível X.');
-      if ((!rz || rz.n === 'alerta') && calc && !isNaN(num(fo.zFundo)) && num(fo.zCheio) <= num(fo.zFundo)) rz = E('O nível normal da água precisa ficar acima do fundo do reservatório.');
+      var rz = cota(fo.zCheio, 'a cota do nível normal da água (reservatório cheio)');
+      if ((!rz || rz.n === 'alerta') && inferior && !isNaN(num(fo.zX)) && num(fo.zCheio) <= num(fo.zX)) rz = E('O nível normal da água precisa ficar acima do nível X calculado (' + String(fo.zX) + ' m).');
+      if ((!rz || rz.n === 'alerta') && !isNaN(num(fo.zFundo)) && num(fo.zCheio) <= num(fo.zFundo)) rz = E('O nível normal da água precisa ficar acima do fundo do reservatório.');
       p('fonte.zCheio', POS.abast, rz, !vazio(F.bomba.id));
     }
     p('ambiente.altitude', POS.ident, tabela(F.ambiente.altitude, ctx.altitudes || [0, 3000], 'a altitude do município em metros', '700'), true);

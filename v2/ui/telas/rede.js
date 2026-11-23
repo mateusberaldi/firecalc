@@ -13,28 +13,53 @@
   /** 2.6.0: dados por trecho e por nó para o cartão do mouse, a planilha e os alertas. Só existe com o cálculo fechado (sit.k 'ok').
    *  Pressão por nó = M.pressoesNos, a mesma conta dos hidrantes. Trecho fora do par de cálculo não leva água no cenário (vazão 0); o ramo do recalque fica fora de tudo. */
   var AC = 'a calcular', NA = 'não se aplica';
-  function dadosRede(F, sit) {
-    if (!sit || sit.k !== 'ok') return null;
-    var R = sit.R, ctx = R.ctx, nm = ctx.norma, M = U.M, vaz = {}, suc = {}, rr = ramoRec(F), rec = {}, lista = [], nomesNo = {}, pn = {}, d = { tr: [], nos: {}, nm: nm, alerta: false };
+  /** 2.7.0 (FC-030): o que impede o cálculo parcial da rede. Falta de campo do Abastecimento (fora a rota), da bomba, do ambiente e dos hidrantes não impede; só o que a rede usa. */
+  var BLOQ = /^(norma$|C$|trechos[.]|nos[.](?!BI$|RI$)|lanc[.]|sistema[.]|fonte\.(tipo|tip|elevModo)$)/;
+  /** 2.7.0 (FC-030): situação que a planilha e o desenho da etapa Rede usam. Cálculo fechado ('ok'): o do projeto. Faltando dado de outras etapas ('aguarda'), rede válida e completa:
+   *  o cálculo parcial do motor (M.calcularRede), marcado k 'parcial', guardado na própria situação (uma conta por alteração, só com a tela Rede aberta). Nunca entra em S.sit.R. */
+  function sitRede(F, sit) {
+    if (!sit) return null;
+    if (sit.k === 'ok') return sit;
+    if (sit.k !== 'aguarda') return null;
+    if (sit.parcial !== undefined) return sit.parcial;
+    sit.parcial = null;
+    try {
+      var modo = F.fonte.modo;
+      if ((sit.falta || []).some(function (c) { return BLOQ.test(c.c); }) || !F.hidrantes.length || ['bomba', 'reforco', 'gravidade'].indexOf(modo) < 0) return null;
+      if (modo !== 'bomba' && (V.vazio(F.nos.RI) || isNaN(V.num(F.nos.RI)))) return null;
+      var Rp = U.M.calcularRede(E.paraMotor(F, D, U.M), D);
+      if (Rp.ok) sit.parcial = { k: 'parcial', R: Rp, campos: sit.campos };
+    } catch (e) { sit.parcial = null; }
+    return sit.parcial;
+  }
+  U.sitRede = sitRede;
+  function dadosRede(F, sit0) {
+    var sit = sitRede(F, sit0);
+    if (!sit) return null;
+    var R = sit.R, ctx = R.ctx, nm = ctx.norma, M = U.M, vaz = {}, suc = {}, rr = ramoRec(F), rec = {}, lista = [], nomesNo = {}, pn = {}, d = { tr: [], nos: {}, nm: nm, alerta: false, parcial: sit.k === 'parcial' };
     if (rr) rr.idx.forEach(function (i) { rec[i] = 1; });
     [[R.par.tronco, R.par.Qt], [R.par.ramalCrit, R.par.Qcrit], [R.par.ramalOut, R.par.Qout]].forEach(function (g) { g[0].forEach(function (e) { vaz[e.t.nome] = { Q: g[1], t: e.t }; }); });
     ctx.suc.forEach(function (e) { suc[e.t.nome] = { Q: R.par.Qt, t: e.t }; });
     var limSuc = ctx.succao && ctx.succao.estado === 'negativa' ? nm.vmaxSucNeg : nm.vmaxSucPos;
     F.trechos.forEach(function (t, i) { if (!rec[i]) { nomesNo[String(t.de).trim()] = 1; nomesNo[String(t.para).trim()] = 1; } });
     try { pn = M.pressoesNos(ctx, R.par, Object.keys(nomesNo)); } catch (e) { pn = {}; }
+    var abx = {}; try { M.abaixoMinimo(ctx, R.par).forEach(function (a) { abx[a.no] = a; }); } catch (e) { abx = {}; }   /* 2.7.0 (FC-031): hidrante abaixo do mínimo, regra única do motor */
     Object.keys(pn).forEach(function (n) {
-      var x = pn[n], semP = n === 'RI';
-      d.nos[n] = { z: x.z, din: semP ? null : x.din, est: semP ? null : x.est, semBomba: !semP && x.semBomba, al: !semP && (x.din > nm.pmax || (x.est !== null && x.est > nm.pmax)) };
+      var x = pn[n], semP = n === 'RI', sem = d.parcial && (V.vazio(F.nos[n]) || isNaN(V.num(F.nos[n])));
+      if (sem && n !== 'RI') return;   /* parcial: nó sem cota fica fora; o cartão e a planilha dizem 'a calcular' */
+      d.nos[n] = { z: sem ? '' : x.z, din: semP ? null : x.din, est: semP ? null : x.est, semBomba: !semP && x.semBomba, al: !semP && (x.din > nm.pmax || (x.est !== null && x.est > nm.pmax)) };
       if (d.nos[n].al) d.alerta = true;
+      if (abx[n] && !semP) { d.nos[n].bx = true; d.nos[n].pmin = abx[n].Pmin; d.nos[n].dinV = abx[n].din; d.alertaMin = true; }
     });
     F.trechos.forEach(function (t, i) {
-      var n = nome(t), q = vaz[n] || suc[n], r = { n: n, dn: t.dn, L: t.L, fora: !!rec[i], suc: !!suc[n] };
+      var n = nome(t), q = vaz[n] || suc[n], r = { n: n, dn: t.dn, L: t.L, fora: !!rec[i], suc: !!suc[n], parc: d.parcial };
       if (!r.fora) {
         var Q = q ? q.Q : 0;
         r.Q = Q; r.v = q ? M.vel(Q, q.t.dint) : 0; r.hf = q ? M.J(Q, q.t.dint, q.t.C) * q.t.Lt : 0;
         r.lim = r.suc ? limSuc : nm.vmaxRede; r.vAl = r.v > r.lim;
-        var nj = d.nos[String(t.para).trim()]; r.P = r.suc || !nj ? null : nj.din; r.pAl = r.P !== null && r.P > nm.pmax;
+        var nj = d.nos[String(t.para).trim()]; r.P = r.suc || !nj ? null : nj.din; r.pAc = !r.suc && !nj; r.pAl = r.P !== null && r.P > nm.pmax; r.pBx = !!(nj && !r.suc && nj.bx);
         if (r.vAl || r.pAl) d.alerta = true;
+        if (r.pBx) d.alertaMin = true;
       }
       d.tr[i] = r;
     });
@@ -46,24 +71,26 @@
     var l = [['Diâmetro', 'DN' + t.dn], ['Comprimento', V.vazio(t.L) || isNaN(V.num(t.L)) ? 'a informar' : fmt(V.num(t.L), 2) + ' m']];
     if (r && !r.fora) l.push(['Vazão', fmt(r.Q, 1) + ' L/min'], ['Velocidade', fmt(r.v, 2) + ' m/s' + (r.vAl ? ' (limite ' + fmt(r.lim, 2) + ')' : ''), r.vAl], ['Perda de carga', fmt(r.hf, 2) + ' mca']);
     else { var tx = r ? NA : AC; l.push(['Vazão', tx], ['Velocidade', tx], ['Perda de carga', tx]); }
+    if (r && !r.fora && r.parc) l.push(['Valores', 'parcial']);
     return [nome(t), l];
   }
   function cartaoNo(n, F, d) {
     var x = d && d.nos[n], z = x ? x.z : F.nos[n], l = [['Cota', V.vazio(z) ? 'a informar' : fmt(V.num(z), 2) + ' m']];
-    if (x && x.din !== null) l.push(['Pressão estática', x.est === null ? (x.semBomba ? AC : NA) : fmt(x.est, 1) + ' mca', x.est !== null && x.est > d.nm.pmax], ['Pressão dinâmica', fmt(x.din, 1) + ' mca' + (x.din > d.nm.pmax ? ' (limite ' + fmt(d.nm.pmax, 0) + ')' : ''), x.din > d.nm.pmax]);
+    if (x && x.din !== null) l.push(['Pressão estática', x.est === null ? (x.semBomba || d.parcial ? AC : NA) : fmt(x.est, 1) + ' mca', x.est !== null && x.est > d.nm.pmax], ['Pressão dinâmica', fmt(x.bx ? x.dinV : x.din, 1) + ' mca' + (x.din > d.nm.pmax ? ' (limite ' + fmt(d.nm.pmax, 0) + ')' : '') + (x.bx ? ' (mínimo ' + fmt(x.pmin, 1) + ')' : ''), x.din > d.nm.pmax || x.bx]);
     else { var tx = x ? NA : AC; l.push(['Pressão estática', tx], ['Pressão dinâmica', tx]); }
+    if (x && x.din !== null && d.parcial) l.push(['Valores', 'parcial']);
     return [n, l];
   }
 
   /** Planilha trecho a trecho: seis colunas, preenchida quando o cálculo fecha; ▲ no que passa do limite do estado. */
   function planilha(F, sit) {
-    var d = dadosRede(F, sit), h = '<div class="rolar" tabindex="0" role="region" aria-label="Planilha da rede, trecho a trecho"><table class="tab-res"><thead><tr><th>Trecho</th><th>Diâmetro</th><th class="r">Vazão <small>(L/min)</small></th><th class="r">Velocidade <small>(m/s)</small></th><th class="r">Perda <small>(mca)</small></th><th class="r">Pressão <small>(mca, no fim do trecho)</small></th></tr></thead><tbody>';
-    function c(txt, al) { return '<td class="r' + (al ? ' alerta' : '') + '">' + txt + (al ? ' <span class="al-m" aria-hidden="true">▲</span><span class="so-leitor">acima do limite</span>' : '') + '</td>'; }
+    var d = dadosRede(F, sit), pc = d && d.parcial ? ' <span class="parc">parcial</span>' : '', h = '<div class="rolar" tabindex="0" role="region" aria-label="Planilha da rede, trecho a trecho"><table class="tab-res"><thead><tr><th>Trecho</th><th>Diâmetro</th><th class="r">Vazão <small>(L/min)</small>' + pc + '</th><th class="r">Velocidade <small>(m/s)</small>' + pc + '</th><th class="r">Perda <small>(mca)</small>' + pc + '</th><th class="r">Pressão <small>(mca, no fim do trecho)</small>' + pc + '</th></tr></thead><tbody>';
+    function c(txt, al, bx) { return '<td class="r' + (al || bx ? ' alerta' : '') + '">' + txt + (al ? ' <span class="al-m" aria-hidden="true">▲</span><span class="so-leitor">acima do limite</span>' : '') + (bx ? ' <span class="al-m" aria-hidden="true">▲</span><span class="so-leitor">abaixo do mínimo</span>' : '') + '</td>'; }
     F.trechos.forEach(function (t, i) {
       var r = d && d.tr[i], ok = r && !r.fora, v0 = d ? NA : AC;
-      h += '<tr' + (r && (r.vAl || r.pAl) ? ' class="al"' : '') + '><th scope="row">' + esc(nome(t)) + '</th><td>DN' + esc(t.dn) + '</td>' + c(ok ? fmt(r.Q, 1) : v0) + c(ok ? fmt(r.v, 2) : v0, ok && r.vAl) + c(ok ? fmt(r.hf, 2) : v0) + c(ok && r.P !== null ? fmt(r.P, 1) : v0, ok && r.pAl) + '</tr>';
+      h += '<tr' + (r && (r.vAl || r.pAl || r.pBx) ? ' class="al"' : '') + '><th scope="row">' + esc(nome(t)) + '</th><td>DN' + esc(t.dn) + '</td>' + c(ok ? fmt(r.Q, 1) : v0) + c(ok ? fmt(r.v, 2) : v0, ok && r.vAl) + c(ok ? fmt(r.hf, 2) : v0) + c(ok && r.P !== null ? fmt(r.P, 1) : (ok && r.pAc ? AC : v0), ok && r.pAl, ok && r.pBx) + '</tr>';
     });
-    return h + '</tbody></table></div><p class="peq">' + (d ? 'Valores do cenário de cálculo: só o par de hidrantes mais desfavorável está em uso, e o trecho que não leva água nele aparece com vazão zero.' + (d.alerta ? ' ▲ marca o que passa do limite do estado.' : '') : 'Vazão, velocidade, perda e pressão aparecem quando o cálculo do projeto fecha.') + '</p>';
+    return h + '</tbody></table></div><p class="peq">' + (d ? (d.parcial ? 'Valores parciais, só com a rede e os hidrantes lançados: o projeto ainda não fechou o cálculo. Só o par de hidrantes mais desfavorável está em uso' : 'Valores do cenário de cálculo: só o par de hidrantes mais desfavorável está em uso') + ', e o trecho que não leva água nele aparece com vazão zero.' + (d.alerta || d.alertaMin ? ' ▲ marca ' + (d.alerta ? 'o que passa do limite do estado' : '') + (d.alerta && d.alertaMin ? ' e ' : '') + (d.alertaMin ? 'o hidrante abaixo do mínimo' : '') + '.' : '') : 'Vazão, velocidade, perda e pressão aparecem com a rede completa: todos os trechos ligados ao reservatório, a cota de cada nó e ao menos um hidrante.') + '</p>';
   }
   U.planilhaRede = planilha;
 
@@ -81,7 +108,8 @@
     var W = 760, dx = prof ? Math.min(200, (W - 150) / prof) : 0, dy = 78, H = Math.max(1, y) * dy + 30;
     function X(n) { return 60 + pos[n].x * dx; } function Y(n) { return 34 + pos[n].y * dy; }
     var par = {}, nomePar = '';
-    if (sit.k === 'ok') { var R = sit.R; [R.par.tronco, R.par.ramalCrit, R.par.ramalOut].forEach(function (l) { l.forEach(function (e) { par[e.t.nome] = 1; }); }); nomePar = R.numeros.par; }
+    var sr = sitRede(F, sit);
+    if (sr) { var R = sr.R; [R.par.tronco, R.par.ramalCrit, R.par.ramalOut].forEach(function (l) { l.forEach(function (e) { par[e.t.nome] = 1; }); }); nomePar = R.numeros.par; }
     var dr = dadosRede(F, sit), g = '', nos = '', hit = '', hT = [], hN = [], tri = function (x, y) { return '<path class="al-m" d="M' + (x - 8) + ' ' + (y + 7) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 8) + ' ' + (y + 7) + 'Z" fill="var(--fc-erro)"/><text class="al-t" x="' + x + '" y="' + (y + 5) + '" text-anchor="middle">!</text>'; };
     F.trechos.forEach(function (t, i) {
       if (!ori[i]) return; var d = ori[i].m, p = ori[i].j; if (!pos[d] || !pos[p]) return;
@@ -97,11 +125,11 @@
       var x = X(n), yy = Y(n), solto = !est.alc[n];
       if (n === 'RI') nos += '<rect x="' + (x - 22) + '" y="' + (yy - 16) + '" width="44" height="32" rx="4" fill="var(--fc-info-fundo)" stroke="var(--fc-agua)" stroke-width="2"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">RI</text>';
       else if (n === 'BI') nos += '<circle cx="' + x + '" cy="' + yy + '" r="16" fill="var(--fc-superficie)" stroke="var(--fc-agua)" stroke-width="2"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">BI</text>';
-      else if (hid[n]) { var q = sit.k === 'ok' && (sit.R.par.a.no === n || sit.R.par.b.no === n); nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="13" fill="' + (solto ? 'var(--fc-erro-fundo)' : (q ? 'var(--fc-fogo-fundo)' : 'var(--fc-superficie)')) + '" stroke="' + (solto ? 'var(--fc-erro)' : (q ? 'var(--fc-fogo)' : 'var(--fc-agua)')) + '" stroke-width="2"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>'; }
+      else if (hid[n]) { var q = sr && (sr.R.par.a.no === n || sr.R.par.b.no === n); nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="13" fill="' + (solto ? 'var(--fc-erro-fundo)' : (q ? 'var(--fc-fogo-fundo)' : 'var(--fc-superficie)')) + '" stroke="' + (solto ? 'var(--fc-erro)' : (q ? 'var(--fc-fogo)' : 'var(--fc-agua)')) + '" stroke-width="2"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>'; }
       else if (rr && n === F.recalque.no) nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="4" fill="var(--fc-superficie)" stroke="var(--fc-texto-3)" stroke-width="2" stroke-dasharray="3 3"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
       else nos += '<circle cx="' + x + '" cy="' + yy + '" r="7" fill="' + (solto ? 'var(--fc-erro)' : 'var(--fc-agua)') + '"/><text x="' + x + '" y="' + (yy - 14) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
       var dn_ = dr && dr.nos[n];
-      if (dn_ && dn_.al) nos += tri(x + (hid[n] ? 62 : 16), yy - (hid[n] ? 14 : 24));
+      if (dn_ && (dn_.al || dn_.bx)) nos += tri(x + (hid[n] ? 62 : 16), yy - (hid[n] ? 14 : 24));
       if (!(rr && n === F.recalque.no)) hN.push([pos[n].x, pos[n].y, '<rect class="hit" tabindex="-1" role="img" aria-label="' + esc(n === 'RI' ? 'Reservatório RI' : n === 'BI' ? 'Bomba BI' : hid[n] ? 'Hidrante ' + n : 'Nó ' + n) + '" x="' + (x - 24) + '" y="' + (yy - 20) + '" width="' + (hid[n] ? 76 : 48) + '" height="40" rx="10" data-card="' + esc(JSON.stringify(cartaoNo(n, F, dr))) + '"/>']);
     });
     /* 2.6.4: ordem de leitura do desenho (da RI para os hidrantes, depois a coluna de cima para baixo): trechos e depois nós. */
@@ -110,7 +138,7 @@
     /* 2.6.4: roving tabindex, uma só parada de Tab no desenho (o primeiro elemento); com menos de dois elementos não há por que parar. */
     hit = hit.split(' tabindex="-1"').length > 2 ? hit.replace(' tabindex="-1"', ' tabindex="0"') : hit.replace(/ tabindex="-1"/g, '');
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="Desenho esquemático da rede, gerado dos trechos">' + g + nos + hit+ '</svg>' +
-      '<div class="leg"><span><i style="background:var(--fc-agua)"></i>tubo</span>' + (nomePar ? '<span><i style="background:var(--fc-fogo)"></i>' + (sit.R.numeros.jatoUnico ? 'caminho do jato (' : 'par mais desfavorável (') + esc(nomePar) + ')</span>' : '') + (rr ? '<span><i style="background:var(--fc-texto-3)"></i>tracejado cinza: ramo do recalque, fora do cálculo</span>' : '') + (est.avisos.length ? '<span><i style="background:var(--fc-erro)"></i>tracejado vermelho: sem ligação ao reservatório</span>' : '') + (dr && dr.alerta ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--fc-erro)"/></svg>acima do limite do estado</span>' : '') + '<span>RI reservatório, BI bomba, H hidrante</span></div>';
+      '<div class="leg"><span><i style="background:var(--fc-agua)"></i>tubo</span>' + (nomePar ? '<span><i style="background:var(--fc-fogo)"></i>' + (sr.R.numeros.jatoUnico ? 'caminho do jato (' : 'par mais desfavorável (') + esc(nomePar) + ')</span>' : '') + (rr ? '<span><i style="background:var(--fc-texto-3)"></i>tracejado cinza: ramo do recalque, fora do cálculo</span>' : '') + (est.avisos.length ? '<span><i style="background:var(--fc-erro)"></i>tracejado vermelho: sem ligação ao reservatório</span>' : '') + (dr && dr.parcial ? '<span><span class="parc">parcial</span> valores do cálculo parcial</span>' : '') + (dr && dr.alerta ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--fc-erro)"/></svg>acima do limite do estado</span>' : '') + (dr && dr.alertaMin ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--fc-erro)"/></svg>abaixo do mínimo</span>' : '') + '<span>RI reservatório, BI bomba, H hidrante</span></div>';
   }
   U.arvore = arvore;
 

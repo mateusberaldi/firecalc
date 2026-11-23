@@ -20,7 +20,18 @@
   "modo": "bomba",
   "zX": 0.465,
   "zCheio": 2.095,
-  "rtiEfetiva": 8
+  "rtiEfetiva": 8,
+  "xModo": "calc",
+  "saida": "lateral",
+  "dnSuc": 65,
+  "resForma": "cil",
+  "zFundo": 0.07,
+  "resD": 2.5,
+  "tipo": "inferior",
+  "tipologia": "cil",
+  "topoReserva": 2.095,
+  "succao": "afogada",
+  "nota": "Reservatório inferior cilíndrico de 2,5 m de diâmetro, saída lateral por tubo de DN65 e fundo na cota 0,07 m, tudo adotado para o exemplo, de modo que o nível X (fundo mais B, D e A, Tabela B.1 e B.3.3 a B.3.8 do Anexo B da NPT 022 do CBMPR) fique em 0,465 m e a reserva em 8 m3."
  },
  "nos": {
   "H1": {
@@ -36,7 +47,7 @@
    "z": 0.3
   },
   "RI": {
-   "z": 0.465
+   "z": 0.07
   }
  },
  "trechos": [

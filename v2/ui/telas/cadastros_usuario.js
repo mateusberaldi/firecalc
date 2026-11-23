@@ -7,7 +7,7 @@
   var U = window.FireUI, D = U.D, E = U.E, V = U.V, S = U.S, esc = U.esc, fmt = U.fmt, CAD = FireCadastros, X = U._bib, CH = 'firecalc2_cadastros';
   U.cad = Object.assign(CAD.vazia(), X.le(CH, {})); Object.keys(CAD.vazia()).forEach(function (g) { if (!Array.isArray(U.cad[g])) U.cad[g] = []; });
   E.defineCadastros(U.cad);
-  S.cadRel = null; S.cadGrupo = 'tiposTubo';
+  S.cadRel = null; S.cadGrupo = 'tiposTubo'; S.cadRes = { tipo: 'ret', cubaForma: 'cil', v: {} };
   function salva() { E.defineCadastros(U.cad); if (!X.guarda(CH, U.cad)) U.avisa('Este navegador não deixou guardar a biblioteca. Baixe o arquivo para não perder o cadastro.'); }
   function redesenha() { if (S.aberto) U.mudou(); else U.desenhar(); }
   /** 2.6.4: nome completo da bomba (fabricante e modelo). O catálogo da base guarda o modelo sem o fabricante; a biblioteca guarda com ele. */
@@ -46,10 +46,40 @@
     if (g === 'mangueiras') return ['<b>' + esc(x.modelo || 'Mangueira') + '</b>, ' + x.dn + ' mm', x.Q.length + ' pontos, de ' + fmt(x.Q[0], 0) + ' a ' + fmt(x.Q[x.Q.length - 1], 0) + ' L/min'];
     return ['<b>' + esc(x.div) + '</b> (' + esc(x.norma) + ')', esc(x.desc) + '; coluna ' + esc(x.colunas.join(' ou '))];
   }
+  /** 2.7.0 (FC-024): campos do formulário de reservatório pelo tipo da caixa (e pela forma da cuba, na taça). Medidas internas em metros. */
+  function camposRes() {
+    var t = S.cadRes.tipo, f = [['fabricante', 'Fabricante', ''], ['modelo', 'Modelo', ''], ['tipo', 'Tipo da caixa', '', 'sel', CAD.TIPOS_RES]], dim = function (k, r, ex) { return [k, r + ' <small>(m)</small>', ex]; };
+    var tr = function () { return [dim('diametroBase', 'Diâmetro interno da base', '2,10'), dim('diametroTopo', 'Diâmetro interno do topo', '2,40'), dim('altura', 'Altura', '1,40')]; };
+    if (t === 'ret') f.push(dim('comprimento', 'Comprimento interno', '4,00'), dim('largura', 'Largura interna', '3,00'));
+    else if (t === 'tronco') f = f.concat(tr());
+    else if (t === 'taca') { f.push(['cubaForma', 'Forma da cuba', '', 'sel', [['cil', 'Cilíndrica'], ['tronco', 'Tronco de cone']]]); f = f.concat(S.cadRes.cubaForma === 'tronco' ? tr() : [dim('diametro', 'Diâmetro interno da cuba', '6,00')]); f.push(dim('diametroColuna', 'Diâmetro interno da coluna (opcional)', '1,20')); }
+    else f.push(dim('diametro', 'Diâmetro interno', '3,00'));
+    f.push(['volumeNominal', 'Volume nominal <small>(m³, opcional)</small>', '5,0']);
+    return f;
+  }
+  /** Medidas internas de um item da biblioteca de reservatórios, em texto (valores já em metros). */
+  function medidasRes(x) {
+    var m = function (v) { return fmt(v, 2); };
+    if (x.tipo === 'ret') return x.comprimento ? m(x.comprimento) + ' por ' + m(x.largura) + ' m' : 'só o volume nominal';
+    if (x.tipo === 'tronco') return 'base ' + m(x.diametroBase) + ', topo ' + m(x.diametroTopo) + ', altura ' + m(x.altura) + ' m';
+    if (x.tipo === 'taca') return (x.cubaForma === 'tronco' ? 'cuba em tronco: base ' + m(x.diametroBase) + ', topo ' + m(x.diametroTopo) + ', altura ' + m(x.altura) : 'cuba de diâmetro ' + m(x.diametro)) + (x.diametroColuna ? ', coluna ' + m(x.diametroColuna) : '') + ' m';
+    return x.diametro ? 'diâmetro ' + m(x.diametro) + ' m' : 'só o volume nominal';
+  }
+  U.medidasRes = medidasRes;
+  U.nomeTipoRes = function (t) { var l = CAD.TIPOS_RES.filter(function (q) { return q[0] === t; })[0]; return l ? l[1] : String(t); };
+  /** Cartão "Minha biblioteca de reservatórios" (aba Minha biblioteca, depois do de bombas). */
+  U.cartaoReservatorios = function () {
+    var l = U.cad.reservatorios || [];
+    return '<div class="cartao bloco" id="bib-res"><div class="cab-ia"><h2 class="t3">Minha biblioteca de reservatórios</h2><button type="button" class="bt-aj bt-aj-t" id="ia-reservatorios-abrir" data-cad="ia-reservatorios" aria-haspopup="dialog" aria-label="Como gerar o JSON de reservatórios com uma IA">?</button></div>' +
+      (l.length ? '<div class="rolar"><table aria-label="Reservatórios da biblioteca"><thead><tr><th>Fabricante e modelo</th><th>Tipo</th><th>Medidas internas</th><th class="r">Volume nominal <small>(m³)</small></th><th>Fonte</th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' + l.map(function (x, i) {
+        return '<tr><td><b>' + esc(x.fabricante) + ' ' + esc(x.modelo) + '</b></td><td>' + esc(U.nomeTipoRes(x.tipo)) + '</td><td class="tec">' + esc(medidasRes(x)) + '</td><td class="r tec">' + (x.volumeNominal ? fmt(x.volumeNominal, 3) : '') + '</td><td class="peq">' + (x.fonte ? esc(x.fonte) : '<span class="pilula p-al">sem fonte</span>') + '</td><td class="r"><button type="button" class="bt lig min" data-cad="res-tirar" data-v="' + i + '" aria-label="Remover reservatório: ' + esc(x.fabricante + ' ' + x.modelo) + '">Remover</button></td></tr>'; }).join('') + '</tbody></table></div>'
+        : '<p class="peq" id="res-vazia"><b>Nenhum reservatório cadastrado.</b></p>') +
+      '<div class="linha-ac"><button type="button" class="bt" data-cad="res-baixar"' + (l.length ? '' : ' disabled') + '>Baixar a biblioteca (.json)</button><button type="button" class="bt" data-cad="res-abrir">Trazer de um arquivo</button><input type="file" id="res-arq" accept=".json,application/json" hidden></div></div>';
+  };
   U.abaCadastrosUsuario = function () {
-    var rel = S.cadRel, total = 0, h = ''; Object.keys(U.cad).forEach(function (g) { total += U.cad[g].length; });
-    h += '<div class="cartao bloco" id="cad-lote"><div class="cab-ia"><h2 class="t3">Minha biblioteca: inclusão em lote</h2><button type="button" class="bt-aj bt-aj-t" id="ia-lote-abrir" data-cad="ia-lote" aria-haspopup="dialog" aria-label="Como gerar o JSON com uma IA">?</button></div><p class="peq">Tubos e tipos de tubo, fator C, peças e comprimento equivalente, esguichos, mangueiras, ocupações e bombas que não estão na base oficial. Baixe o modelo, preencha os grupos que quiser e importe o arquivo: a ferramenta mostra o que entrou e o que foi recusado, com o motivo. Todo item pede a fonte. A base oficial não é alterada, e o item da biblioteca aparece com a marca "(personalizado)" nas listas e no relatório.</p>' +
-      '<div class="linha-ac"><button type="button" class="bt" data-cad="modelo">Baixar o modelo (.json)</button><button type="button" class="bt pri" data-cad="abrir">Importar arquivo (.json)</button><button type="button" class="bt" data-cad="baixar"' + (total ? '' : ' disabled') + '>Baixar a minha biblioteca (.json)</button><input type="file" id="cad-arq" accept=".json,application/json" hidden></div>';
+    var rel = S.cadRel, total = 0, h = ''; Object.keys(U.cad).forEach(function (g) { if (g !== 'reservatorios') total += U.cad[g].length; });
+    h += '<div class="cartao bloco" id="cad-lote"><div class="cab-ia"><h2 class="t3">Minha biblioteca: inclusão em lote</h2><button type="button" class="bt-aj bt-aj-t" id="ia-lote-abrir" data-cad="ia-lote" aria-haspopup="dialog" aria-label="Como gerar o JSON com uma IA">?</button></div><p class="peq">Tubos e tipos de tubo, fator C, peças e comprimento equivalente, esguichos, mangueiras, ocupações, bombas e reservatórios que não estão na base oficial. Baixe o modelo, preencha os grupos que quiser e importe o arquivo: a ferramenta mostra o que entrou e o que foi recusado, com o motivo. Todo item pede a fonte. A base oficial não é alterada, e o item da biblioteca aparece com a marca "(personalizado)" nas listas e no relatório.</p>' +
+      '<div class="linha-ac"><button type="button" class="bt" data-cad="modelo">Baixar o modelo (.json)</button><button type="button" class="bt pri" data-cad="abrir">Importar arquivo (.json)</button><button type="button" class="bt" data-cad="baixar"' + (total || U.cad.reservatorios.length ? '' : ' disabled') + '>Baixar a minha biblioteca (.json)</button><input type="file" id="cad-arq" accept=".json,application/json" hidden></div>';
     if (rel) {
       h += '<div id="cad-rel" role="status" style="margin-top:12px">';
       if (rel.erro) h += U.aviso('er', '<b>Nada foi importado.</b> ' + esc(rel.erro));
@@ -61,17 +91,19 @@
     }
     h += '</div>';
     h += '<div class="cartao bloco" id="cad-itens"><h2 class="t3">Itens da minha biblioteca</h2>';
-    if (!total) h += '<p class="peq" id="cad-vazia"><b>Nenhum item cadastrado além das bombas.</b> As bombas ficam no cartão seguinte.</p>';
+    if (!total) h += '<p class="peq" id="cad-vazia"><b>Nenhum item cadastrado além das bombas e dos reservatórios.</b> Eles ficam nos cartões seguintes.</p>';
     else Object.keys(U.cad).forEach(function (g) {
-      if (!U.cad[g].length) return;
+      if (!U.cad[g].length || g === 'reservatorios') return;
       h += '<h3 class="t3" style="margin-top:12px">' + esc(CAD.NOME[g]) + '</h3><div class="rolar"><table aria-label="' + esc(CAD.NOME[g]) + ' da biblioteca"><thead><tr><th>Item</th><th>Dados</th><th>Fonte</th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' +
         U.cad[g].map(function (x, i) { var r = resumoItem(g, x); return '<tr><td>' + r[0] + ' <span class="pilula p-al">personalizado</span></td><td>' + r[1] + '</td><td>' + esc(x.fonte) + '</td><td class="r">' + (g === 'mangueiras' && S.aberto ? '<button type="button" class="bt min" data-cad="usar-mang" data-v="' + i + '">Usar no projeto aberto</button> ' : '') + '<button type="button" class="bt min" data-cad="tirar" data-g="' + g + '" data-v="' + i + '" aria-label="Retirar da biblioteca: ' + esc(String(x.nome || x.modelo || x.material || x.div || x.norma)) + '">Retirar</button></td></tr>'; }).join('') + '</tbody></table></div>';
     });
     h += '</div>';
-    var g0 = S.cadGrupo, campos = FORM[g0];
-    h += '<div class="cartao bloco" id="cad-um"><h2 class="t3">Incluir um item</h2><div class="form"><label class="cmp"><span class="rt">Grupo</span><select class="campo" id="cad-grupo">' + Object.keys(FORM).map(function (g) { return '<option value="' + g + '"' + (g === g0 ? ' selected' : '') + '>' + esc(CAD.NOME[g]) + '</option>'; }).join('') + '</select><span class="aj">Bomba e mangueira têm formulário próprio, abaixo, no modo personalizado.</span></label>' +
-      campos.map(function (c) { return '<label class="cmp"><span class="rt">' + c[1] + '</span><input class="campo" id="ci-' + c[0] + '" data-ci="' + c[0] + '"' + (c[2] ? ' placeholder="' + esc(c[2]) + '"' : '') + ' autocomplete="off"></label>'; }).join('') +
-      '<label class="cmp larga"><span class="rt">Fonte: norma e item, ou catálogo e página</span><input class="campo" id="ci-fonte" data-ci="fonte" placeholder="Catálogo do fabricante, edição e página" autocomplete="off"></label></div>' +
+    var g0 = S.cadGrupo, res = g0 === 'reservatorios', campos = res ? camposRes() : FORM[g0];
+    h += '<div class="cartao bloco" id="cad-um"><h2 class="t3">Incluir um item</h2><div class="form"><label class="cmp"><span class="rt">Grupo</span><select class="campo" id="cad-grupo">' + Object.keys(FORM).concat('reservatorios').map(function (g) { return '<option value="' + g + '"' + (g === g0 ? ' selected' : '') + '>' + esc(CAD.NOME[g]) + '</option>'; }).join('') + '</select><span class="aj">Bomba e mangueira têm formulário próprio, abaixo, no modo personalizado.</span></label>' +
+      campos.map(function (c) {
+        if (c[3] === 'sel') return '<label class="cmp"><span class="rt">' + c[1] + '</span><select class="campo" id="ci-' + c[0] + '" data-ci="' + c[0] + '" data-res="1">' + c[4].map(function (o) { return '<option value="' + esc(o[0]) + '"' + (S.cadRes[c[0]] === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></label>';
+        return '<label class="cmp"><span class="rt">' + c[1] + '</span><input class="campo" id="ci-' + c[0] + '" data-ci="' + c[0] + '"' + (c[2] ? ' placeholder="' + esc(c[2]) + '"' : '') + (res ? ' value="' + esc(S.cadRes.v[c[0]] || '') + '"' : '') + ' autocomplete="off"></label>'; }).join('') +
+      '<label class="cmp larga"><span class="rt">' + (res ? 'Fonte: catálogo e página (opcional)' : 'Fonte: norma e item, ou catálogo e página') + '</span><input class="campo" id="ci-fonte" data-ci="fonte" placeholder="Catálogo do fabricante, edição e página"' + (res ? ' value="' + esc(S.cadRes.v.fonte || '') + '"' : '') + ' autocomplete="off"></label></div>' +
       '<div id="ci-msg" role="alert"></div><div class="linha-ac"><button type="button" class="bt pri" data-cad="incluir">Incluir na biblioteca</button></div></div>';
     return h;
   };
@@ -82,8 +114,9 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(certo, alt); else alt();
   }
   U.dialogoIA = function (escopo) {
-    var d = document.getElementById('dlg'), bombas = escopo === 'bombas', passos = PASSOS_IA.slice(), estado = function (t) { var e = document.getElementById('ia-estado'); if (e) e.textContent = t; };
+    var d = document.getElementById('dlg'), bombas = escopo === 'bombas', resv = escopo === 'reservatorios', passos = PASSOS_IA.slice(), estado = function (t) { var e = document.getElementById('ia-estado'); if (e) e.textContent = t; };
     if (bombas) passos[6] = 'Em "Importar arquivo (.json)", no cartão "Minha biblioteca: inclusão em lote", escolha o arquivo. Em "Minha biblioteca de bombas", o botão "Trazer de um arquivo" faz o mesmo. As duas rotas mostram o que entrou e o que foi recusado, com o motivo.';
+    if (resv) passos[6] = 'Em "Trazer de um arquivo", no cartão "Minha biblioteca de reservatórios", escolha o arquivo. Em "Importar arquivo (.json)", no cartão "Minha biblioteca: inclusão em lote", o resultado é o mesmo. As duas rotas mostram o que entrou e o que foi recusado, com o motivo.';
     /** O toque na margem interna do menu também tem o diálogo como alvo; só o toque fora do retângulo do menu (no fundo) fecha (FC-010). */
     function foraDoMenu(ev, d) { var r = d.getBoundingClientRect(); return ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom; }
     d.dataset.modo = 'ia'; d.setAttribute('aria-labelledby', 'dlg-tit');
@@ -93,7 +126,7 @@
     d.onclick = function (ev) {
       var b = ev.target.closest('[data-ia]');
       if (b) {
-        if (b.dataset.ia === 'modelo') U.baixa(CAD.arquivoModelo(escopo), new Blob([JSON.stringify(CAD.modeloLote(bombas ? ['bombas'] : undefined), null, 1)], { type: 'application/json' }));
+        if (b.dataset.ia === 'modelo') U.baixa(CAD.arquivoModelo(escopo), new Blob([JSON.stringify(CAD.modeloLote(bombas ? ['bombas'] : resv ? ['reservatorios'] : undefined), null, 1)], { type: 'application/json' }));
         else copiaTexto(CAD.promptIA(escopo), function () { estado('Prompt copiado.'); }, function () { estado('Não foi possível copiar. Selecione o texto do prompt e copie.'); });
         return;
       }
@@ -125,6 +158,10 @@
     if (m === 'modelo') U.baixa('modelo_biblioteca.firecalc.json', new Blob([JSON.stringify(CAD.modeloLote(), null, 1)], { type: 'application/json' }));
     else if (m === 'ia-lote') U.dialogoIA('lote');
     else if (m === 'ia-bombas') U.dialogoIA('bombas');
+    else if (m === 'ia-reservatorios') U.dialogoIA('reservatorios');
+    else if (m === 'res-abrir') document.getElementById('res-arq').click();
+    else if (m === 'res-baixar') U.baixa('meus_reservatorios.firecalc.json', new Blob([JSON.stringify({ reservatorios: loteDe(U.cad).reservatorios || [] }, null, 1)], { type: 'application/json' }));
+    else if (m === 'res-tirar') { var rx = U.cad.reservatorios[+t.dataset.v]; if (!rx) return; U.cad.reservatorios.splice(+t.dataset.v, 1); salva(); S.cadRel = null; redesenha(); U.avisa('Reservatório removido da biblioteca.'); }
     else if (m === 'abrir') document.getElementById('cad-arq').click();
     else if (m === 'baixar') U.baixa('minha_biblioteca.firecalc.json', new Blob([JSON.stringify(loteDe(U.cad, U.bib), null, 1)], { type: 'application/json' }));
     else if (m === 'tirar') { var g = t.dataset.g, x = U.cad[g][+t.dataset.v]; if (!x) return; U.cad[g].splice(+t.dataset.v, 1); salva(); S.cadRel = null; redesenha(); U.avisa(g === 'esguichos' ? 'Esguicho retirado da biblioteca. O projeto aberto que o usa guarda a cópia e segue igual.' : 'Item retirado da biblioteca. Projeto que usava o item volta a pedir a escolha.'); }
@@ -132,15 +169,17 @@
     else if (m === 'incluir') {
       var it = {}; document.querySelectorAll('#cad-um [data-ci]').forEach(function (e) { it[e.dataset.ci] = e.value; });
       var v = CAD.valida(S.cadGrupo, it, D, U.cad), msg = document.getElementById('ci-msg');
+      if (S.cadGrupo === 'reservatorios') { S.cadRes.v = it; S.cadRes.tipo = it.tipo || S.cadRes.tipo; }
       if (v.erro) { msg.innerHTML = '<div class="msg-er">' + esc(v.erro) + '</div>'; return; }
-      U.cad[S.cadGrupo].push(v.item); salva(); S.cadRel = null; redesenha(); U.avisa('Item incluído na biblioteca, com a marca de personalizado.');
+      U.cad[S.cadGrupo].push(v.item); salva(); S.cadRel = null; if (S.cadGrupo === 'reservatorios') S.cadRes.v = {}; redesenha(); U.avisa(S.cadGrupo === 'reservatorios' ? 'Reservatório incluído na biblioteca.' : 'Item incluído na biblioteca, com a marca de personalizado.');
     }
     else if (m === 'copia-baixar') U.baixa('copia_firecalc.json', new Blob([JSON.stringify({ firecalc: 'copia', versao: U.VERSAO, configuracoes: U.cfg, biblioteca: loteDe(U.cad, U.bib) }, null, 1)], { type: 'application/json' }));
     else if (m === 'copia-abrir') document.getElementById('copia-arq').click();
   });
   document.addEventListener('change', function (ev) {
     var t = ev.target;
+    if (t.dataset && t.dataset.res && t.dataset.ci) { var vv = {}; document.querySelectorAll('#cad-um [data-ci]').forEach(function (e) { vv[e.dataset.ci] = e.value; }); S.cadRes.v = Object.assign(S.cadRes.v, vv); S.cadRes[t.dataset.ci] = t.value; U.desenhar(); var e2 = document.getElementById(t.id); if (e2) e2.focus(); return; }
     if (t.id === 'cad-grupo') { S.cadGrupo = t.value; U.desenhar(); var e = document.getElementById('cad-grupo'); if (e) e.focus(); return; }
-    if ((t.id === 'cad-arq' || t.id === 'copia-arq') && t.files[0]) { var copia = t.id === 'copia-arq', r = new FileReader(); r.onload = function () { if (copia) { if (U.restauraCopia(String(r.result))) U.avisa('Cópia restaurada. Confira o relatório em Cadastros, Minha biblioteca.'); } else U.importaCadastros(String(r.result)); }; r.readAsText(t.files[0]); t.value = ''; }
+    if ((t.id === 'cad-arq' || t.id === 'copia-arq' || t.id === 'res-arq') && t.files[0]) { var copia = t.id === 'copia-arq', r = new FileReader(); r.onload = function () { if (copia) { if (U.restauraCopia(String(r.result))) U.avisa('Cópia restaurada. Confira o relatório em Cadastros, Minha biblioteca.'); } else U.importaCadastros(String(r.result)); }; r.readAsText(t.files[0]); t.value = ''; }
   });
 })();
