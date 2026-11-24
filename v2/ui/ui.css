@@ -1,110 +1,161 @@
 /* FireCalc. Copyright (C) 2026 Mateus Beraldi Nobre. Licença GNU AGPL-3.0-only (SPDX-License-Identifier: AGPL-3.0-only); texto em LICENSE. Nome e logo reservados (MARCA.md). Sem garantia. */
-@font-face{font-family:"Inter FireCalc";src:url(data:font/woff2;base64,{{INTER}}) format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"JetBrains Mono FireCalc";src:url(data:font/woff2;base64,{{MONO}}) format("woff2");font-weight:100 800;font-display:swap}
+/* AJUSTES PROVISÓRIOS DA F1 (FC-042), cada um com a fatia do plano (docs/planos/FC-042.md, seção 6A) que o remove:
+   1. (removido na F19: --fc-texto-3 saiu; os seis usos passaram a texto-2 do design system, a mesma cor computada de antes)
+   2. (removido na F3: body e h1 a h3 agora seguem os estilos do design system)
+   3. (removido na F14; provisório 3, F14) o foco do desenho da rede passou a --foco com 3 px (L9).
+   4. --fc-sombra:none (o cartão antigo perde a sombra do tema claro, como manda o design system): o cartão novo sem sombra entra na F7; o apelido sai na F19.
+   5. .al-t com fill var(--superficie) no lugar do branco fixo (no tema escuro o texto do marcador fica escuro sobre o amarelo): revisto na F14 (desenho da rede só com tokens). */
+/* Camada do FireCalc, depois de ds/tokens.css e ds/bundle.css (design system). Apelidos temporários: os nomes --fc-* antigos apontam para os tokens novos
+   e somem com as regras antigas até a F19 da FC-042. Nenhuma cor é escrita aqui: tudo vem de ds/tokens.css. */
 :root{
---fc-fundo:#F5F5F4;--fc-superficie:#FFFFFF;--fc-superficie-2:#ECECEA;--fc-borda:#D6D6D3;--fc-borda-campo:#7A7A7A;
---fc-texto:#0A0A0A;--fc-texto-2:#3D3D3D;--fc-texto-3:#5A5A5A;
---fc-fogo:#D95A00;--fc-fogo-texto:#A84300;--fc-fogo-fundo:#FFF1E6;--fc-botao-primario:#B84A00;--fc-botao-primario-hover:#9A3E00;--fc-sobre-fogo:#FFFFFF;
---fc-agua:#0B7FB3;--fc-info-texto:#075E86;--fc-info-fundo:#E6F4FA;
---fc-sucesso:#15803D;--fc-sucesso-texto:#116432;--fc-sucesso-fundo:#E8F6EC;
---fc-alerta:#FFC107;--fc-alerta-texto:#7A4F00;--fc-alerta-fundo:#FFF6D9;
---fc-erro:#E11D2E;--fc-erro-texto:#A30E1C;--fc-erro-fundo:#FDEBEC;--fc-foco:#0B7FB3;--fc-foco-des:#7A2FD0;
---fc-sombra:0 1px 2px rgba(10,10,10,.06),0 4px 12px rgba(10,10,10,.06);--fc-sombra-janela:0 12px 36px rgba(10,10,10,.18);
---fc-texto-fam:"Inter FireCalc",Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
---fc-tec-fam:"JetBrains Mono FireCalc","JetBrains Mono",ui-monospace,Consolas,monospace;
+--fc-fundo:var(--fundo);--fc-superficie:var(--superficie);--fc-superficie-2:var(--superficie-2);--fc-borda:var(--linha);--fc-borda-campo:var(--linha-campo);
+--fc-texto:var(--texto);--fc-texto-2:var(--texto-2);
+--fc-fogo:var(--acao);--fc-fogo-texto:var(--acao-texto);--fc-fogo-fundo:var(--selecionado-fundo);--fc-botao-primario:var(--acao);--fc-botao-primario-hover:var(--acao-hover);--fc-sobre-fogo:var(--sobre-acao);
+--fc-agua:var(--grafico-sistema);--fc-info-texto:var(--info-texto);--fc-info-fundo:var(--info-fundo);
+--fc-sucesso:var(--sucesso);--fc-sucesso-texto:var(--sucesso-texto);--fc-sucesso-fundo:var(--sucesso-fundo);
+--fc-alerta:var(--alerta);--fc-alerta-texto:var(--alerta-texto);--fc-alerta-fundo:var(--alerta-fundo);
+--fc-erro:var(--erro);--fc-erro-texto:var(--erro-texto);--fc-erro-fundo:var(--erro-fundo);--fc-foco:var(--foco);
+--fc-sombra:none/*provisório 4, F7 e F19*/;--fc-sombra-janela:var(--sombra-janela);--fc-texto-fam:var(--font-texto);--fc-tec-fam:var(--font-codigo);
 }
-[data-tema="escuro"]{
---fc-fundo:#0A0A0A;--fc-superficie:#1A1A1A;--fc-superficie-2:#222222;--fc-borda:#2A2A2A;--fc-borda-campo:#8A8A8A;
---fc-texto:#FFFFFF;--fc-texto-2:#C8C8C8;--fc-texto-3:#A3A3A3;
---fc-fogo:#FF6B00;--fc-fogo-texto:#FF8A33;--fc-fogo-fundo:#2B1608;--fc-botao-primario:#FF6B00;--fc-botao-primario-hover:#FF8A33;--fc-sobre-fogo:#0A0A0A;
---fc-agua:#38BDF8;--fc-info-texto:#7DD3FC;--fc-info-fundo:#0B2533;
---fc-sucesso:#22C55E;--fc-sucesso-texto:#4ADE80;--fc-sucesso-fundo:#0E2A18;
---fc-alerta:#FFC107;--fc-alerta-texto:#FFC107;--fc-alerta-fundo:#2E2507;
---fc-erro:#F2495A;--fc-erro-texto:#FF7A85;--fc-erro-fundo:#33090E;--fc-foco:#FF8A33;--fc-foco-des:#D7B0FF;
---fc-sombra:none;--fc-sombra-janela:0 12px 36px rgba(0,0,0,.45);
-}
-*{box-sizing:border-box}
+.sprite-icones{position:absolute;width:0;height:0;overflow:hidden}
+.ic-lu{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%}
-body{background:var(--fc-fundo);color:var(--fc-texto);font:400 15px/1.5 var(--fc-texto-fam);font-variant-numeric:tabular-nums}
 h1,h2,h3,p{margin:0}
-h1{font-size:28px;line-height:1.2;font-weight:800;letter-spacing:-.03em}
-h2{font-size:20px;line-height:1.3;font-weight:700;letter-spacing:-.02em}
-h3,h2.t3{font-size:16px;line-height:1.4;font-weight:700}
+h1{font-size:24px;line-height:32px;font-weight:650;letter-spacing:-.02em}
+h2{font-size:18px;line-height:26px;font-weight:600;letter-spacing:-.01em}
+h3,h2.t3{font-size:16px;line-height:24px;font-weight:600;letter-spacing:-.01em}
 .peq{font-size:13px;line-height:1.45;color:var(--fc-texto-2)}
-.rot{font:600 11px/1.3 var(--fc-tec-fam);text-transform:uppercase;letter-spacing:.08em;color:var(--fc-texto-3)}
+.rot{font:600 12px/1.3 var(--font-texto);color:var(--texto-2)}
 .tec{font-family:var(--fc-tec-fam);font-size:13px}
 a{color:var(--fc-fogo-texto)}
-:focus-visible{outline:2px solid var(--fc-foco);outline-offset:2px}
-button,input,select{font:inherit;color:inherit}
 .pular{position:absolute;left:-999px;top:8px;background:var(--fc-superficie);padding:8px 12px;border-radius:8px;z-index:50}
 .pular:focus{left:8px}
-.pular:focus~.app .marca svg{opacity:0}
-.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100%}
-/* barra lateral */
-.lat{background:var(--fc-superficie);border-right:1px solid var(--fc-borda);padding:16px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:auto}
-.marca{display:block;padding:4px 8px 16px}
-.marca svg{height:36px;width:auto;display:block}
-.marca .escuro{display:none}[data-tema="escuro"] .marca .escuro{display:block}[data-tema="escuro"] .marca .claro{display:none}
-.nav{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:6px 8px;border:0;background:none;border-radius:8px;text-align:left;cursor:pointer;color:var(--fc-texto-2)}
-.nav:hover{background:var(--fc-superficie-2)}
-.nav[aria-current="page"]{background:var(--fc-fogo-fundo);color:var(--fc-texto);font-weight:600;box-shadow:inset 3px 0 0 var(--fc-fogo)}
-.nav .n{flex:none;width:22px;height:22px;border-radius:999px;border:1.5px solid var(--fc-borda-campo);display:grid;place-items:center;font:600 11px/1 var(--fc-tec-fam);color:var(--fc-texto-2)}
-.nav.feita .n{background:var(--fc-sucesso);border-color:var(--fc-sucesso);color:var(--fc-superficie)}
-.nav.atual .n{border-color:var(--fc-fogo);color:var(--fc-fogo-texto)}
-.nav.pend .n{background:var(--fc-erro-fundo);border-color:var(--fc-erro);color:var(--fc-erro-texto)}
-.nav.bloq{color:var(--fc-texto-3)}
-.nav .t{flex:1;min-width:0}
-.nav .est{font-size:11px;font-family:var(--fc-tec-fam);color:var(--fc-texto-3);white-space:nowrap}
-.nav.pend .est{color:var(--fc-erro-texto);font-weight:600}
-.etapas{margin:2px 0 8px 10px;padding-left:8px;border-left:1px solid var(--fc-borda);display:flex;flex-direction:column;gap:2px}
-.lat .rot{padding:12px 8px 4px}
-.lat .fim{margin-top:auto;padding:12px 8px 0;border-top:1px solid var(--fc-borda);font-size:12px;color:var(--fc-texto-3);line-height:1.4}
-/* área de trabalho */
-.area{display:flex;flex-direction:column;min-width:0}
-.topo{display:flex;align-items:center;gap:12px;padding:12px 32px;border-bottom:1px solid var(--fc-borda);background:var(--fc-superficie);flex-wrap:wrap}
-.topo .proj{flex:1;min-width:200px}
-.topo .proj b{display:block;font-size:15px}
-.busca{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--fc-borda-campo);border-radius:8px;background:var(--fc-superficie);color:var(--fc-texto-2);cursor:pointer;max-width:100%}
-.busca kbd,.kbd{font:600 11px/1 var(--fc-tec-fam);padding:3px 6px;border:1px solid var(--fc-borda);border-radius:4px;background:var(--fc-superficie-2);margin-left:auto;color:var(--fc-texto-2)}
-.bt{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--fc-borda-campo);background:var(--fc-superficie);cursor:pointer;font-weight:600;font-size:14px;white-space:nowrap;transition:background .15s cubic-bezier(.4,0,.2,1)}
-.bt:hover{background:var(--fc-superficie-2)}
-.bt.pri{height:40px;background:var(--fc-botao-primario);border-color:var(--fc-botao-primario);color:var(--fc-sobre-fogo)}
-.bt.pri:hover{background:var(--fc-botao-primario-hover)}
-.bt.lig{border-color:transparent;background:none;color:var(--fc-fogo-texto);padding:0 8px}
-.bt.lig:hover{background:var(--fc-fogo-fundo)}
-.bt[disabled]{opacity:.55;cursor:not-allowed}
-.bt.min{height:28px;padding:0 8px;font-size:13px;font-weight:500}
-.faixa-proto{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 32px;background:var(--fc-info-fundo);color:var(--fc-info-texto);font-size:13px;border-bottom:1px solid var(--fc-borda)}
-.faixa-proto select{height:30px;border:1px solid var(--fc-borda-campo);border-radius:8px;background:var(--fc-superficie);color:var(--fc-texto);padding:0 8px}
-.resumo{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;padding:16px 32px;background:var(--fc-fundo);position:sticky;top:0;z-index:5;border-bottom:1px solid var(--fc-borda)}
-.cartao{background:var(--fc-superficie);border:1px solid var(--fc-borda);border-radius:14px;box-shadow:var(--fc-sombra)}
-.ind{padding:12px 14px;min-width:0}
-.ind .v{font-size:24px;line-height:1.1;font-weight:700;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ind .v small{font-size:13px;font-weight:500;color:var(--fc-texto-3)}
-.ind .s{font-size:12px;line-height:1.35;color:var(--fc-texto-3)}
-.ind .v.txt{font-size:16px;line-height:1.25;white-space:normal;margin:8px 0 4px}
-.ind.vazio .v{color:var(--fc-texto-3);font-size:16px;font-weight:600;margin:10px 0 4px}
-.resumo .estado{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;font-size:14px}
-.estado>span{flex:1;min-width:0}.estado>svg,.estado>.bt{flex:none}
-.estado.erro{background:var(--fc-erro-fundo);color:var(--fc-erro-texto);border:1px solid var(--fc-erro)}
-.estado.info{background:var(--fc-info-fundo);color:var(--fc-info-texto);border:1px solid var(--fc-agua)}
-.conteudo{padding:24px 32px 32px;width:100%;flex:1}
-.cab{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
-.cab .tx{flex:1;min-width:min(280px,100%)}
-.cab p{color:var(--fc-texto-2);max-width:72ch;margin-top:4px}
-.pilula{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
-.pilula svg{width:14px;height:14px;flex:none}
-.p-ok{background:var(--fc-sucesso-fundo);color:var(--fc-sucesso-texto)}
-.p-al{background:var(--fc-alerta-fundo);color:var(--fc-alerta-texto)}
-.p-er{background:var(--fc-erro-fundo);color:var(--fc-erro-texto)}
-.p-in{background:var(--fc-info-fundo);color:var(--fc-info-texto)}
-.p-ne{background:var(--fc-superficie-2);color:var(--fc-texto-2)}
+.pular:focus~.fc-app .fc-lat__marca svg{opacity:0}
+.kbd{font:600 11px/1 var(--fc-tec-fam);padding:3px 6px;border:1px solid var(--fc-borda);border-radius:4px;background:var(--fc-superficie-2);margin-left:auto;color:var(--fc-texto-2)}
 .grade{display:grid;gap:16px}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g-rede{grid-template-columns:minmax(0,1fr) 292px;align-items:start}
-.bloco{padding:16px}
-.bloco h3,.bloco h2.t3{margin-bottom:4px}
+/* ===== estrutura de tela (F3 da FC-042): barra lateral, barra superior, conteúdo, painel de resumo e rodapé da etapa. As classes fc-* vêm de ds/bundle.css; aqui só o que é do FireCalc. ===== */
+.fc-app>.fc-lat{position:sticky;top:0;height:100vh;overflow:auto;align-self:start}
+.fc-app{grid-template-rows:minmax(var(--barra-superior),auto) minmax(0,1fr) auto}
+.fc-app>.fc-topo{position:sticky;top:0;z-index:5;height:auto;min-height:var(--barra-superior)}
+.fc-app>.fc-resumo{position:sticky;top:var(--barra-superior);height:calc(100vh - var(--barra-superior));overflow:auto;align-self:start}
+.fc-app>.fc-rodape{z-index:4}
+.fc-app--sem-resumo{grid-template-columns:var(--barra-lateral) minmax(0,1fr)}
+.fc-app--sem-resumo>.fc-topo{grid-column:2}
+.fc-conteudo>.fc-cartao+.fc-cartao,.fc-conteudo>.fc-cartao+.grade,.fc-conteudo>.grade+.fc-cartao{margin-top:0}
+.fc-lat__marca{text-decoration:none;color:inherit}
+.fc-lat__marca svg{height:28px;width:auto;display:block}
+.fc-lat__marca .escuro{display:none}[data-theme="escuro"] .fc-lat__marca .escuro{display:block}[data-theme="escuro"] .fc-lat__marca .claro{display:none}
+.fc-lat__versao{color:var(--texto-2);padding:var(--esp-2) var(--esp-2) 0}
+.fc-etapa[aria-disabled="true"]{cursor:not-allowed}
+.fc-etapa[aria-current="page"] .fc-etapa__n{border-color:var(--acao);color:var(--acao-texto);box-shadow:0 0 0 2px var(--selecionado-fundo),0 0 0 3.5px var(--acao)}
+.fc-etapa--feita[aria-current="page"] .fc-etapa__n{color:var(--superficie);border-color:var(--sucesso);box-shadow:0 0 0 2px var(--selecionado-fundo),0 0 0 3.5px var(--acao)}
+.fc-topo__proj{position:relative;flex:1 1 0;min-width:0}
+.fc-topo__proj-bt{flex:none;max-width:none;height:auto;min-height:var(--controle-m);text-align:left}
+.fc-topo__proj-bt b{white-space:nowrap}
+.fc-topo__salvo{flex:none}
+.fc-topo__menu{position:absolute;top:calc(100% + 10px);left:0;z-index:30;animation:fc-menu-entra .15s ease-out}
+@keyframes fc-menu-entra{from{opacity:0;transform:translateY(-4px)}}
+.fc-topo .fc-dica{display:none;left:auto;right:0;transform:none}
+.fc-topo .fc-dica-ancora:hover>.fc-dica{display:flex;animation:fc-dica-entra .1s .4s backwards}
+.fc-topo .fc-dica-ancora>button:focus-visible~.fc-dica{display:flex}
+@keyframes fc-dica-entra{from{opacity:0}}
+.fc-ind__v small{margin-left:0}
+.fc-ind__v--tx{white-space:normal;overflow-wrap:anywhere}
+.fc-ind__s{overflow-wrap:anywhere}
+.fc-resumo .apoio{color:var(--texto-2)}
+.fc-resumo__ver-bt{align-self:flex-start;padding:0}
+.fc-resumo .fc-aviso{margin-top:var(--esp-3);flex-wrap:wrap;padding:var(--esp-3)}
+.fc-resumo .fc-aviso>.fc-bt{margin-left:auto}
+.fc-resumo .fc-aviso__tx{flex:1 1 100%}
+.fc-rodape__ok{color:var(--sucesso);vertical-align:-3px;margin-right:6px}
+.fc-direitos{color:var(--texto-2);margin-top:var(--esp-4)}
+/* ===== Responsivo (F4 da FC-042). Três modos, escolhidos também em JS por matchMedia com os mesmos limites (U.modo):
+   amplo (1280 px ou mais): barra lateral, conteúdo e painel de resumo; medio (1024 a 1279 px): barra lateral, faixa do resumo (fc-resumo-faixa) e gaveta com o resumo inteiro;
+   movel (abaixo de 1024 px): menu da barra lateral em gaveta, nome do projeto em linha própria, faixa "Etapa N de 8" (fc-etapa-movel) e folha do resumo. A página nunca rola de lado; só a faixa rola dentro dela mesma. ===== */
+.topo-dir{display:flex;align-items:center;gap:var(--esp-3);flex:none}
+.topo-esq{display:flex;align-items:center;gap:var(--esp-2);flex:1 1 auto;min-width:0}
+.fc-topo__marca{flex:none}
+.fc-topo__marca svg{height:24px;width:auto;display:block}
+.fc-topo__marca .escuro{display:none}[data-theme="escuro"] .fc-topo__marca .escuro{display:block}[data-theme="escuro"] .fc-topo__marca .claro{display:none}
+/* a barra cede espaço ao nome do projeto, nesta ordem: busca só com o ícone (c1), sem "Baixar projeto" (que fica no menu do projeto, c2) e, por fim, o nome em linha própria */
+.fc-topo--c1 .fc-busca{width:var(--controle-m);padding:0;justify-content:center;gap:0}
+.fc-topo--c1 .fc-busca span,.fc-topo--c1 .fc-busca kbd{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.fc-topo--c2 .topo-dir>[data-acao="salvar"]{display:none}
+.fc-topo--c1 .topo-dir{gap:var(--esp-1)}
+.fc-topo--c3 .fc-topo__proj{flex-direction:column;align-items:flex-start;justify-content:center;gap:0}
+.fc-topo--c3 .fc-topo__proj-bt{min-height:var(--controle-p)}
+.fc-app>.fc-topo.fc-topo--linha{flex-wrap:wrap;row-gap:0;align-content:flex-start}
+.fc-topo--linha .topo-dir{margin-left:auto;height:var(--barra-superior)}
+.fc-topo--linha .fc-topo__proj{order:3;flex:1 1 100%;flex-direction:row;align-items:center;justify-content:flex-start;flex-wrap:wrap;padding:0 0 var(--esp-3)}
+.fc-topo--linha .fc-topo__proj-bt{min-height:var(--controle-m)}
+.fc-topo--linha .fc-topo__proj-bt{flex:0 1 auto}
+.fc-topo--linha .fc-topo__proj-bt b{white-space:normal;overflow-wrap:anywhere}
+.fc-app>.fc-topo.fc-topo--movel{padding:0 var(--esp-2) 0 var(--esp-1)}
+.fc-topo--movel .topo-esq{height:var(--barra-superior)}
+.fc-topo--movel .topo-dir{margin-left:0;gap:var(--esp-1)}
+.fc-topo--movel .fc-topo__div{display:none}
+.fc-topo--movel .fc-topo__proj{padding-left:var(--esp-3)}
+.fc-topo--movel .fc-topo__menu{left:var(--esp-3);max-width:calc(100vw - 24px)}
+/* medio e movel: a estrutura (grade, colunas escondidas) vem só de @media, para não depender de o JS ter redesenhado; o JS troca a marcação (faixa, menu) pelo mesmo limite */
+@media (max-width:1279px){
+  .fc-app,.fc-app.fc-app--sem-resumo{grid-template-columns:var(--barra-lateral) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto}
+  .fc-app>.fc-lat{grid-row:1/5}
+  .fc-app>.fc-topo{grid-column:2;grid-row:1}
+  .fc-app>.fc-resumo-faixa{grid-column:2;grid-row:2}
+  .fc-app>.fc-conteudo{grid-column:2;grid-row:3}
+  .fc-app>.fc-rodape{grid-column:2;grid-row:4}
+  .fc-app>.fc-resumo{display:none}
+}
+@media (max-width:1023px){
+  .fc-app,.fc-app.fc-app--sem-resumo{display:flex;flex-direction:column}
+  .fc-app>.fc-lat{display:none}
+  .fc-app>.fc-conteudo{flex:1 1 auto}
+}
+.fc-resumo-faixa{padding:var(--esp-3) var(--esp-8);align-items:center}
+.fc-resumo-faixa__div{align-self:stretch}
+@media (max-width:1119px){.fc-resumo-faixa{gap:var(--esp-5)}}   /* de 1024 a 1119 px o espaço entre os indicadores encolhe, para o botão "Resumo completo" ficar inteiro à vista */
+.fc-so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.fc-app--movel .fc-cab-etapa .fc-ind__rot{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* abaixo de 1024 px a faixa da etapa já mostra "Etapa N de 8"; o rótulo do cabeçalho fica só para o leitor de tela */
+.fc-resumo-faixa .fc-ind{padding:0;border-top:0}
+.fc-bts--faixa{gap:6px;margin-top:var(--esp-1)}
+.fc-resumo-faixa .fc-ind--vazio .fc-ind__v{font-size:14px;line-height:20px}
+/* movel: uma coluna; faixa da etapa, conteúdo e rodapé com alvos de pelo menos 36 px */
+.fc-app--movel>.fc-topo{position:sticky;top:0;z-index:5;height:auto;min-height:var(--barra-superior);flex-wrap:wrap;align-content:flex-start;row-gap:0}
+.fc-app--movel .fc-topo__proj{order:3;flex:1 1 100%;flex-wrap:wrap;padding-bottom:var(--esp-3)}
+.fc-app--movel .fc-etapa-movel{padding:var(--esp-2) var(--esp-4)}
+.fc-etapa-movel__vaz{flex:1}
+.fc-app--movel .fc-etapa-movel .fc-ind__rot{white-space:nowrap}
+.fc-app--movel .fc-rodape{flex-wrap:wrap}
+.fc-app--movel .fc-rodape__falta{order:-1;flex:1 1 100%;text-align:left}
+.fc-app--movel #topo .fc-bt:not(.fc-bt--g),.fc-app--movel .fc-etapa-movel .fc-bt,.fc-app--movel #pe .fc-bt:not(.fc-bt--g),.fc-gaveta .fc-bt:not(.fc-bt--g){min-height:var(--controle-m);height:var(--controle-m)}
+.fc-app--movel #pe .fc-bt.fc-bt--disc:not(.fc-bt--g){min-height:44px;height:auto}
+.fc-app--movel #topo .fc-bt--icone,.fc-app--movel #pe .fc-bt--icone,.fc-gaveta .fc-bt--icone{min-width:var(--controle-m);width:var(--controle-m)}
+/* gaveta e folha (dialog nativo) */
+dialog.fc-gaveta{padding:0;border:0;margin:0;max-width:none;max-height:none;background:var(--superficie);color:var(--texto);box-shadow:var(--sombra-janela);overflow:auto;border-radius:0}
+dialog.fc-gaveta::backdrop{background:var(--veu)}
+dialog.fc-gaveta--esq{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);height:100%;border-right:1px solid var(--linha)}
+dialog.fc-gaveta--dir{position:fixed;inset:0 0 0 auto;width:min(360px,100vw);height:100%;border-left:1px solid var(--linha)}
+dialog.fc-gaveta--folha{position:fixed;inset:auto 0 0 0;width:100%;height:auto;max-height:88vh;border-top:1px solid var(--linha);border-radius:var(--raio-4) var(--raio-4) 0 0}
+dialog.fc-gaveta--esq[open]{animation:fc-gav-esq .2s ease-out}
+dialog.fc-gaveta--dir[open]{animation:fc-gav-dir .2s ease-out}
+dialog.fc-gaveta--folha[open]{animation:fc-gav-folha .2s ease-out}
+@keyframes fc-gav-esq{from{transform:translateX(-100%)}}
+@keyframes fc-gav-dir{from{transform:translateX(100%)}}
+@keyframes fc-gav-folha{from{transform:translateY(100%)}}
+.fc-gaveta__cab{display:flex;align-items:center;gap:var(--esp-3);padding:var(--esp-4) var(--esp-4) var(--esp-2) var(--esp-5);position:sticky;top:0;background:var(--superficie);z-index:1}
+.fc-gaveta__cab h2{margin:0;flex:1;font-size:18px;line-height:26px}
+.fc-gaveta__x{position:absolute;top:var(--esp-2);right:var(--esp-2);z-index:2}
+.fc-resumo--gav{width:auto;border-left:0;padding:var(--esp-2) var(--esp-5) var(--esp-5)}
+.fc-lat--gav{width:auto;height:auto;min-height:100%;border-right:0;padding-right:var(--esp-12)}
+.fc-lat--gav .fc-etapa{min-height:var(--controle-m)}   /* alvo de 36 px no modo móvel */
+/* etapa bloqueada: o motivo numa Dica visível ao passar o mouse ou ao focar (Etapas) */
+.fc-dica-ancora--lat{display:block;position:relative}
+.fc-lat .fc-dica{display:none;left:var(--esp-2);right:var(--esp-2);top:calc(100% + 2px);transform:none;width:auto;max-width:none;white-space:normal}
+.fc-lat .fc-dica-ancora--lat:hover>.fc-dica,.fc-lat .fc-dica-ancora--lat:focus-within>.fc-dica{display:flex}
+.fc-lat .fc-dica-ancora--lat:hover>.fc-dica{animation:fc-dica-entra .1s .4s backwards}
 /* tela vazia */
 .vazia{padding:40px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;border:1.5px dashed var(--fc-borda-campo);border-radius:14px;background:var(--fc-superficie)}
 .vazia svg.il{width:96px;height:96px}
@@ -116,20 +167,7 @@ button,input,select{font:inherit;color:inherit}
 .seg{display:inline-flex;border:1px solid var(--fc-borda-campo);border-radius:8px;overflow:hidden;background:var(--fc-superficie)}
 .seg button{border:0;background:none;height:36px;padding:0 14px;cursor:pointer;font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;color:var(--fc-texto-2)}
 .seg button[aria-selected="true"]{background:var(--fc-fogo-fundo);color:var(--fc-texto);box-shadow:inset 0 -2px 0 var(--fc-fogo)}
-.selo{font:600 10px/1 var(--fc-tec-fam);padding:3px 5px;border-radius:4px;background:var(--fc-info-fundo);color:var(--fc-info-texto);letter-spacing:.04em}
 /* tabela */
-.rolar{overflow:auto}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th{font:600 11px/1.3 var(--fc-tec-fam);text-transform:uppercase;letter-spacing:.06em;color:var(--fc-texto-2);text-align:left;background:var(--fc-superficie-2);padding:8px;white-space:nowrap}
-th small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:var(--fc-texto-3)}
-td{padding:6px 8px;border-top:1px solid var(--fc-borda);vertical-align:top}
-tr.sel td{background:var(--fc-fogo-fundo)}
-td.r,th.r{text-align:right}
-.campo{width:100%;height:36px;border:1px solid var(--fc-borda-campo);border-radius:8px;background:var(--fc-superficie);padding:0 8px;min-width:60px}
-select.campo{min-width:88px}
-td .campo.num{text-align:right}
-.campo[aria-invalid="true"]{border-color:var(--fc-erro);box-shadow:0 0 0 1px var(--fc-erro)}
-.msg-er{display:flex;gap:4px;color:var(--fc-erro-texto);font-size:12px;line-height:1.35;margin-top:4px;max-width:210px}
 .pulso{animation:pulso 1.2s cubic-bezier(.4,0,.2,1) 2}
 @keyframes pulso{50%{box-shadow:0 0 0 4px var(--fc-fogo)}}
 .rodape-tab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--fc-borda);font-size:13px;color:var(--fc-texto-2)}
@@ -138,315 +176,138 @@ td .campo.num{text-align:right}
 .pecas .q{font-family:var(--fc-tec-fam);width:28px;text-align:right}
 .pecas .nm{flex:1}
 .soma{display:flex;justify-content:space-between;padding:10px 0 0;border-top:2px solid var(--fc-texto);font-weight:700;margin-top:4px}
-.aviso{display:flex;gap:10px;padding:12px 14px;border-radius:8px;font-size:14px;align-items:flex-start}
-.aviso svg{flex:none;width:18px;height:18px;margin-top:2px}
-.aviso.er{background:var(--fc-erro-fundo);color:var(--fc-erro-texto)}
-.aviso.al{background:var(--fc-alerta-fundo);color:var(--fc-alerta-texto)}
-.aviso.in{background:var(--fc-info-fundo);color:var(--fc-info-texto)}
-.aviso .bt{margin-left:auto;flex:none}
 /* desenho */
 .des svg{width:100%;height:auto;display:block}
-.des text{font:500 12px var(--fc-texto-fam);fill:var(--fc-texto)}
-.des text.s{font:500 11px var(--fc-tec-fam);fill:var(--fc-texto-3)}
-.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--fc-texto-2);margin-top:8px}
-.leg i{display:inline-block;width:18px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.des text{font:500 12px var(--font-texto);fill:var(--texto)}
+.des text.s{font:500 11px var(--font-codigo);fill:var(--texto-2)}
 /* verificações */
-.conc{display:flex;gap:16px;align-items:center;padding:16px 20px;margin-bottom:16px;flex-wrap:wrap}
-.conc.er{border-color:var(--fc-erro);background:var(--fc-erro-fundo)}
-.conc.ok{border-color:var(--fc-sucesso);background:var(--fc-sucesso-fundo)}
-.conc h2{flex:1;min-width:min(260px,100%)}
-.ver{padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;border-top:1px solid var(--fc-borda)}
-.ver:first-of-type{border-top:0}
-.ver .nm{font-weight:600}
-.ver .cod{font:500 12px var(--fc-tec-fam);color:var(--fc-texto-3);margin-left:8px}
-.ver .val{font-size:14px;color:var(--fc-texto-2)}
-.ver .fazer{grid-column:1/-1;background:var(--fc-superficie-2);border-radius:8px;padding:10px 12px;font-size:14px}
-.ver .fazer b{display:block;margin-bottom:2px}
-.ver .fazer ol{margin:4px 0 0;padding-left:20px}
-.ver .ac{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.grupo{margin-bottom:16px}
-.grupo>summary,.grupo>.gt{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;list-style:none}
-.grupo>summary::-webkit-details-marker{display:none}
-.grupo>summary::after{content:"mostrar";margin-left:auto;font-size:13px;color:var(--fc-fogo-texto);font-weight:600}
-.grupo[open]>summary::after{content:"recolher"}
-.grupo>.gt{cursor:default;border-bottom:1px solid var(--fc-borda)}
 .solta{border:1.5px dashed var(--fc-borda-campo);border-radius:8px;padding:20px;text-align:center;color:var(--fc-texto-2);font-size:14px;margin-top:8px}
-/* navegação do assistente */
-.pe{display:flex;align-items:center;gap:12px;padding:12px 32px;border-top:1px solid var(--fc-borda);background:var(--fc-superficie);position:sticky;bottom:0;flex-wrap:wrap}
-.pe .falta{flex:1;font-size:13px;color:var(--fc-texto-2);text-align:right;min-width:200px}
-.direitos{padding:10px 32px;font-size:12px;color:var(--fc-texto-3);background:var(--fc-superficie);border-top:1px solid var(--fc-borda)}
 /* busca rápida */
-dialog{border:1px solid var(--fc-borda);border-radius:14px;padding:0;background:var(--fc-superficie);color:var(--fc-texto);box-shadow:var(--fc-sombra-janela);width:min(640px,92vw);margin-top:12vh}
-dialog::backdrop{background:rgba(10,10,10,.45)}
-.bq-campo{width:100%;height:52px;border:0;border-bottom:1px solid var(--fc-borda);background:none;padding:0 16px;font-size:16px;outline:none}
-.bq-lista{max-height:46vh;overflow:auto;margin:0;padding:6px;list-style:none}
-.bq-lista li{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;cursor:pointer}
-.bq-lista li[aria-selected="true"]{background:var(--fc-fogo-fundo)}
-.bq-lista .tp{font:600 10px/1 var(--fc-tec-fam);text-transform:uppercase;letter-spacing:.06em;color:var(--fc-texto-3);width:86px;flex:none}
-.bq-lista .ds{font-size:13px;color:var(--fc-texto-2);display:block}
-.bq-pe{display:flex;gap:16px;padding:8px 14px;border-top:1px solid var(--fc-borda);font-size:12px;color:var(--fc-texto-3)}
-#aviso-proto{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--fc-texto);color:var(--fc-fundo);padding:10px 16px;border-radius:8px;font-size:14px;z-index:40;max-width:90vw;box-shadow:var(--fc-sombra-janela)}
+#aviso-proto{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);z-index:40;max-width:90vw}
 .vis-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media (max-width:1100px){.resumo{grid-template-columns:repeat(3,minmax(0,1fr))}.g-rede,.g3{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:820px){.app{grid-template-columns:minmax(0,1fr)}.lat{position:static;height:auto}.topo,.resumo,.conteudo,.pe,.direitos,.faixa-proto{padding-left:16px;padding-right:16px}.resumo{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1100px){.g-rede,.g3{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-@media print{.lat,.pe,.faixa-proto,.busca{display:none}.app{display:block}body{background:#fff;color:#000}}
+@media print{.fc-lat,.fc-rodape,.fc-topo,.fc-resumo-faixa,.fc-etapa-movel,.fc-gaveta{display:none}.fc-app{display:block}body{background:Canvas;color:CanvasText}}
 /* ===== acréscimos da 2.0: formulários, avisos e cartões das etapas ===== */
 .form{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 16px;margin-top:12px}
-.cmp{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--fc-texto-2);min-width:0}
-.cmp.larga{grid-column:1/-1}
-.cmp .rt{font-weight:600;color:var(--fc-texto)}
-.cmp .rt small{font-weight:400;color:var(--fc-texto-3)}
-.cmp .aj{font-size:12px;color:var(--fc-texto-3)}
-.cmp-ajuda{position:relative;min-width:0}
-.cmp-ajuda .rt{padding-right:34px}
-.bt-aj{position:absolute;top:-5px;right:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--fc-info-texto);background:var(--fc-superficie);color:var(--fc-info-texto);font:700 14px/1 var(--fc-texto-fam);cursor:pointer;padding:0}
-.bt-aj:hover,.bt-aj[aria-expanded="true"]{background:var(--fc-info-fundo)}
-.bal{margin-top:8px;padding:10px 12px;border:1px solid var(--fc-info-texto);border-radius:8px;background:var(--fc-info-fundo);color:var(--fc-info-texto);font-size:13px;line-height:1.45}
-.msg-al{font-size:12px;color:var(--fc-texto-2);margin-top:2px}
-.msg-al::before{content:"Conferir: ";font-weight:700}
 .marcar{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin-top:10px}
-.marcar input{width:18px;height:18px;margin-top:2px;accent-color:var(--fc-botao-primario)}
-.bloco+.bloco,.bloco+.grade,.grade+.bloco{margin-top:16px}
+.marcar input{width:18px;height:18px;margin-top:2px;accent-color:var(--acao)}
+.fc-app--movel .marcar{min-height:36px;align-items:center}.fc-app--movel .marcar input{margin-top:0}   /* celular: a linha de marcar é a área de toque (36 px) */
+.fc-cartao+.fc-cartao,.fc-cartao+.grade,.grade+.fc-cartao{margin-top:16px}
 .dados{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:10px 0}
-.dados div{font-size:12px;color:var(--fc-texto-3)}
+.dados div{font-size:12px;color:var(--texto-2)}
 .dados b{display:block;font:600 18px/1.3 "JetBrains Mono FireCalc",monospace;color:var(--fc-texto)}
 .faixa-ret{position:relative;height:26px;margin:14px 0 22px;background:var(--fc-superficie-2);border-radius:4px}
 .faixa-ret .ok{position:absolute;top:0;bottom:0;background:var(--fc-info-fundo);border-left:2px solid var(--fc-agua);border-right:2px solid var(--fc-agua)}
 .faixa-ret .m{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--fc-fogo)}
-.faixa-ret .lb{position:absolute;top:30px;font-size:11px;color:var(--fc-texto-3);transform:translateX(-50%)}
-.pecas input.campo{width:56px;text-align:right}
+.faixa-ret .lb{position:absolute;top:30px;font-size:11px;color:var(--texto-2);transform:translateX(-50%)}
 .pecas li{align-items:center}
 .linha-ac{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-textarea.campo{width:100%;min-height:140px;font-family:"JetBrains Mono FireCalc",monospace}
-#dlg{width:min(640px,92vw);padding:20px}
-.topo .ac{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
 .selo-obra{font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--fc-fogo-fundo);color:var(--fc-fogo-texto)}
-.bt[aria-disabled="true"]{opacity:.55}
-.nav[aria-disabled="true"]{cursor:not-allowed}
 /* ===== ajustes: enquadramento, estatísticas e telas menores ===== */
-.opcoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
-.opcao{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px 16px;border:1.5px solid var(--fc-borda-campo);border-radius:12px;background:var(--fc-superficie);color:var(--fc-texto);cursor:pointer;font:inherit}
-.opcao:hover{border-color:var(--fc-fogo)}
-.opcao.at{border-color:var(--fc-fogo);background:var(--fc-fogo-fundo);box-shadow:inset 0 0 0 1px var(--fc-fogo)}
-.opcao .ot{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px}
-.opcao .ot svg{width:16px;height:16px;color:var(--fc-fogo-texto);flex:none}
-.opcao .od{font-size:13px;color:var(--fc-texto-2)}
-.opcao .oo{font-size:12px;color:var(--fc-texto-3)}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
-.g2 .bloco+.bloco{margin-top:0}
-.rolar{-webkit-overflow-scrolling:touch}
-.rolar table:has(input){min-width:520px}
-.ver{overflow-wrap:anywhere}
-@media (max-width:1280px){.resumo{grid-template-columns:repeat(3,minmax(0,1fr))}.g-rede{grid-template-columns:minmax(0,1fr) 264px}}
-@media (max-width:1100px){.g-rede,.g2{grid-template-columns:minmax(0,1fr)}.topo{padding-left:20px;padding-right:20px}.conteudo{padding:20px}}
-@media (max-height:760px) and (min-width:821px){.resumo{position:static}}
+.g2 .fc-cartao+.fc-cartao{margin-top:0}
+.fc-ver{overflow-wrap:anywhere}
+@media (max-width:1280px){.g-rede{grid-template-columns:minmax(0,1fr) 264px}}
+@media (max-width:1100px){.g-rede,.g2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:820px){
-  .lat{padding:8px 12px;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 6px;border-right:0;border-bottom:1px solid var(--fc-borda);overflow:visible}
-  .lat .marca{flex:0 0 100%;padding:4px 0}.lat .marca svg{height:28px;width:auto}
-  .lat>.nav{flex:none;width:auto;padding:6px 10px;font-size:13px}
-  .lat .etapas{order:9;flex:0 0 100%;flex-direction:row;overflow-x:auto;margin:4px 0 0;padding:0 0 6px;border-left:0;gap:6px;scrollbar-width:thin}
-  .lat .etapas .nav{flex:none;width:auto;padding:6px 10px;white-space:nowrap}
-  .lat .etapas .nav .t{display:none}.lat .etapas .nav[aria-current="page"] .t{display:inline}
-  .lat .etapas .nav .est{display:none}
-  .lat .fim{display:none}
-  .topo{gap:8px}.topo .proj{flex:1 1 100%}.topo .busca{flex:1 1 100%;order:3}.topo .ac{margin-left:0;flex:1 1 100%}
-  .resumo{display:flex;overflow-x:auto;gap:8px;padding-top:10px;padding-bottom:10px}.resumo .ind{flex:0 0 150px}.resumo .estado{flex:0 0 min(86vw,420px)}
-  .conteudo{padding:16px}.cab{flex-direction:column;align-items:stretch;gap:10px}h1{font-size:24px}
   .form{grid-template-columns:minmax(0,1fr)}.dados{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .conc{padding:14px}.conc .bt{width:100%}.ver{grid-template-columns:minmax(0,1fr)}.ver .ac .bt{width:100%}
-  .pe{gap:8px;padding-top:8px;padding-bottom:8px}.pe .falta{order:-1;flex:1 1 100%;text-align:left}.pe .bt.pri{flex:1}.pe .bt.lig{min-height:44px}
-  .vazia{padding:24px 16px}.vazia .acoes{flex-direction:column}.vazia .acoes .bt{width:100%}
-  #dlg,#bq{width:94vw}
+  
+  .vazia{padding:24px 16px}.vazia .acoes{flex-direction:column}.vazia .acoes .fc-bt{width:100%}
 }
-tbody th{text-transform:none;letter-spacing:0;font-family:inherit;font-size:14px;font-weight:600;color:var(--fc-texto-2);background:none;text-align:left}
-.graf{width:100%;height:auto;max-width:760px;display:block}
-.graf text{font:11px "JetBrains Mono FireCalc",monospace;fill:var(--fc-texto-2)}
-.graf .ge{font:600 12px "Inter FireCalc",sans-serif;fill:var(--fc-texto)}
-.graf .gr{font-weight:700;fill:var(--fc-fogo-texto)}
-.graf .gl{stroke:var(--fc-borda);stroke-width:1}
-.graf .gb{stroke:var(--fc-borda-campo);stroke-width:1}
-.graf .gc{stroke:var(--fc-fogo);stroke-width:1.5;stroke-dasharray:5 4}
 
 /* módulos Cadastros, Configurações e Ajuda */
-.abas{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--fc-borda);margin:0 0 16px}
-.aba{height:40px;padding:0 14px;border:0;border-bottom:3px solid transparent;background:none;cursor:pointer;font:600 14px/1 var(--fc-texto-fam);color:var(--fc-texto-2);border-radius:8px 8px 0 0}
-.aba:hover{background:var(--fc-superficie-2)}
-.aba[aria-selected="true"]{color:var(--fc-fogo-texto);border-bottom-color:var(--fc-fogo)}
 .gt-cad{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
-.gt-cad .pilula svg{width:12px;height:12px}
 .gloss dt{font-weight:600;margin-top:12px}
 .gloss dd{margin:2px 0 0;color:var(--fc-texto-2)}
 .passo-calc{padding:12px 0;border-top:1px solid var(--fc-borda)}
 .passo-calc h3{font-size:15px;margin:0 0 4px}
 .passo-calc p{margin:0 0 4px}
-h3 .pilula,h2.t3 .pilula{vertical-align:middle;margin-left:6px}
-.cmp .rt .pilula{height:20px;font-size:11px;margin-left:4px}
-textarea.campo{font-family:var(--fc-tec-fam)}
 
 /* texto só para leitor de tela */
 .so-leitor{position:fixed!important;left:0;top:0;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 /* 2.5.0: tabela da rede com 12 colunas, ícones, alça de mover, cota por nó, diálogo de peças, figura do reservatório e leiaute em telas estreitas */
-.bt.ic{width:32px;height:32px;padding:0;border-color:transparent;background:none;color:var(--fc-texto-2)}
-.bt.ic:hover{background:var(--fc-superficie-2);color:var(--fc-texto)}
-.bt.ic svg{width:18px;height:18px}
-.bt.ic.perigo:hover{background:var(--fc-erro-fundo);color:var(--fc-erro)}
-.bt.ic:focus-visible{outline:2px solid var(--fc-foco,var(--fc-fogo));outline-offset:1px}
-.tab-rede td{vertical-align:middle}
-.tab-rede .c-trecho{white-space:nowrap}
-.tab-rede .c-trecho small{display:block;font-size:11px}
-.tab-rede .mover{display:inline-block;vertical-align:middle;margin-right:4px}
-.tab-rede .mover .bt.ic{width:24px;height:28px;cursor:grab}
-.tab-rede .c-cota .campo{width:84px}
-.tab-rede .c-cota.ro{font-size:13px;white-space:nowrap}
-.tab-rede .c-cota.ro .bt{height:22px;padding:0 4px;font-size:12px}
-.tab-rede td select.campo{min-width:96px}
-.tab-rede td:nth-child(8) select.campo{max-width:220px}
-.tab-rede .c-ac{width:36px;text-align:center;padding-left:2px;padding-right:2px}
-.tab-rede tr.rec td{background:var(--fc-superficie-2)}
 .guia .guia-nomes p+p{margin-top:6px}
 .vazia .guia-nomes{max-width:640px;margin:8px auto;text-align:left}
 #dlg[data-modo="pecas"]{padding:20px 22px;width:min(760px,94vw);margin-top:5vh;max-height:88vh}
 .lista-pecas{list-style:none;margin:12px 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;max-height:52vh;overflow:auto}
 .lista-pecas li{display:grid;grid-template-columns:minmax(0,1fr) auto 64px;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--fc-borda);border-radius:8px}
-.lista-pecas li.marcada{border-color:var(--fc-agua);background:var(--fc-info-fundo)}
+.lista-pecas li.marcada{border-color:var(--selecionado-linha);background:var(--selecionado-fundo)}
 .lista-pecas .pc{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px}
 .lista-pecas .pc input{width:18px;height:18px;flex:none}
-.lista-pecas .leq{font-size:12px;color:var(--fc-texto-3);white-space:nowrap}
-.lista-pecas .qt{width:64px}
+.lista-pecas .leq{font-size:12px;color:var(--texto-2);white-space:nowrap}
+.lista-pecas .fc-entrada{width:64px}
 .ic-peca{width:24px;height:24px;flex:none;color:var(--fc-agua)}
 .soma-pecas{margin-top:8px}
 .fig-res{width:100%;max-width:560px;height:auto;display:block;margin:8px 0}
 /* 2.5.1: cartões "Como a água sai do reservatório?" */
 /* 2.5.2 */
-.g-bomba{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:stretch}.g-bomba .bloco+.bloco,.g-fig .bloco+.bloco,.g-est .bloco+.bloco{margin-top:0}
+.g-bomba{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:stretch}.g-bomba .fc-cartao+.fc-cartao,.g-fig .fc-cartao+.fc-cartao,.g-est .fc-cartao+.fc-cartao{margin-top:0}
 .g-fig{grid-template-columns:minmax(0,1fr) minmax(300px,42%);align-items:stretch}.g-fig .fig-res{max-width:none}
 .g-est{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start}.g-est+.g-est{margin-top:16px}.grade+.grade{margin-top:16px}
 @media (max-width:1000px){.g-fig{grid-template-columns:minmax(0,1fr)}}
-.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;margin:12px 0 4px}.kv-topo{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));margin:0 0 16px}
-.kv-i{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--fc-borda);border-radius:10px;background:var(--fc-superficie-2);min-width:0}.kv-topo .kv-i{background:var(--fc-superficie);box-shadow:var(--fc-sombra)}
-.kv-i dt{font-size:12px;color:var(--fc-texto-2);line-height:1.3}.kv-i dd{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;overflow-wrap:anywhere}
-.kv-i dd b{font:600 20px/1.3 "JetBrains Mono FireCalc",monospace;color:var(--fc-texto)}.kv-i .un{font-size:13px;color:var(--fc-texto-2)}.kv-i small{flex-basis:100%;font-size:12px;color:var(--fc-texto-3)}
-.kv-i.ok{border-color:var(--fc-sucesso);background:var(--fc-sucesso-fundo)}.kv-i.er{border-color:var(--fc-erro);background:var(--fc-erro-fundo)}.kv-i.ok dt,.kv-i.ok small{color:var(--fc-sucesso-texto)}.kv-i.er dt,.kv-i.er small{color:var(--fc-erro-texto)}
 .bomba-nome{margin:8px 0 0;display:flex;flex-direction:column;gap:2px}.bomba-nome b{font-size:16px}.bomba-nome span{font-size:13px;color:var(--fc-texto-2)}
 .barras{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}.barras li{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:13px}
-.barras .b-r{color:var(--fc-texto-2);line-height:1.25}.barras .b-t{position:relative;height:14px;border-radius:7px;background:var(--fc-superficie-2);overflow:hidden}.barras .b-f{position:absolute;inset:0 auto 0 0;border-radius:7px}
-.barras .b-l{position:absolute;top:0;bottom:0;width:2px;background:var(--fc-erro)}.barras .b-v{text-align:right;font-size:13px}.b-leg{margin-top:8px}.b-l-ex{display:inline-block;width:2px;height:12px;background:var(--fc-erro);margin-right:6px;vertical-align:-2px}
+.barras .b-r{color:var(--texto-2);line-height:1.25}.barras .b-t{position:relative;height:14px;border-radius:7px;background:var(--superficie-2);overflow:hidden}.barras .b-f{position:absolute;inset:0 auto 0 0;border-radius:7px}
+.barras .b-l{position:absolute;top:0;bottom:0;width:2px;background:var(--erro)}.barras .b-v{text-align:right;font-size:13px}.b-leg{margin-top:8px}.b-l-ex{display:inline-block;width:2px;height:12px;background:var(--erro);margin-right:6px;vertical-align:-2px}
 @media (max-width:560px){.barras li{grid-template-columns:minmax(0,1fr) 64px}.barras .b-r{grid-column:1 / -1}}
 .pilha{display:flex;height:22px;border-radius:11px;overflow:hidden;margin:12px 0 8px;gap:2px}.pilha-leg{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}.pilha-leg .cor{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 #dlg[data-modo="tubos"]{padding:20px 22px;width:min(820px,94vw);margin-top:5vh;max-height:88vh;overflow:auto}
-.lista-tubos{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}.lista-tubos li{border:1px solid var(--fc-borda);border-radius:10px}.lista-tubos li.marcada{border-color:var(--fc-agua);background:var(--fc-info-fundo)}
+.lista-tubos{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}.lista-tubos li{border:1px solid var(--fc-borda);border-radius:10px}.lista-tubos li.marcada{border-color:var(--selecionado-linha);background:var(--selecionado-fundo)}
 .lista-tubos .tb{display:flex;gap:10px;padding:10px 12px;cursor:pointer;align-items:flex-start}.lista-tubos .tb input{width:18px;height:18px;flex:none;margin-top:2px}.tb-f{display:flex;flex-direction:column;gap:3px;min-width:0}
-.tb-n{font-size:14px}.tb-d{font-size:13px;color:var(--fc-texto-2)}.tb-dn{font-size:12px;color:var(--fc-texto-2);overflow-wrap:anywhere}.tb-dn small{color:var(--fc-texto-3)}
-.saidas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
-.saida{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;padding:12px;border:2px solid var(--fc-borda);border-radius:12px;background:var(--fc-superficie);color:var(--fc-texto);font:inherit;cursor:pointer;min-height:44px}
-.saida svg{width:140px;max-width:100%;height:70px;color:var(--fc-texto-2)}
-.saida b{font-size:14px}.saida span{font-size:13px;color:var(--fc-texto-2)}
-.saida:hover{border-color:var(--fc-texto-3)}
-.saida.on{border-color:var(--fc-fogo);background:var(--fc-superficie-2)}
-.saida:focus-visible{outline:3px solid var(--fc-foco,var(--fc-fogo));outline-offset:2px}
-.fig-res text{font:12px var(--fc-tec-fam);fill:var(--fc-texto)}
-.fig-res text.s{font-size:11px;fill:var(--fc-texto-3)}
+.tb-n{font-size:14px}.tb-d{font-size:13px;color:var(--fc-texto-2)}.tb-dn{font-size:12px;color:var(--fc-texto-2);overflow-wrap:anywhere}.tb-dn small{color:var(--texto-2)}
+.fig-res text{font:12px var(--font-codigo);fill:var(--texto)}
+.fig-res text.s{font-size:11px;fill:var(--texto-2)}
 @media (max-width:900px){
   .lista-pecas{grid-template-columns:minmax(0,1fr)}
-  .rolar table.tab-rede{min-width:0}
-  .tab-rede thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  .tab-rede,.tab-rede tbody{display:block}
-  .tab-rede tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;padding:12px;border-top:1px solid var(--fc-borda)}
-  .tab-rede td{display:block;border-top:0;padding:2px 0}
-  .tab-rede td[data-rot]::before{content:attr(data-rot);display:block;font:600 11px/1.4 var(--fc-tec-fam);text-transform:uppercase;letter-spacing:.05em;color:var(--fc-texto-3)}
-  .tab-rede td.c-trecho{grid-column:1/-1}
-  .tab-rede td.c-trecho::before{display:none}
-  .tab-rede td.c-ac{display:inline-block;width:auto;text-align:left}
-  .tab-rede td.c-ac::before{display:none}
-  .tab-rede .c-cota .campo,.tab-rede td select.campo,.tab-rede td .campo{width:100%;max-width:none}
-  .tab-rede td.r{text-align:left}
 }
 @media (max-width:420px){.lista-pecas li{grid-template-columns:minmax(0,1fr) 64px}.lista-pecas .leq{grid-column:1/-1}}
-.tab-rede .c-proprio{display:block;margin-top:4px}.tab-rede .c-proprio .campo{width:84px}
-.tab-rede th,.tab-rede td{padding-left:4px;padding-right:4px}
-.tab-rede td .campo{padding-left:5px;padding-right:5px}
-.tab-rede td:nth-child(2) .campo,.tab-rede td:nth-child(4) .campo{width:62px}
-.tab-rede .c-cota .campo{width:70px}
-.tab-rede td:nth-child(7) .campo{width:66px}
-.tab-rede td select.campo{min-width:0;width:84px}
-.tab-rede td:nth-child(8) select.campo{width:136px;max-width:none}
-.tab-rede td:nth-child(9) .bt{white-space:nowrap}
-@media (max-width:900px){.tab-rede td:nth-child(n) .campo,.tab-rede td:nth-child(n) select.campo{width:100%}}
-@media (max-width:900px){.tab-rede tr.sel td{background:none}.tab-rede tr.sel{background:var(--fc-fogo-fundo)}.tab-rede td.c-ac{justify-self:start}}
+.tab-rede .c-proprio{display:block;margin-top:4px}.tab-rede .c-proprio .fc-entrada{width:84px}
 /* 2.5.3: cascata de pressões nas Estatísticas */
 .casc{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px}
 .casc li,.c-eixo{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px}
-.casc .c-r{color:var(--fc-texto-2);line-height:1.25;text-align:right}
+.casc .c-r{color:var(--texto-2);line-height:1.25;text-align:right}
 .c-t{position:relative;height:18px}
-.c-t i{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--fc-borda)}
+.c-t i{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--linha)}
 .c-b{position:absolute;top:1px;bottom:1px;border-radius:2px}
-.c-sub .c-b{background:var(--fc-agua)}.c-soma .c-b{background:var(--fc-erro)}.c-subt .c-b{background:var(--fc-sucesso)}
-.casc .c-v{text-align:left;white-space:nowrap}.c-sub .c-v{font-weight:700;color:var(--fc-texto)}.c-soma .c-v{color:var(--fc-erro-texto)}.c-subt .c-v{color:var(--fc-sucesso-texto)}
-.c-eixo{margin-top:2px}.c-eixo .c-t{height:16px}.c-eixo .c-t span{position:absolute;top:0;transform:translateX(-50%);font-size:12px;color:var(--fc-texto-2);white-space:nowrap}
+.c-sub .c-b{background:var(--grafico-sistema)}.c-soma .c-b{background:var(--erro)}.c-subt .c-b{background:var(--sucesso)}
+.casc .c-v{text-align:left;white-space:nowrap}.c-sub .c-v{font-weight:700;color:var(--texto)}.c-soma .c-v{color:var(--erro-texto)}.c-subt .c-v{color:var(--sucesso-texto)}
+.c-eixo{margin-top:2px}.c-eixo .c-t{height:16px}.c-eixo .c-t span{position:absolute;top:0;transform:translateX(-50%);font-size:12px;color:var(--texto-2);white-space:nowrap}
 .c-un{text-align:center;margin:2px 0 0}
-.c-leg{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;font-size:13px;color:var(--fc-texto-2)}
+.c-leg{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;font-size:13px;color:var(--texto-2)}
 .c-leg .cor{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
-.c-cor-sub{background:var(--fc-agua)}.c-cor-soma{background:var(--fc-erro)}.c-cor-subt{background:var(--fc-sucesso)}
+.c-cor-sub{background:var(--grafico-sistema)}.c-cor-soma{background:var(--erro)}.c-cor-subt{background:var(--sucesso)}
 .c-tog{gap:8px;flex-wrap:wrap}
 @media (max-width:640px){.casc li,.c-eixo{grid-template-columns:minmax(0,1fr) 78px;gap:2px 8px}.casc .c-r{grid-column:1 / -1;text-align:left}.c-eixo .c-r{display:none}.casc{gap:8px}}
 .c-eixo .c-t span:first-child{transform:none}
 /* 2.5.4: cartões da bomba em duas linhas (1,0 Q em cima; NPSH a 1,5 Q embaixo), campos do NPSH, marca "Conferido" e grade das Estatísticas */
-.kv-tit{margin:14px 0 0;font-size:12px;font-weight:600;color:var(--fc-texto-2)}
-.kv-l{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));margin-top:6px}
-.kv-1{grid-template-columns:1fr;margin:0}
 .form-npsh{margin-top:12px}
-.kv-i.sel{border-color:var(--fc-agua);box-shadow:inset 0 0 0 1px var(--fc-agua)}
-.form-npsh .cmp:has(.msg-al) .campo{border-color:var(--fc-alerta);box-shadow:0 0 0 1px var(--fc-alerta)}
-#npsh-sit{margin-top:10px}#npsh-sit .pilula+.pilula{margin-left:6px}
+.form-npsh .fc-campo:has(.fc-campo__conferir) .fc-entrada{border-color:var(--alerta);box-shadow:inset 0 0 0 1px var(--alerta)}
+#npsh-sit{margin-top:10px}#npsh-sit .fc-selo+.fc-selo{margin-left:6px}
 .conf-l{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px}
-.kv-topo{grid-template-columns:repeat(var(--n,6),minmax(0,1fr))}
-.kv-i dd b{white-space:nowrap}
 #est-tabelas{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
-#est-tabelas>.cartao{margin-top:0}
-@media (max-width:1199px){.kv-topo{grid-template-columns:repeat(3,minmax(0,1fr))}#est-tabelas{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:767px){.kv-topo{grid-template-columns:repeat(2,minmax(0,1fr))}}
-#est-tabelas table{table-layout:fixed;width:100%}#est-hipotese .grupo+.grupo th,#est-hipotese .grupo+.grupo td{border-top:2px solid var(--fc-borda,#cbd5e1)}
+#est-tabelas>.fc-cartao{margin-top:0}
+#est-tabelas table{table-layout:fixed;width:100%}#est-hipotese .grupo+.grupo th,#est-hipotese .grupo+.grupo td{border-top:2px solid var(--linha)}
 .est-meio{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}#est-estatica-barras .barras{margin-top:0}#est-estatica table{table-layout:fixed;width:100%}#est-estatica th{white-space:normal;overflow-wrap:anywhere}#est-estatica td.tec{white-space:nowrap}
 @media (max-width:1100px){.est-meio{grid-template-columns:minmax(0,1fr)}}#est-tabelas th{white-space:normal;overflow-wrap:anywhere}#est-tabelas td.tec{white-space:nowrap}
 
 /* ===== 2.6.0: Edificação e sistema, botões do sistema com SVG, Alterar sistema ===== */
 .sv{width:96px;height:64px;flex:none}
-.sv .ab{fill:var(--fc-superficie);stroke:var(--fc-texto);stroke-width:2;stroke-linejoin:round}
-.sv .ln,.sv .ca,.sv .vl{fill:none;stroke:var(--fc-texto);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.sv .mg{fill:none;stroke:var(--fc-agua);stroke-linecap:round;stroke-linejoin:round}
-.sv .es{fill:var(--fc-texto);stroke:var(--fc-texto);stroke-width:1.5;stroke-linejoin:round}
-.opcoes.sist{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
-.sbt{flex-direction:row;align-items:center;gap:14px;width:100%}
-.sbt .sb-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.sbt .ot{display:block;margin-bottom:2px}
-.sbt .ot svg{display:inline-block;vertical-align:-3px;margin-right:6px}
-.sbt .selo{margin-left:8px;vertical-align:2px}
-.sbt .selo{font-size:11px;font-weight:700;letter-spacing:.04em;padding:1px 8px;border-radius:999px;background:var(--fc-superficie-2);color:var(--fc-texto-2)}
-.sbt .opl{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--fc-texto-2)}
-.sbt .opl b{font:600 13px/1.4 var(--fc-tec-fam);color:var(--fc-texto);white-space:nowrap}
-div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
+.sv .ab{fill:var(--superficie);stroke:var(--grafico-bomba);stroke-width:2;stroke-linejoin:round}
+.sv .ln,.sv .ca,.sv .vl{fill:none;stroke:var(--grafico-bomba);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sv .mg{fill:none;stroke:var(--grafico-sistema);stroke-linecap:round;stroke-linejoin:round}
+.sv .es{fill:var(--grafico-bomba);stroke:var(--grafico-bomba);stroke-width:1.5;stroke-linejoin:round}
 .cab-ac{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.bt.alt{border-color:var(--fc-fogo);color:var(--fc-fogo-texto)}
-.bt.alt:hover{background:var(--fc-fogo-fundo)}
-.form.dados-ed{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
-.form.dados-ed.c3{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)}
-.form.dados-ed.c4{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
-.campo.destaque{height:48px;font-size:17px;font-weight:600;border-width:2px;padding:0 12px}
-.cmp:has(.destaque) .rt{font-size:14px}
+.fc-form.dados-ed{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.fc-form.dados-ed .fc-campo__rot{min-height:41px}/* com o conteúdo de até 880 px o rótulo com unidade pode quebrar em duas linhas: todos reservam as duas, para os campos ficarem na mesma linha */
+.fc-form.dados-ed.c3{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr)}
+.fc-form.dados-ed.c4{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
 #dlg[data-modo="sistema"]{padding:20px 22px;width:min(1000px,94vw);margin-top:5vh;max-height:88vh;overflow:auto}
-@media (max-width:900px){.form.dados-ed.c4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.form.dados-ed.c4>:first-child{grid-column:1/-1}}
-@media (max-width:640px){.form.dados-ed,.form.dados-ed.c3,.form.dados-ed.c4{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.fc-form.dados-ed.c4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fc-form.dados-ed.c4>:first-child{grid-column:1/-1}}
+@media (max-width:640px){.fc-form.dados-ed,.fc-form.dados-ed.c3,.fc-form.dados-ed.c4{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:480px){.sbt{gap:10px;padding:12px}.sv{width:72px;height:48px}.sbt .opl{flex-wrap:wrap;gap:0 8px}}
 
 /* 2.6.0: Abastecimento. Botões com desenho, menu sobreposto, cartão de dados e comentários. */
-.ab-bts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
-.ab-bt{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;padding:12px;border:2px solid var(--fc-borda);border-radius:12px;background:var(--fc-superficie);color:var(--fc-texto);font:inherit;cursor:pointer;min-height:44px}
-.ab-bt svg.sv-ab{width:100%;max-width:150px;height:auto;aspect-ratio:3/2;color:var(--fc-texto-2)}
-.ab-bt b{font-size:14px}.ab-bt span{font-size:13px;color:var(--fc-texto-2)}
-.ab-bt:hover{border-color:var(--fc-texto-3)}
-.ab-bt.on{border-color:var(--fc-fogo);background:var(--fc-superficie-2)}
-.ab-bt:focus-visible{outline:3px solid var(--fc-foco,var(--fc-fogo));outline-offset:2px}
 #dlg[data-modo="abast"]{padding:20px 22px;width:min(900px,94vw);margin-top:4vh;max-height:92vh;overflow:auto}
 .ab-m-bloco{border-top:1px solid var(--fc-borda);padding:14px 0}.ab-m-bloco h3{font-size:15px;margin:0 0 8px}
 .ab-m-bloco .ab-bts{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:4px}
@@ -454,38 +315,23 @@ div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
 .ab-m-res{position:sticky;bottom:0;background:var(--fc-superficie);border-top:2px solid var(--fc-borda);padding:10px 0;margin-top:8px}
 .ab-coment{margin:6px 0 0;padding-left:20px;font-size:14px;color:var(--fc-texto-2)}.ab-coment li{margin:4px 0}
 @media (max-width:640px){#dlg[data-modo="abast"]{width:100vw;max-width:100vw;height:100vh;max-height:100vh;margin:0;border-radius:0;padding:16px}.ab-bts{grid-template-columns:minmax(0,1fr)}}
-/* 2.6.0: título de coluna e campo na mesma borda; acima de 900 px o conteúdo da cota e dos números fica à direita, como o título */
-@media (min-width:901px){
-  .tab-rede th.r,.tab-rede td.r,.tab-rede td.c-cota{text-align:right}
-  .tab-rede th,.tab-rede td{vertical-align:middle}
-  .tab-rede th small{white-space:nowrap}
-}
-@media (min-width:1180px){
-  .tab-rede{table-layout:fixed;min-width:0}
-  .tab-rede th{letter-spacing:.03em}
-  .tab-rede th:nth-child(1){width:104px}.tab-rede th:nth-child(2),.tab-rede th:nth-child(4){width:76px}.tab-rede th:nth-child(3),.tab-rede th:nth-child(5){width:108px}
-  .tab-rede th:nth-child(6){width:92px}.tab-rede th:nth-child(7){width:88px}.tab-rede th:nth-child(8){width:96px}.tab-rede th:nth-child(9){width:116px}.tab-rede th:nth-child(10){width:108px}.tab-rede th:nth-child(11),.tab-rede th:nth-child(12){width:38px}
-  .tab-rede td:nth-child(n) .campo,.tab-rede td:nth-child(n) select.campo{width:100%;min-width:0;max-width:none;box-sizing:border-box}
-  .tab-rede td .c-proprio .campo{width:100%}
-}
-#aviso-cota .aviso{border-radius:8px 8px 0 0}
-@media (min-width:901px){.tab-rede td[data-rot="Peças"]>.bt,.tab-rede td[data-rot="Tipo tubo"]>.bt{padding-left:0;padding-right:0;min-width:0}.tab-rede td[data-rot="Peças"]>.bt:focus-visible,.tab-rede td[data-rot="Tipo tubo"]>.bt:focus-visible{outline-offset:4px}}
+#aviso-cota .fc-aviso{border-radius:8px 8px 0 0}
 /* 2.6.0: tubo padrão em 1/3 e guia de lançamento em 2/3 */
 .g-rd1{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px;align-items:stretch}
-.g-rd1>.cartao{margin:0}
+.g-rd1>.fc-cartao{margin:0}
 .tubo-card{position:relative;display:flex;flex-direction:column;gap:8px}
 .tubo-corpo{display:flex;gap:12px;align-items:flex-start}
 .tubo-corpo .sv{width:72px;height:48px}
 .tubo-l{flex:1;min-width:0;margin:0}
-.tubo-l>div{display:flex;gap:8px;padding:2px 0;font-size:13px;line-height:1.4}
-.tubo-l dt{flex:none;width:92px;color:var(--fc-texto-3)}
-.tubo-l dd{margin:0;min-width:0;overflow-wrap:anywhere}
-.tubo-troca{align-self:flex-start;margin-top:auto}
+.tubo-l>div{display:flex;flex-wrap:wrap;gap:0 8px;padding:2px 0;font-size:13px;line-height:1.4}
+.tubo-l dt{flex:none;width:92px;color:var(--texto-2)}
+.tubo-l dd{margin:0;flex:1 1 auto;min-width:0;overflow-wrap:normal;hyphens:none}   /* a palavra não parte no meio: sem espaço ao lado do rótulo, o valor desce para a linha de baixo */
+.tubo-troca{align-self:flex-start;margin-top:auto;position:static}/* F5: o .fc-bt é position:relative; o ::after de baixo cobre o cartão inteiro só se o botão não for o ancestral posicionado */
 .tubo-troca::after{content:'';position:absolute;inset:0;border-radius:14px}
-.tubo-card:hover{border-color:var(--fc-texto-3)}
+.tubo-card:hover{border-color:var(--linha-campo-hover)}
 .guia-passos{list-style:none;counter-reset:gp;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:8px 0 0;padding:0}
 .guia-passos li{counter-increment:gp;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--fc-borda);border-radius:10px;background:var(--fc-superficie-2);font-size:13px;line-height:1.45;color:var(--fc-texto-2)}
-.guia-passos li::before{content:counter(gp);display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--fc-fogo);color:#fff;font:700 13px/1 var(--fc-tec-fam)}
+.guia-passos li::before{content:counter(gp);display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--acao);color:var(--sobre-acao);font:700 13px/1 var(--fc-tec-fam)}
 .guia-passos li b{color:var(--fc-texto);font-size:14px}
 @media (max-width:1100px){.g-rd1{grid-template-columns:minmax(0,1fr)}}
 /* 2.6.0: cartão ao passar o mouse no Desenho da rede, marcador de alerta e planilha da rede */
@@ -494,81 +340,306 @@ div.sbt{cursor:default}div.sbt:hover{border-color:var(--fc-fogo)}
 .des path.hit{fill:none;stroke-width:18;pointer-events:stroke}
 .des rect.hit{pointer-events:all}
 .des .hit:focus{outline:none}
-.des .hit:focus-visible{outline:3px solid var(--fc-foco-des);outline-offset:3px}
+.des .hit:focus-visible{outline:3px solid var(--foco);outline-offset:3px}
 .des path.hit:focus-visible{outline:none}
-.des .al-t{font:700 11px var(--fc-texto-fam);fill:#fff;pointer-events:none}
+.des .al-t{font:700 11px var(--fc-texto-fam);fill:var(--superficie);pointer-events:none}/* provisório 5, F14 */
 .des svg.leg-al{width:14px;height:14px;display:inline-block;margin-right:6px;vertical-align:middle}
-#cartao-mouse{position:absolute;z-index:5;min-width:190px;width:max-content;max-width:320px;padding:10px 12px;background:var(--fc-superficie);border:1px solid var(--fc-borda-campo);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.18);font-size:13px;color:var(--fc-texto)}
+#cartao-mouse{position:absolute;z-index:5;min-width:190px;width:max-content;max-width:320px;padding:10px 12px;background:var(--fc-superficie);border:1px solid var(--fc-borda-campo);border-radius:10px;box-shadow:var(--sombra-flutuante);font-size:13px;color:var(--fc-texto)}
 #cartao-mouse[hidden]{display:none}
 #cartao-mouse .cm-t{display:block;margin-bottom:6px;font-size:14px}
 #cartao-mouse dl{margin:0;display:grid;gap:2px}
 #cartao-mouse dl>div{display:flex;justify-content:space-between;gap:14px}
-#cartao-mouse dt{color:var(--fc-texto-3);white-space:nowrap}
+#cartao-mouse dt{color:var(--texto-2);white-space:nowrap}
 #cartao-mouse dd{margin:0;text-align:right;font-family:var(--fc-tec-fam);white-space:nowrap}
 #cartao-mouse .al dd,#cartao-mouse .al dt{color:var(--fc-erro-texto);font-weight:700}
 .al-m{color:var(--fc-erro-texto);font-size:11px}
 .parc{display:inline-block;margin-left:4px;padding:0 6px;border:1px dashed var(--fc-texto-2);border-radius:8px;font-size:11px;font-weight:600;color:var(--fc-texto-2);white-space:nowrap}
-.tab-res{width:100%;border-collapse:collapse;font-size:13px}
-.tab-res th,.tab-res td{padding:8px 10px;border-bottom:1px solid var(--fc-borda);text-align:left;white-space:nowrap}
-.tab-res th.r,.tab-res td.r{text-align:right}
-.tab-res thead th{font-weight:600;color:var(--fc-texto-2);white-space:normal}
-.tab-res tbody th{font-weight:700}
-.tab-res td.r{font-family:var(--fc-tec-fam)}
-.tab-res td.alerta{color:var(--fc-erro-texto);font-weight:700}
-.tab-res tr.al{background:var(--fc-erro-fundo)}
-@media (max-width:600px){.tab-res{font-size:12px}.tab-res th,.tab-res td{padding:6px 4px;white-space:normal}.tab-res thead th{font-size:10px;letter-spacing:0}.tab-res thead th small{display:block}}
 /* 2.6.0: mangueira e esguicho em meia largura, menu do esguicho, curva e pressões lado a lado, botão da válvula redutora */
 .g-hi1,.g-hi4{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
-.g-hi1>.cartao,.g-hi4>.cartao{margin:0}
+.g-hi1>.fc-cartao,.g-hi4>.fc-cartao{margin:0}
 .g-hi1+.linha-ac,.g-hi4{margin-top:16px}
-.hi-card{display:flex;flex-direction:column;gap:10px}
 .hi-corpo{display:flex;gap:14px;align-items:flex-start}
 .hi-corpo .sv{width:72px;height:48px;margin-top:22px}
 .hi-form{flex:1;min-width:0;grid-template-columns:minmax(0,1fr)}
-.hi-sel{margin:0}
-.hi-l{margin:0}
-.hi-l>div{display:flex;gap:8px;padding:2px 0;font-size:13px;line-height:1.4}
-.hi-l dt{flex:none;width:132px;color:var(--fc-texto-3)}
-.hi-l dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.g-hi1 .fc-kv,.g-hi4 .fc-kv{margin-top:12px}
+.g-hi1 .fc-cartao__corpo{display:flex;flex-direction:column}
 .esg-lista{border:0;margin:0;padding:0;display:grid;gap:8px}
-.esg-op{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:2px solid var(--fc-borda);border-radius:10px;cursor:pointer}
-.esg-op.sel{border-color:var(--fc-fogo)}
-.esg-op span{display:flex;flex-direction:column;gap:2px}
-.esg-op small{color:var(--fc-texto-3);font-size:12px}
-.tab-pres tbody tr{cursor:pointer}
-.tab-pres tbody tr.sel>*{background:var(--fc-superficie-2)}
-.tab-pres tbody tr.sel>th{box-shadow:inset 3px 0 0 var(--fc-fogo)}
-.tab-pres td,.tab-pres th{vertical-align:middle}
-.tab-pres tbody tr:focus-visible{outline:2px solid var(--fc-foco,var(--fc-fogo));outline-offset:-2px}
 .red-bt{display:inline-flex;align-items:center;gap:8px}
 .red-bt .sv{width:36px;height:24px}
-.cab-pres{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 @media (max-width:1100px){.g-hi1,.g-hi4{grid-template-columns:minmax(0,1fr)}}
 /* 2.6.0: listas de bombas em meia largura; modelo com largura mínima, células mais justas, para o nome não quebrar em cinco linhas */
-#tab-sugeridas td:first-child,#tab-bombas-15 td:first-child,#tab-jockey td:first-child{min-width:132px}
-#tab-sugeridas th,#tab-sugeridas td,#tab-bombas-15 th,#tab-bombas-15 td,#tab-jockey th,#tab-jockey td{padding-left:5px;padding-right:5px}
-#grade-bomba>.cartao+.cartao,#grade-jockey>.cartao+.cartao{margin-top:0}
+#grade-bomba>.fc-cartao+.fc-cartao,#grade-jockey>.fc-cartao+.fc-cartao{margin-top:0}
 #grade-jockey+#card-pressostatos{margin-top:16px}
 
 /* 2.6.0: "?" ao lado do título do cartão e menu sobreposto do passo a passo para gerar o JSON com uma IA */
 .cab-ia{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .cab-ia h2{margin:0}
-.bt-aj.bt-aj-t{position:static;flex:none}
 #dlg[data-modo="ia"]{padding:20px 22px;width:min(760px,94vw);margin-top:5vh;max-height:88vh;overflow:auto}
 .ia-passos{margin:8px 0 12px;padding-left:22px}
 .ia-passos li{margin:4px 0}
 .ia-prompt{height:auto;padding:8px;width:100%;font:400 13px/1.45 var(--fc-tec-fam);resize:vertical}
 /* FC-010: no celular o menu "?" é uma folha ancorada embaixo; sobra no alto uma faixa do fundo (48px ou mais) que fecha ao toque */
-@media (max-width:640px){#dlg[data-modo="ia"]{width:100vw;max-width:100vw;height:auto;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);margin:auto 0 0;border-radius:16px 16px 0 0;padding:16px;overscroll-behavior:contain}#dlg[data-modo="ia"] .bt{min-height:44px;min-width:44px}}
+@media (max-width:640px){#dlg[data-modo="ia"]{width:100vw;max-width:100vw;height:auto;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);margin:auto 0 0;border-radius:16px 16px 0 0;padding:16px;overscroll-behavior:contain}#dlg[data-modo="ia"] .fc-bt{min-height:44px;min-width:44px}}
 @media (max-width:640px){.ia-prompt{height:120px}}
 
 /* 2.6.4 (FC-033): linha da lista de bombas que mostra a curva sem escolher */
-.tab-bomba tbody tr[data-b]{cursor:pointer}
-.tab-bomba tbody tr.vendo>*{background:var(--fc-superficie-2)}
-.tab-bomba tbody tr.vendo>td:first-child{box-shadow:inset 3px 0 0 var(--fc-agua)}
-.tab-bomba tbody tr.vendo .bt-ver{text-decoration:underline dotted}
-.tab-bomba .bt-ver{text-align:left}
-.tab-bomba .bt-ver:focus-visible{outline:3px solid var(--fc-foco,var(--fc-fogo));outline-offset:2px}
+
 .bt-voltar{margin-bottom:8px}
 #card-curva-bomba:focus{outline:none}
-@media (max-width:900px){.bt.min.bt-voltar{min-height:44px;height:auto}.tab-bomba tbody tr[data-b] .bt{min-height:44px}.tab-bomba tbody tr[data-b] td{padding-top:4px;padding-bottom:4px}}
+@media (max-width:900px){.fc-bt.fc-bt--p.bt-voltar{min-height:44px;height:auto}.tab-bomba tbody tr[data-b] .fc-bt{min-height:44px}.tab-bomba tbody tr[data-b] td{padding-top:4px;padding-bottom:4px}}
+/* ===== peças de entrada (F5 da FC-042): Botão, Campo, Seleção, Dica e caixa de marcar. As classes fc-* vêm de ds/bundle.css; aqui só o que é do FireCalc (gancho .alt, unidade na caixa de tabela, área de texto, caixa de marcar, balão do "?"). ===== */
+.fc-bt.alt{border-color:var(--acao);color:var(--acao-texto)}
+.fc-bt.alt:hover{background:var(--selecionado-fundo)}
+.fc-bt--icone.fc-bt--perigo:hover{background:var(--erro-fundo);border-color:transparent;color:var(--erro-texto)}
+.fc-campo.larga{grid-column:1/-1}
+.fc-campo__conferir{color:var(--alerta-texto)}
+.fc-campo__ic{display:inline-flex;flex:none;margin-top:1px}
+.fc-campo__conferir{align-items:flex-start}
+.fc-campo__ref .fc-bt--disc{min-height:0}
+.fc-entrada:has([aria-invalid="true"]){border-color:var(--erro);box-shadow:inset 0 0 0 1px var(--erro)}
+.fc-entrada:has(.destaque){height:48px;border-width:2px}
+.fc-entrada .destaque{font-size:17px;font-weight:600;padding:0 12px}
+.fc-entrada input.num{text-align:right;font-variant-numeric:tabular-nums}
+.fc-sel .fc-entrada{width:100%}
+.fc-entrada--area{width:100%;height:auto;align-items:stretch}
+.fc-entrada--area textarea{width:100%;min-height:140px;padding:8px 10px;font-family:var(--font-codigo);resize:vertical;outline:none;border:0;background:none}
+.fc-form .fc-campo>.fc-sel{width:100%;max-width:100%}
+.hi-form .fc-campo>.fc-sel:not(.fc-sel--larga){width:240px;max-width:100%}
+.fc-form .fc-campo__erro,.form .fc-campo__erro,.fc-celula-erro{max-width:none}
+td .fc-campo__erro{max-width:210px;margin-top:4px}
+.pecas .fc-entrada{width:64px;flex:none}
+.pecas .fc-entrada input{text-align:right}
+.fc-campo-ajuda{position:relative;min-width:0}
+.fc-campo-ajuda>.fc-campo .fc-campo__rot{padding-right:32px}
+.fc-ajuda{display:inline-grid;place-items:center;width:24px;height:24px;border:0;padding:0;background:none;color:var(--texto-2);cursor:help;border-radius:var(--raio-total)}
+.fc-ajuda:hover,.fc-ajuda[aria-expanded="true"]{color:var(--texto);background:var(--hover-tinta)}
+.fc-ajuda .fc-ic{width:16px;height:16px}
+.fc-campo-ajuda>.fc-ajuda{position:absolute;top:-2px;right:0}
+.fc-ajuda--t{flex:none}
+.fc-campo-ajuda>.fc-dica.bal{position:static;transform:none;display:block;width:auto;max-width:none;margin-top:8px;white-space:normal;font-weight:400}
+.marcar input{accent-color:var(--acao)}
+/* celular (modo móvel, F4): alvos de 36 px também nos botões pequenos de tabela e de cartão do conteúdo */
+.fc-app--movel #conteudo .fc-bt--p{height:var(--controle-m)}
+.fc-sel--larga{width:100%}
+.fc-form:not(.dados-ed) .fc-campo:has(.fc-sel--larga),.form:not(.dados-ed) .fc-campo:has(.fc-sel--larga){grid-column:1/-1}
+.dados-ed .fc-entrada--num{width:100%}
+.fc-entrada .destaque{padding:0 8px}
+
+.tab-rede td .fc-entrada,.tab-pres td .fc-entrada,.pecas .fc-entrada{display:inline-flex;vertical-align:middle}
+@media (min-width:901px) and (max-width:1279px){.fc-form.dados-ed.c4{grid-template-columns:repeat(3,minmax(0,1fr))}.fc-form.dados-ed.c4>:first-child{grid-column:1/-1}}
+/* ===== peças de escolha (F6 da FC-042): Segmentado e OpcaoVisual. O estado fica em aria-pressed (L1), com o mesmo desenho do aria-checked do design system. ===== */
+.fc-opcao[aria-pressed="true"],.fc-opcao[data-atual="true"],.fc-opcao--radio:has(input:checked){border-color:var(--selecionado-linha);box-shadow:inset 0 0 0 1px var(--selecionado-linha)}
+.fc-opcao[aria-pressed="true"] .fc-opcao__des,.fc-opcao[data-atual="true"] .fc-opcao__des{background:var(--selecionado-fundo)}
+.fc-opcao[aria-pressed="true"] .fc-opcao__marca,.fc-opcao[data-atual="true"] .fc-opcao__marca{border:5px solid var(--acao)}
+div.fc-opcao{cursor:default}
+div.fc-opcao:hover{border-color:var(--linha)}
+div.fc-opcao[data-atual="true"]:hover{border-color:var(--selecionado-linha)}
+.fc-opcoes{margin-top:12px}
+.fc-opcoes--sist{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.fc-opcao .sv-ab{width:100%;max-width:150px;height:auto;aspect-ratio:3/2;color:var(--grafico-bomba)}
+.fc-opcao__des .sv{width:auto;height:64px}
+.fc-opcao--sist .fc-opcao__tx{padding-right:var(--esp-4)}
+.fc-opcao--sist .fc-opcao__tx b .fc-selo{margin-left:var(--esp-2);vertical-align:1px}
+.fc-opcao__linha{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:18px;color:var(--texto-2)}
+.fc-opcao__linha b{font:600 13px/18px var(--font-codigo);color:var(--texto);white-space:nowrap}
+.fc-opcao--radio{flex-direction:row;align-items:flex-start;gap:10px;padding:10px 12px;text-align:left;overflow:visible}
+.fc-opcao--radio input{accent-color:var(--acao);margin-top:3px;flex:none}
+.fc-opcao--radio>span{display:flex;flex-direction:column;gap:2px}
+.fc-opcao--radio small{color:var(--texto-2);font-size:12px}
+.c-tog{margin-top:12px}
+@media (max-width:480px){.fc-opcao--sist .fc-opcao__linha{flex-wrap:wrap;gap:0 8px}}
+/* ===== estado e estrutura (F7 da FC-042): Cartão, Selo, Aviso, EstadoVazio, Indicador e Abas. As classes fc-* vêm de ds/bundle.css; aqui só o modificador do cartão e a grade de indicadores do FireCalc. ===== */
+.fc-cartao{box-shadow:none}
+.fc-cartao--s{padding:var(--esp-4) var(--esp-5) var(--esp-5)}
+.fc-cartao--s>h2.t3,.fc-cartao--s>h3{margin-bottom:var(--esp-2)}
+.fc-app--movel .fc-cartao--s{padding:var(--esp-4)}
+.h3 .fc-selo,h3 .fc-selo,h2.t3 .fc-selo{vertical-align:middle;margin-left:6px}
+.fc-campo__rot .fc-selo{height:20px;font-size:11px;margin-left:4px}
+.fc-aviso+.fc-aviso{margin-top:var(--esp-2)}
+.fc-aviso--acoes{flex-wrap:wrap}.fc-aviso--acoes .fc-aviso__tx{flex:1 1 220px}.fc-aviso--acoes>.fc-bt{min-height:36px}   /* FC-073: Aviso com dois botões de ação, que passam para a linha de baixo em tela estreita */
+.fc-inds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:0 24px;margin:12px 0 4px}
+.fc-inds--topo{grid-template-columns:repeat(var(--n,6),minmax(0,1fr));margin:0 0 16px}
+.fc-inds--l{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));margin-top:6px}
+.fc-inds--1{grid-template-columns:1fr;margin:0}
+.fc-inds .fc-ind{border-top:0;border-bottom:1px solid var(--linha-fraca)}
+.fc-inds dd{margin:0}
+.fc-inds .fc-ind__v small{margin-left:4px}
+.fc-ind--ok .fc-ind__v{color:var(--sucesso-texto)}
+.fc-ind--er .fc-ind__v{color:var(--erro-texto)}
+.fc-ind--sel{box-shadow:inset 3px 0 0 var(--acao);padding-left:var(--esp-3)}
+.fc-inds__tit{margin:14px 0 0;font-size:12px;font-weight:600;color:var(--texto-2)}
+@media (max-width:1199px){.fc-inds--topo{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:767px){.fc-inds--topo{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fc-abas{margin:0 0 16px}
+@media (max-width:1199px){#est-tabelas{grid-template-columns:minmax(0,1fr)}}
+
+.fc-sel--larga select{padding-left:8px;padding-right:28px}/* nome longo de opção: a seta ocupa os 26 px da direita; o cartão do design system tem 20 px de respiro e a seleção larga não pode perder o texto */
+/* ===== correções da validação F5 a F7 (FC-042) ===== */
+/* Seleção larga (nome longo de opção): o texto escolhido quebra em linhas em vez de ser cortado; a caixa cresce com ele (o seletor nativo do Chromium quebra com white-space normal) */
+.fc-sel--larga .fc-entrada{height:auto;min-height:var(--controle-m)}
+.fc-sel--larga .fc-entrada:has(.destaque){min-height:48px}
+.fc-sel--larga select{white-space:normal;height:auto;min-height:calc(var(--controle-m) - 2px);padding-top:7px;padding-bottom:7px;line-height:20px}
+.fc-sel--larga select.destaque{min-height:44px;padding:8px 30px 8px 8px}   /* a regra .fc-entrada .destaque zera o respiro; a seta ocupa os 26 px da direita */
+/* celular: Segmentado com trilho de 44 px e botões de 36 px; "?" de ajuda e alça de arrastar com área de toque de 36 px (o ícone continua do mesmo tamanho) */
+.fc-app--movel .fc-seg{padding:4px;height:calc(var(--controle-m) + 8px)}
+.fc-app--movel .fc-seg button{min-height:var(--controle-m)}
+.fc-app--movel .fc-ajuda{width:var(--controle-m);height:var(--controle-m)}
+.fc-app--movel .fc-ajuda:hover,.fc-app--movel .fc-ajuda[aria-expanded="true"]{background:radial-gradient(circle,var(--hover-tinta) 12px,transparent 12.5px)}
+.fc-app--movel .fc-campo-ajuda>.fc-ajuda{top:-8px;right:-6px}
+.fc-app--movel .tab-rede .mover .fc-bt--icone{width:var(--controle-m);height:var(--controle-m)}
+
+/* ===== tabelas (F8 da FC-042): a peça Tabela vem de ds/bundle.css (fc-tab-rolar, fc-tab, fc-tab--edit); aqui só o que é do FireCalc ===== */
+.fc-tab-rolar{-webkit-overflow-scrolling:touch;max-width:100%}
+.fc-tab--edit{min-width:max-content}
+.fc-tab th small{white-space:nowrap}
+.fc-tab td.r{white-space:nowrap}
+.fc-tab caption{text-align:left;caption-side:top;padding:0 0 var(--esp-2);color:var(--texto-2)}
+.fc-tab th.fc-tab__rh{position:static;text-align:left;background:none;font-size:14px;line-height:20px;font-weight:600;color:var(--texto);white-space:normal}
+.fc-tab tbody th.fc-tab__rh{border-bottom:1px solid var(--linha-fraca)}
+.fc-tab tr:last-child th.fc-tab__rh{border-bottom:0}
+.fc-tab tbody tr:hover th.fc-tab__rh{background:var(--hover-tinta)}
+.fc-tab tbody tr[aria-selected="true"] th.fc-tab__rh{background:var(--selecionado-fundo)}
+.fc-tab.tab-res th,.fc-tab.tab-res td{padding-left:var(--esp-2);padding-right:var(--esp-2)}
+.fc-tab td.alerta{color:var(--erro-texto);font-weight:600}
+.fc-tab tr.al td{background:var(--erro-fundo)}
+.fc-tab tr.rec td{background:var(--superficie-2)}
+.tab-pres th.fc-tab__rh{position:relative;padding-left:var(--esp-5)}
+.tab-pres .fc-critico{position:absolute;left:var(--esp-3);top:50%;margin-top:-4px}
+.fc-tab td.r.tec{font-variant-numeric:tabular-nums}
+.fc-tab tbody tr[data-escolhida="true"] td{background:var(--selecionado-fundo)}
+.tab-rede td[data-rot="Peças"]>.fc-bt,.tab-rede td[data-rot="Tipo tubo"]>.fc-bt{padding-left:0;padding-right:0;min-width:0}
+.tab-rede td[data-rot="Peças"]>.fc-bt:focus-visible,.tab-rede td[data-rot="Tipo tubo"]>.fc-bt:focus-visible{outline-offset:4px}
+.tab-pres tbody tr{cursor:pointer}
+.tab-pres tbody tr:focus-visible{outline:2px solid var(--foco);outline-offset:-2px}
+.tab-bomba tbody tr[data-b]{cursor:pointer}
+.tab-bomba tbody tr[data-vendo="true"]>td{background:var(--hover-tinta)}
+.tab-bomba tbody tr[data-vendo="true"]>td:first-child{box-shadow:inset 3px 0 0 var(--grafico-sistema)}
+.tab-bomba tbody tr[data-vendo="true"] .bt-ver{text-decoration:underline dotted}
+.tab-bomba .bt-ver{text-align:left}
+.tab-bomba tbody tr[data-escolhida="true"]>td{background:var(--selecionado-fundo)}
+.bombas-15{margin-top:var(--esp-4)}
+#tab-sugeridas td:first-child,#tab-bombas-15 td:first-child,#tab-jockey td:first-child{min-width:132px}
+/* 2.8.0, F19: listas de bombas em largura inteira (curva embaixo) e, em contêiner estreito, Potência, Altura e Shut-off passam a texto de apoio sob o modelo: Escolher fica sempre à vista */
+.g-hi4.g-lista-larga{grid-template-columns:minmax(0,1fr)}
+.tab-lista-bomba{container-type:inline-size}
+.lb-sec{display:none;margin-top:2px}
+@container (max-width:720px){.tab-lista-bomba .lb-c{display:none}.tab-lista-bomba .lb-sec{display:block;white-space:normal}.tab-lista-bomba td:first-child{white-space:normal}.tab-lista-bomba .bt-ver{white-space:normal;height:auto;min-height:var(--controle-m);padding-top:4px;padding-bottom:4px}}
+.tab-rede td{vertical-align:middle}
+.tab-rede td.r,.tab-rede td.c-cota{text-align:right}
+.tab-rede .c-trecho{white-space:nowrap}
+.tab-rede .c-trecho small{display:block;font-size:12px}
+.tab-rede .mover{display:inline-block;vertical-align:middle;margin-right:4px}
+.tab-rede .mover .fc-bt--icone{width:var(--controle-p);height:var(--controle-p);cursor:grab}
+.tab-rede .c-cota{--w:84px}
+.tab-rede td:nth-child(2),.tab-rede td:nth-child(4){--w:64px}
+.tab-rede td:nth-child(7){--w:72px}
+.tab-rede .c-cota.ro{font-size:13px;white-space:nowrap}
+.tab-rede .c-cota.ro .fc-bt{height:22px;padding:0 4px;font-size:12px}
+.tab-rede td:nth-child(8) .fc-sel,.tab-rede td:nth-child(6) .fc-sel{width:112px;min-width:112px}
+.tab-rede .c-ac{width:36px;text-align:center;padding-left:2px;padding-right:2px}
+.tab-rede td:nth-child(9) .fc-bt,.tab-rede td:nth-child(8)>.fc-bt{white-space:nowrap}
+.tab-rede .c-proprio{display:block;margin-top:4px}.tab-rede .c-proprio .fc-entrada{width:84px}
+/* Rede (FC-042, correção do grupo F8 e F9): colunas e larguras enxutas para a Situação e as ações caírem à vista; o que não couber rola dentro do contêiner */
+.tab-rede{min-width:0}
+.tab-rede th,.tab-rede th small{white-space:normal}
+.tab-rede th,.tab-rede td{padding-left:4px;padding-right:4px}
+.tab-rede th:first-child,.tab-rede td:first-child{padding-left:8px}
+.tab-rede .c-trecho small{white-space:normal;max-width:96px}
+.tab-rede .c-cota{--w:64px}
+.tab-rede td:nth-child(2),.tab-rede td:nth-child(4){--w:56px}
+.tab-rede td:nth-child(7){--w:64px}
+.tab-rede .c-cota.ro{white-space:normal}
+.tab-rede .mover{margin-right:2px}
+.tab-rede td:nth-child(9) .fc-bt{white-space:normal;text-align:right;line-height:16px;height:auto;min-height:var(--controle-p);padding-top:2px;padding-bottom:2px}
+/* Situação, Duplicar e Excluir ficam à vista quando a tabela rola de lado (computador); no celular a tabela inteira rola */
+.fc-app:not(.fc-app--movel) .tab-rede :is(th,td):nth-child(n+10){position:sticky;z-index:1;box-sizing:border-box;background:var(--superficie)}
+.fc-app:not(.fc-app--movel) .tab-rede th:nth-child(n+10){z-index:2;background:var(--superficie-2)}
+.fc-app:not(.fc-app--movel) .tab-rede :is(th,td):nth-child(10){right:80px;width:92px;min-width:92px;max-width:92px;padding-left:2px;padding-right:2px;box-shadow:inset 1px 0 0 var(--linha)}
+.fc-app:not(.fc-app--movel) .tab-rede :is(th,td):nth-child(11){right:40px}
+.fc-app:not(.fc-app--movel) .tab-rede :is(th,td):nth-child(12){right:0}
+.fc-app:not(.fc-app--movel) .tab-rede tbody tr:hover td:nth-child(n+10){background:linear-gradient(var(--hover-tinta),var(--hover-tinta)),var(--superficie)}
+.fc-app:not(.fc-app--movel) .tab-rede tbody tr[aria-selected="true"] td:nth-child(n+10){background:linear-gradient(var(--selecionado-fundo),var(--selecionado-fundo)),var(--superficie)}
+
+/* ===== janela e busca rápida (F9 da FC-042): Janela e BuscaRapida vêm de ds/bundle.css; aqui só o que é do FireCalc ===== */
+dialog.fc-janela{color:var(--texto);padding:0;margin:auto}
+dialog.fc-janela::backdrop{background:var(--veu)}
+#dlg{width:min(560px,92vw)}
+#dlg[data-modo]:not([data-modo=""]){padding:20px 22px}
+#dlg[data-modo="esguicho"],#dlg[data-modo="redutora"]{width:min(640px,92vw)}
+#dlg .fc-janela__cab .fc-bt{flex:none}
+#bq{width:min(560px,92vw);margin:12vh auto auto}
+.fc-bq__campo:focus-within{outline:2px solid var(--foco);outline-offset:-2px}
+.fc-bq__item[aria-disabled="true"]{cursor:default}
+/* abre em 200 ms e fecha em 140 ms; com movimento reduzido, sem animação */
+/* só opacidade: sem deslocamento, a geometria da janela é a mesma durante e depois da animação */
+dialog.fc-janela,dialog.fc-janela::backdrop{opacity:0;transition:opacity .14s ease-in,overlay .14s allow-discrete,display .14s allow-discrete}
+dialog.fc-janela[open],dialog.fc-janela[open]::backdrop{opacity:1;transition-duration:.2s;transition-timing-function:ease-out}
+@starting-style{dialog.fc-janela[open],dialog.fc-janela[open]::backdrop{opacity:0}}
+@media (prefers-reduced-motion:reduce){dialog.fc-janela,dialog.fc-janela::backdrop{transition:none}}
+@media (max-width:640px){#bq{margin-top:8vh}}
+/* ===== gráfico (F9): a peça Grafico vem de ds/bundle.css (fc-graf, fc-leg); três tintas: sistema, bomba e ponto ===== */
+.fc-graf{width:100%;height:auto;max-width:760px;display:block}
+.fc-graf text.ge{font-weight:600}
+.fc-graf polyline.sistema{fill:none;stroke:var(--grafico-sistema);stroke-width:2.5;stroke-linejoin:round}
+.fc-graf polyline.bomba{fill:none;stroke:var(--grafico-bomba);stroke-width:2.5;stroke-linejoin:round}
+.fc-graf .pt-bomba{fill:var(--superficie);stroke:var(--grafico-bomba);stroke-width:2}
+.fc-graf .pt-sistema{fill:var(--superficie);stroke:var(--grafico-sistema);stroke-width:2}
+.fc-graf rect.ponto{stroke-width:2}
+.fc-leg{margin-top:var(--esp-2)}
+.fc-leg i.l-sistema{background:var(--grafico-sistema)}
+.fc-leg i.l-bomba{background:var(--grafico-bomba)}
+.fc-leg i.l-ponto{background:var(--grafico-ponto);width:10px;height:10px;border-radius:50%}
+.fc-leg i.l-marca{width:9px;height:9px;border-radius:0;transform:rotate(45deg)}   /* o ponto de trabalho é losango no desenho e na legenda; o de projeto é redondo */
+/* nome da obra: área de uma linha lógica que cresce com o texto (nada cortado) */
+.fc-entrada--uma{height:auto;min-height:var(--controle-m);align-items:stretch}
+.fc-entrada--uma textarea{min-height:0;height:34px;padding:7px 12px;font:inherit;line-height:20px;resize:none;overflow:hidden;display:block;box-sizing:border-box}
+/* celular: campos e seleções dentro da tabela com alvo de 36 px (a peça fixa 28 px no computador) */
+.fc-app--movel .fc-tab .fc-entrada{height:var(--controle-m)}
+/* ===== telas Início, Configurações, Ajuda e Sobre (F10 da FC-042): cartão com cabeçalho e corpo (U.cartao), lista de projetos, Segmentado nas Configurações ===== */
+.fc-cartao__cab h2.t3{margin:0;flex:1;min-width:0}
+.fc-cartao__nota{color:var(--texto-2);flex:none}
+.fc-cartao__corpo>p+p{margin-top:var(--esp-2)}
+.fc-cartao__corpo>.fc-form+.linha-ac,.fc-cartao__corpo>.peq{margin-top:var(--esp-3)}
+.fc-lista--proj li{flex-wrap:wrap}
+.fc-lista--proj li>span:first-of-type{flex:1 1 220px}
+.fc-lista--proj li .fc-selo{flex:none}
+.fc-lista--proj li .fc-ic{flex:none;color:var(--texto-2)}
+.fc-lista--proj li b{overflow-wrap:anywhere}
+.fc-cartao--linha>.fc-cartao__corpo{display:flex;gap:var(--esp-8);flex-wrap:wrap}
+.fc-conteudo>.fc-vazio h2{margin:0;font-size:18px;line-height:26px;font-weight:600}   /* o Início tem h1 e depois h2 (sem pular nível); o resto usa h3 do design system */
+.fc-fonte{margin-top:var(--esp-3)}
+.fc-cartao__corpo>.fc-tab-rolar+.fc-tab-rolar,.fc-cartao__corpo>.fc-tab-rolar+.linha-ac{margin-top:var(--esp-3)}
+.fc-fonte,.fc-cartao__pe .apoio{color:var(--texto-2)}
+#cad-um .fc-form{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}   /* os exemplos dos campos (CPVC para incêndio, soldável) não cabem em 200 px: colunas de 250 px nesta tela */
+/* ===== Abastecimento (F13 da FC-042): valor calculado do cartão Dados do reservatório ===== */
+#ab-dados .fc-calc{display:block;height:auto;padding:var(--esp-2) var(--esp-3);font-size:12px;line-height:18px;color:var(--texto-2);width:100%}
+#ab-dados .fc-calc b{display:block;font:600 18px/1.3 var(--font-codigo);color:var(--texto)}
+#ab-dados .fc-form{margin-bottom:var(--esp-3);grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+/* ===== Rede (F14 da FC-042): guia recolhível, cartão da tabela, tubo padrão em cabeçalho e corpo ===== */
+.tubo-card>.fc-cartao__corpo{display:flex;flex-direction:column;gap:var(--esp-2);flex:1}
+.fc-guia>summary{list-style:none;cursor:pointer}
+.fc-guia>summary::-webkit-details-marker{display:none}
+.fc-guia>summary:focus-visible{outline:3px solid var(--foco);outline-offset:-3px;border-radius:var(--raio-3)}
+.fc-guia:not([open])>summary{padding-bottom:var(--esp-4)}
+.fc-guia>summary::after{content:"";flex:none;width:8px;height:8px;margin:0 var(--esp-1) 4px 0;border:solid var(--texto-2);border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .2s}   /* seta feita em CSS: o guia não leva desenho */
+.fc-guia[open]>summary::after{transform:rotate(-135deg);margin-bottom:-2px}
+@media (prefers-reduced-motion:reduce){.fc-guia>summary::after{transition:none}}
+.des>.fc-cartao__corpo{position:relative}   /* o cartão de passar o mouse se posiciona dentro do corpo do cartão do desenho */
+.g-rd1>.fc-guia{align-self:start}
+.fc-cartao--tab{max-width:none}
+.fc-cartao--tab>.fc-cartao__corpo{padding-bottom:var(--esp-3)}
+
+/* F17: Verificacao do design system com o selo depois do nome no HTML (mesma ordem de leitura de antes); a grade o leva à primeira coluna */
+.fc-ver>.fc-selo{grid-column:1;grid-row:1;justify-self:start}
+.fc-ver__nm{grid-column:2;grid-row:1}
+.fc-ver__cod{grid-column:3;grid-row:1}
+.fc-ver>.conf-l{grid-column:2/-1;margin-top:0}
+.fc-grupo-ver>.fc-cartao__cab .fc-selo{order:2}
+.fc-grupo-ver>.fc-cartao__cab h2{order:1;margin-right:auto}
+.fc-grupo>summary h2{margin:0;font-size:inherit;line-height:inherit}
+.fc-conc__tx h2{font-size:16px;line-height:24px}
+.conf-l .fc-bt[aria-pressed="true"]{background:var(--selecionado-fundo);border-color:var(--acao);color:var(--acao-texto)}
+@media (max-width:820px){.fc-conc{padding:var(--esp-4)}.fc-ver{grid-template-columns:minmax(0,1fr) auto}.fc-ver>.fc-selo{grid-column:1/-1;grid-row:auto}.fc-ver__nm{grid-column:1;grid-row:auto}.fc-ver__cod{grid-column:2;grid-row:auto}.fc-ver__val,.fc-ver__fazer,.fc-ver>.conf-l{grid-column:1/-1}.fc-ver__fazer .fc-bts .fc-bt{width:100%}}
+
+/* pós-aceite: por ordem do dono o conteúdo usa a largura toda da coluna; o teto de 880 px do design system (--conteudo-max) não vale */
+.fc-conteudo>*{max-width:none}

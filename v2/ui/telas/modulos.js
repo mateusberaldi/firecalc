@@ -28,25 +28,31 @@
     return n;
   };
   function classesTubo() { var l = []; D.tubos.forEach(function (t) { var k = t.norma + '|' + t.classe; if (l.indexOf(k) < 0) l.push(k); }); return l; }
-  function cCampo(k, rot, o) { o = o || {}; return '<label class="cmp' + (o.larga ? ' larga' : '') + '"><span class="rt">' + rot + '</span><input class="campo" id="cfg-' + k + '" data-cfg="' + k + '" value="' + esc(U.cfg[k]) + '"' + (o.ex ? ' placeholder="' + esc(o.ex) + '"' : '') + ' autocomplete="off">' + (o.aj ? '<span class="aj">' + o.aj + '</span>' : '') + '</label>'; }
-  function cEscolha(k, rot, ops, aj) { return '<label class="cmp"><span class="rt">' + rot + '</span><select class="campo" id="cfg-' + k + '" data-cfg="' + k + '"><option value="">Sem padrão (escolher em cada projeto)</option>' + ops.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (U.cfg[k] === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('') + '</select>' + (aj ? '<span class="aj">' + aj + '</span>' : '') + '</label>'; }
+  function cCampo(k, rot, o) { o = o || {}; return '<label class="fc-campo' + (o.larga ? ' larga' : '') + '"><span class="fc-campo__rot">' + rot + '</span><span class="fc-entrada"><input id="cfg-' + k + '" data-cfg="' + k + '" value="' + esc(U.cfg[k]) + '"' + (o.ex ? ' placeholder="' + esc(o.ex) + '"' : '') + ' autocomplete="off"></span>' + (o.aj ? '<span class="fc-campo__ref">' + o.aj + '</span>' : '') + '</label>'; }
+  function cEscolha(k, rot, ops, aj) { return '<label class="fc-campo"><span class="fc-campo__rot">' + rot + '</span><span class="fc-sel fc-sel--larga"><span class="fc-entrada"><select id="cfg-' + k + '" data-cfg="' + k + '"><option value="">Sem padrão (escolher em cada projeto)</option>' + ops.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (U.cfg[k] === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('') + '</select></span>' + U.icone('chevron-down', 'fc-ic') + '</span>' + (aj ? '<span class="fc-campo__ref">' + aj + '</span>' : '') + '</label>'; }
+  /** Segmentado do design system (radiogroup, setas trocam a opção, tratadas em app.js): um botão por valor, data-acao e data-v. */
+  function segmentado(acao, rot, atual, ops) {
+    return '<div class="fc-campo"><span class="fc-campo__rot" id="seg-' + acao + '">' + rot + '</span><div class="fc-seg" role="radiogroup" aria-labelledby="seg-' + acao + '">' + ops.map(function (o) {
+      return '<button type="button" role="radio" id="seg-' + acao + '-' + o[0] + '" data-acao="' + acao + '" data-v="' + o[0] + '" aria-checked="' + (atual === o[0]) + '" tabindex="' + (atual === o[0] ? 0 : -1) + '">' + (o[2] || '') + o[1] + '</button>';
+    }).join('') + '</div></div>';
+  }
   U.telas.config = function () {
     var cInv = U.cfg.C && (isNaN(V.num(U.cfg.C)) || V.num(U.cfg.C) <= 0);
-    return '<div class="cab"><div class="tx"><h1>Configurações</h1></div></div>' +
-      '<div class="cartao bloco"><h2 class="t3">Escritório e responsável técnico</h2><div class="form">' +
-      cCampo('escritorio', 'Razão social do escritório', { larga: true }) + cCampo('cnpj', 'CNPJ', { ex: '00.000.000/0000-00' }) + cCampo('rt', 'Responsável técnico') + cCampo('registro', 'CREA ou CAU', { ex: 'CREA-PR 000000/D' }) + cCampo('municipio', 'Município habitual das obras') + cCampo('uf', 'Estado', { ex: 'SP' }) + '</div>' +
-      '<div class="linha-ac"><button class="bt" data-mod="cfg-aplicar"' + (S.aberto ? '' : ' disabled') + '>Preencher o projeto aberto com estes dados</button>' + (S.aberto ? '' : '<span class="peq">Nenhum projeto aberto.</span>') + '</div></div>' +
-      '<div class="cartao bloco"><h2 class="t3">Padrões de projeto</h2><div class="form">' +
-      cEscolha('norma', 'Norma', Object.keys(D.normas).map(function (k) { return [k, D.normas[k].nome]; })) +
-      cEscolha('tabelaLeq', 'Tabela de comprimento equivalente', Object.keys(D.leq).map(function (k) { return [k, D.leq[k].titulo]; })) +
-      cEscolha('tipoTubo', 'Tipo de tubo', (D.tiposTubo || []).map(function (t) { return [t.id, t.nome]; })) +
-      cEscolha('saida', 'Saída do reservatório (bomba de incêndio)', [['lateral', 'Saída lateral, junto ao fundo'], ['fundo', 'Saída pelo fundo'], ['cima', 'Tubo que entra por cima']]) +
-      cCampo('C', 'Fator C de Hazen-Williams', { ex: '120', aj: cInv ? '<span class="msg-er">Use só número maior que zero. Este padrão não será aplicado.</span>' : '' }) + '</div></div>' +
-      '<div class="cartao bloco"><h2 class="t3">Aparência e modo de uso</h2><div class="linha-ac"><span><b>Tema:</b> ' + (S.tema === 'escuro' ? 'escuro' : 'claro') + '</span><button class="bt min" data-acao="tema">' + (S.tema === 'escuro' ? 'Usar o tema claro' : 'Usar o tema escuro') + '</button></div>' +
-      '<div class="linha-ac"><span><b>Modo:</b> ' + (S.modo === 'padrao' ? 'padrão' : 'personalizado') + '</span><button class="bt min" data-acao="modo">' + (S.modo === 'padrao' ? 'Usar o modo personalizado' : 'Voltar ao modo padrão') + '</button></div>' +
-      '</div>' +
+    return U.cab(0, 'Configurações') +
+      U.cartao('Escritório e responsável técnico', '<div class="fc-form">' + cCampo('escritorio', 'Razão social do escritório', { larga: true }) + cCampo('cnpj', 'CNPJ', { ex: '00.000.000/0000-00' }) + cCampo('rt', 'Responsável técnico') + cCampo('registro', 'CREA ou CAU', { ex: 'CREA-PR 000000/D' }) + cCampo('municipio', 'Município habitual das obras') + cCampo('uf', 'Estado', { ex: 'SP' }) + '</div>',
+        { pe: '<button class="fc-bt fc-bt--p" data-mod="cfg-aplicar"' + (S.aberto ? '' : ' disabled') + '>Preencher o projeto aberto com estes dados</button>' + (S.aberto ? '' : '<span class="apoio">Nenhum projeto aberto.</span>') }) +
+      U.cartao('Padrões de projeto', '<div class="fc-form">' +
+        cEscolha('norma', 'Norma', Object.keys(D.normas).map(function (k) { return [k, D.normas[k].nome]; })) +
+        cEscolha('tabelaLeq', 'Tabela de comprimento equivalente', Object.keys(D.leq).map(function (k) { return [k, D.leq[k].titulo]; })) +
+        cEscolha('tipoTubo', 'Tipo de tubo', (D.tiposTubo || []).map(function (t) { return [t.id, t.nome]; })) +
+        cEscolha('saida', 'Saída do reservatório (bomba de incêndio)', [['lateral', 'Saída lateral, junto ao fundo'], ['fundo', 'Saída pelo fundo'], ['cima', 'Tubo que entra por cima']]) +
+        cCampo('C', 'Fator C de Hazen-Williams', { ex: '120', aj: cInv ? '<span class="fc-campo__erro" role="alert">' + U.icone('circle-x', 'fc-ic') + 'Use só número maior que zero. Este padrão não será aplicado.</span>' : '' }) + '</div>') +
+      U.cartao('Aparência e modo de uso',
+        segmentado('tema', 'Tema', S.tema === 'escuro' ? 'escuro' : 'claro', [['claro', 'Claro', U.icone('sun', 'fc-ic')], ['escuro', 'Escuro', U.icone('moon', 'fc-ic')]]) +
+        segmentado('modo', 'Modo', S.modo === 'padrao' ? 'padrao' : 'personalizado', [['padrao', 'Padrão'], ['personalizado', 'Personalizado']]), { cls: 'fc-cartao--linha' }) +
       U.cartaoCopia() +
-      '<div class="cartao bloco"><h2 class="t3">Dados guardados neste navegador</h2><p class="peq">Configurações, biblioteca pessoal e a lista de projetos ficam só neste navegador deste computador. Limpar os dados do navegador apaga tudo; o que importa deve estar em arquivo (.json).</p><div class="linha-ac"><button class="bt" data-mod="cfg-limpar">Apagar as configurações</button></div></div>';
+      U.cartao('Dados guardados neste navegador', '<p class="peq">Configurações, biblioteca pessoal e a lista de projetos ficam só neste navegador deste computador. Limpar os dados do navegador apaga tudo; o que importa deve estar em arquivo (.json).</p>',
+        { pe: '<button class="fc-bt" data-mod="cfg-limpar">Apagar as configurações</button>' });
   };
 
   // ---------------------------------------------------------------- biblioteca pessoal (bombas cadastradas à mão)
@@ -87,42 +93,47 @@
   };
   function blocoMangueiras(pers) {
     var mu = S.aberto ? S.F.mangueirasUsuario || {} : {}, ks = Object.keys(mu);
-    var h = '<div class="cartao bloco" id="bib-mang"><h2 class="t3">Mangueiras cadastradas no projeto aberto</h2><p class="peq">Curva de perda de carga de mangueira fora da base, para o cálculo pelo esguicho do catálogo. Vale só neste projeto e vai no arquivo dele. Substitui a curva da base para o mesmo diâmetro.</p>';
-    if (!S.aberto) return h + '<p class="peq"><b>Nenhum projeto aberto.</b></p></div>';
-    h += ks.length ? '<div class="rolar"><table><thead><tr><th>Diâmetro</th><th>Modelo</th><th class="r">Pontos</th><th class="r">Faixa de vazão <small>(L/min)</small></th><th>Fonte</th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' + ks.map(function (k) { var m = mu[k]; return '<tr><td class="tec">' + esc(k) + ' mm</td><td>' + esc(m.modelo || '') + '</td><td class="r tec">' + m.Q.length + '</td><td class="r tec">' + fmt(m.Q[0], 0) + ' a ' + fmt(m.Q[m.Q.length - 1], 0) + '</td><td class="peq">' + esc(m.fonte || '') + '</td><td class="r">' + (pers ? '<button class="bt lig min" data-mod="mang-tirar" data-v="' + esc(k) + '">Excluir</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="peq" id="mang-vazia"><b>Nenhuma mangueira cadastrada.</b></p>';
-    if (!pers) return h + (ks.length ? '<p class="peq">Para mudar, use o modo personalizado.</p>' : '') + '</div>';
-    return h + '<div class="form" style="margin-top:12px"><label class="cmp"><span class="rt">Diâmetro <small>(mm)</small></span><input class="campo" id="nm-dn" placeholder="40" inputmode="numeric" autocomplete="off"></label><label class="cmp"><span class="rt">Modelo</span><input class="campo" id="nm-modelo" autocomplete="off"></label><label class="cmp larga"><span class="rt">Fonte: catálogo e página</span><input class="campo" id="nm-fonte" placeholder="Catálogo do fabricante, edição e página" autocomplete="off"></label>' +
-      '<label class="cmp larga"><span class="rt">Pontos da curva, um por linha: vazão em L/min; perda em kPa por metro</span><textarea class="campo" id="nm-pts" rows="5" style="height:auto;padding:8px" placeholder="300; 0,33&#10;600; 1,33&#10;1000; 3,00"></textarea><span class="aj">Vazão e perda crescentes, no mínimo 3 pontos. Dado do catálogo, nunca estimado.</span></label></div><div id="nm-msg" role="alert"></div><div class="linha-ac"><button class="bt pri" data-mod="mang-cadastrar">Cadastrar no projeto</button></div></div>';
+    var h = U.cartaoAbre('Mangueiras cadastradas no projeto aberto', { id: 'bib-mang' }) + '<p class="peq">Curva de perda de carga de mangueira fora da base, para o cálculo pelo esguicho do catálogo. Vale só neste projeto e vai no arquivo dele. Substitui a curva da base para o mesmo diâmetro.</p>';
+    if (!S.aberto) return h + '<p class="peq"><b>Nenhum projeto aberto.</b></p>' + U.cartaoFim();
+    h += ks.length ? '<div class="fc-tab-rolar"><table class="fc-tab"><thead><tr><th>Diâmetro</th><th>Modelo</th><th class="r">Pontos</th><th class="r">Faixa de vazão <small>(L/min)</small></th><th>Fonte</th><th><span class="so-leitor">Ação</span></th></tr></thead><tbody>' + ks.map(function (k) { var m = mu[k]; return '<tr><td class="tec">' + esc(k) + ' mm</td><td>' + esc(m.modelo || '') + '</td><td class="r tec">' + m.Q.length + '</td><td class="r tec">' + fmt(m.Q[0], 0) + ' a ' + fmt(m.Q[m.Q.length - 1], 0) + '</td><td class="peq">' + esc(m.fonte || '') + '</td><td class="r">' + (pers ? '<button class="fc-bt fc-bt--disc fc-bt--p" data-mod="mang-tirar" data-v="' + esc(k) + '">Excluir</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="peq" id="mang-vazia"><b>Nenhuma mangueira cadastrada.</b></p>';
+    if (!pers) return h + (ks.length ? '<p class="peq">Para mudar, use o modo personalizado.</p>' : '') + U.cartaoFim();
+    return h + '<div class="fc-form" style="margin-top:12px"><label class="fc-campo"><span class="fc-campo__rot">Diâmetro <small>(mm)</small></span><span class="fc-entrada"><input id="nm-dn" placeholder="40" inputmode="numeric" autocomplete="off"></span></label><label class="fc-campo"><span class="fc-campo__rot">Modelo</span><span class="fc-entrada"><input id="nm-modelo" autocomplete="off"></span></label><label class="fc-campo larga"><span class="fc-campo__rot">Fonte: catálogo e página</span><span class="fc-entrada"><input id="nm-fonte" placeholder="Catálogo do fabricante, edição e página" autocomplete="off"></span></label>' +
+      '<label class="fc-campo larga"><span class="fc-campo__rot">Pontos da curva, um por linha: vazão em L/min; perda em kPa por metro</span><span class="fc-entrada fc-entrada--area"><textarea id="nm-pts" rows="5" style="height:auto;padding:8px" placeholder="300; 0,33&#10;600; 1,33&#10;1000; 3,00"></textarea></span><span class="fc-campo__ref">Vazão e perda crescentes, no mínimo 3 pontos. Dado do catálogo, nunca estimado.</span></label></div><div id="nm-msg" role="alert"></div><div class="linha-ac"><button class="fc-bt" data-mod="mang-cadastrar">Cadastrar no projeto</button></div>' + U.cartaoFim();
   }
   function linhaBomba(b, onde) {
     var qs = b.pts.map(function (p) { return p[1]; });
     return '<tr><td><b>' + esc(b.modelo) + '</b>' + (b.jockey ? ' <span class="peq">bomba de pressurização</span>' : '') + '</td><td class="r tec">' + (b.cv ? fmt(b.cv, b.cv % 1 ? 1 : 0) : '') + '</td><td class="r tec">' + fmt(b.shutoff, 1) + '</td><td class="r tec">' + fmt(Math.min.apply(null, qs), 1) + ' a ' + fmt(Math.max.apply(null, qs), 1) + '</td><td class="r tec">' + (b.hsucMax === null || b.hsucMax === undefined ? '' : fmt(b.hsucMax, 1)) + '</td><td class="peq">' + esc(b.fonte) + '</td><td class="r" style="white-space:nowrap">' +
-      (onde === 'proj' ? '<button class="bt min" data-mod="bib-guardar" data-v="' + esc(b.id) + '">Guardar na biblioteca</button>' : (S.aberto && !b.jockey ? '<button class="bt min" data-mod="bib-usar" data-v="' + esc(b.id) + '">Usar no projeto</button> ' : '') + '<button class="bt lig min" data-mod="bib-tirar" data-v="' + esc(b.id) + '">Excluir</button>') + '</td></tr>';
+      (onde === 'proj' ? '<button class="fc-bt fc-bt--p" data-mod="bib-guardar" data-v="' + esc(b.id) + '">Guardar na biblioteca</button>' : (S.aberto && !b.jockey ? '<button class="fc-bt fc-bt--p" data-mod="bib-usar" data-v="' + esc(b.id) + '">Usar no projeto</button> ' : '') + '<button class="fc-bt fc-bt--disc fc-bt--p" data-mod="bib-tirar" data-v="' + esc(b.id) + '">Excluir</button>') + '</td></tr>';
   }
   var CAB_B = '<thead><tr><th>Modelo</th><th class="r">Potência <small>(cv)</small></th><th class="r">Vazão nula <small>(mca)</small></th><th class="r">Faixa de vazão <small>(m³/h)</small></th><th class="r">Sucção máxima <small>(mca)</small></th><th>Fonte</th><th><span class="so-leitor">Ação</span></th></tr></thead>';
   function abaBiblioteca() {
     var pers = S.modo === 'personalizado', doProj = (S.aberto ? S.F.bombasUsuario || [] : []).filter(function (b) { return !U.bib.some(function (x) { return x.id === b.id; }); });
-    var h = '<div class="cartao bloco"><div class="cab-ia"><h2 class="t3">Minha biblioteca de bombas</h2><button type="button" class="bt-aj bt-aj-t" id="ia-bombas-abrir" data-cad="ia-bombas" aria-haspopup="dialog" aria-label="Como gerar o JSON de bombas com uma IA">?</button></div><p class="peq">Bombas fora do catálogo da base, cadastradas por você com a fonte. Ficam neste navegador e aparecem na etapa Bomba de qualquer projeto. O arquivo do projeto leva junto a bomba que ele usa.</p>' +
-      (U.bib.length ? '<div class="rolar"><table>' + CAB_B + '<tbody>' + U.bib.map(function (b) { return linhaBomba(b, 'bib'); }).join('') + '</tbody></table></div>' : '<p class="peq" id="bib-vazia"><b>Nenhuma bomba cadastrada.</b></p>') +
-      '<div class="linha-ac"><button class="bt" data-mod="bib-baixar"' + (U.bib.length ? '' : ' disabled') + '>Baixar a biblioteca (.json)</button><button class="bt" data-mod="bib-abrir">Trazer de um arquivo</button><input type="file" id="bib-arq" accept=".json,application/json" hidden></div></div>';
+    var h = U.cartaoAbre('Minha biblioteca de bombas', { extra: '<button type="button" class="fc-ajuda fc-ajuda--t" id="ia-bombas-abrir" data-cad="ia-bombas" aria-haspopup="dialog" aria-label="Como gerar o JSON de bombas com uma IA">' + U.icone('circle-help', 'fc-ic') + '</button>' }) + '<p class="peq">Bombas fora do catálogo da base, cadastradas por você com a fonte. Ficam neste navegador e aparecem na etapa Bomba de qualquer projeto. O arquivo do projeto leva junto a bomba que ele usa.</p>' +
+      (U.bib.length ? '<div class="fc-tab-rolar"><table class="fc-tab">' + CAB_B + '<tbody>' + U.bib.map(function (b) { return linhaBomba(b, 'bib'); }).join('') + '</tbody></table></div>' : '<p class="peq" id="bib-vazia"><b>Nenhuma bomba cadastrada.</b></p>') +
+      '<div class="linha-ac"><button class="fc-bt" data-mod="bib-baixar"' + (U.bib.length ? '' : ' disabled') + '>Baixar a biblioteca (.json)</button><button class="fc-bt" data-mod="bib-abrir">Trazer de um arquivo</button><input type="file" id="bib-arq" accept=".json,application/json" hidden></div>' + U.cartaoFim();
     h += U.cartaoReservatorios();
-    if (doProj.length) h += '<div class="cartao bloco"><h2 class="t3">Bombas cadastradas no projeto aberto</h2><p class="peq">Vieram no arquivo do projeto. Valem só nele, até você guardar na biblioteca.</p><div class="rolar"><table>' + CAB_B + '<tbody>' + doProj.map(function (b) { return linhaBomba(b, 'proj'); }).join('') + '</tbody></table></div></div>';
-    h += '<div class="cartao bloco"><h2 class="t3">Cadastrar bomba</h2>';
-    if (!pers) return h + U.aviso('in', 'O cadastro de bomba ou de mangueira fora do catálogo faz parte do modo personalizado. <button class="bt lig min" data-acao="modo">Usar o modo personalizado</button>') + '</div>' + blocoMangueiras(false);
-    var c = function (k, rot, ex, larga) { return '<label class="cmp' + (larga ? ' larga' : '') + '"><span class="rt">' + rot + '</span><input class="campo" id="nb-' + k + '"' + (ex ? ' placeholder="' + esc(ex) + '"' : '') + ' autocomplete="off"></label>'; };
-    return h + '<p class="peq">Dados do catálogo do fabricante, nunca estimados. A fonte (catálogo e página) é obrigatória e aparece ao lado da bomba em todas as telas.</p><div class="form">' +
+    if (doProj.length) h += U.cartaoAbre('Bombas cadastradas no projeto aberto') + '<p class="peq">Vieram no arquivo do projeto. Valem só nele, até você guardar na biblioteca.</p><div class="fc-tab-rolar"><table class="fc-tab">' + CAB_B + '<tbody>' + doProj.map(function (b) { return linhaBomba(b, 'proj'); }).join('') + '</tbody></table></div>' + U.cartaoFim();
+    h += U.cartaoAbre('Cadastrar bomba');
+    if (!pers) return h + U.aviso('in', 'O cadastro de bomba ou de mangueira fora do catálogo faz parte do modo personalizado. <button class="fc-bt fc-bt--disc fc-bt--p" data-acao="modo">Usar o modo personalizado</button>') + U.cartaoFim() + blocoMangueiras(false);
+    var c = function (k, rot, ex, larga) { return '<label class="fc-campo' + (larga ? ' larga' : '') + '"><span class="fc-campo__rot">' + rot + '</span><span class="fc-entrada"><input id="nb-' + k + '"' + (ex ? ' placeholder="' + esc(ex) + '"' : '') + ' autocomplete="off"></span></label>'; };
+    return h + '<p class="peq">Dados do catálogo do fabricante, nunca estimados. A fonte (catálogo e página) é obrigatória e aparece ao lado da bomba em todas as telas.</p><div class="fc-form" style="margin-top:12px">' +
       c('fab', 'Fabricante') + c('mod', 'Modelo') + c('cv', 'Potência <small>(cv)</small>', '7,5') + c('rotor', 'Rotor <small>(mm)</small>', '150') + c('so', 'Pressão a vazão nula <small>(mca)</small>', '60') + c('hs', 'Altura máxima de sucção <small>(mca)</small>', '8') + c('fonte', 'Fonte: catálogo e página', 'Catálogo do fabricante, edição e página', true) +
-      '<label class="cmp larga"><span class="rt">Pontos da curva, um por linha: vazão em m³/h; altura em mca</span><textarea class="campo" id="nb-pts" rows="6" style="height:auto;padding:8px" placeholder="10; 55&#10;20; 48&#10;30; 38"></textarea><span class="aj">Vazão crescente e altura decrescente, no mínimo 3 pontos.</span></label></div>' +
-      '<label class="marcar"><input type="checkbox" id="nb-jockey"><span>É bomba de pressurização (jockey).</span></label><div id="nb-msg" role="alert"></div><div class="linha-ac"><button class="bt pri" data-mod="bib-cadastrar">Cadastrar na biblioteca</button></div></div>' + blocoMangueiras(true);
+      '<label class="fc-campo larga"><span class="fc-campo__rot">Pontos da curva, um por linha: vazão em m³/h; altura em mca</span><span class="fc-entrada fc-entrada--area"><textarea id="nb-pts" rows="6" style="height:auto;padding:8px" placeholder="10; 55&#10;20; 48&#10;30; 38"></textarea></span><span class="fc-campo__ref">Vazão crescente e altura decrescente, no mínimo 3 pontos.</span></label></div>' +
+      '<label class="marcar"><input type="checkbox" id="nb-jockey"><span>É bomba de pressurização (jockey).</span></label><div id="nb-msg" role="alert"></div><div class="linha-ac"><button class="fc-bt" data-mod="bib-cadastrar">Cadastrar na biblioteca</button></div>' + U.cartaoFim() + blocoMangueiras(true);
   }
 
   // ---------------------------------------------------------------- cadastros (consulta)
   var ABAS_C = [['tubos', 'Tubos'], ['pecas', 'Peças e fator C'], ['hid', 'Esguichos e mangueiras'], ['bombas', 'Bombas'], ['ocup', 'Ocupações e tipos'], ['amb', 'Atmosfera e vapor'], ['bib', 'Minha biblioteca']];
-  function abas(mod, lista) { return '<div class="abas" role="tablist" aria-label="Seções">' + lista.map(function (a) { return '<button role="tab" class="aba" id="aba-' + mod + '-' + a[0] + '" data-aba="' + mod + ':' + a[0] + '" aria-selected="' + (S.aba[mod] === a[0]) + '" tabindex="' + (S.aba[mod] === a[0] ? 0 : -1) + '">' + a[1] + '</button>'; }).join('') + '</div>'; }
-  function tab(cab, linhas, id) { return '<div class="rolar"' + (id ? ' id="' + id + '"' : '') + ' tabindex="0" role="region" aria-label="Tabela da base, só consulta"><table><thead><tr>' + cab.map(function (c) { return '<th' + (c[1] ? ' class="r"' : '') + '>' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + linhas.join('') + '</tbody></table></div>'; }
+  function abas(mod, lista) { return '<div class="fc-abas" role="tablist" aria-label="Seções">' + lista.map(function (a) { return '<button role="tab" id="aba-' + mod + '-' + a[0] + '" data-aba="' + mod + ':' + a[0] + '" aria-selected="' + (S.aba[mod] === a[0]) + '" tabindex="' + (S.aba[mod] === a[0] ? 0 : -1) + '">' + a[1] + '</button>'; }).join('') + '</div>'; }
+  function tab(cab, linhas, id) { return '<div class="fc-tab-rolar"' + (id ? ' id="' + id + '"' : '') + ' tabindex="0" role="region" aria-label="Tabela da base, só consulta"><table class="fc-tab"><thead><tr>' + cab.map(function (c) { return '<th' + (c[1] ? ' class="r"' : '') + '>' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + linhas.join('') + '</tbody></table></div>'; }
   function tr(cs) { return '<tr>' + cs.map(function (c) { return Array.isArray(c) ? '<td class="r tec">' + c[0] + '</td>' : '<td>' + c + '</td>'; }).join('') + '</tr>'; }
   function arquivos(l) { var v = []; l.forEach(function (x) { var a = String(x || '').split(', p')[0]; if (a && v.indexOf(a) < 0) v.push(a); }); return v.join('; '); }
-  function travado(titulo, fonte, corpo) { return '<div class="cartao bloco"><div class="gt-cad"><h2 class="t3">' + titulo + '</h2><span class="pilula p-in" title="Base travada: só consulta">' + U.IC.cad + 'só consulta</span></div><p class="peq">Fonte: ' + esc(fonte) + '</p>' + corpo.replace('aria-label="Tabela da base, só consulta"', function () { return 'aria-label="Tabela só de consulta: ' + String(titulo).replace(/<[^>]*>/g, '').replace(/"/g, '') + '"'; }) + '</div>'; }
+  /** Base de consulta: cartão com o título da norma ou do catálogo, selo neutro "Só consulta" com cadeado e a fonte em apoio abaixo da tabela (TelaCadastros). */
+  function travado(titulo, fonte, corpo) {
+    var t = String(titulo).replace(/<[^>]*>/g, '').replace(/"/g, '');
+    return U.cartao(titulo, corpo.replace('aria-label="Tabela da base, só consulta"', function () { return 'aria-label="Tabela só de consulta: ' + t + '"'; }) + '<p class="apoio fc-fonte">Fonte: ' + esc(fonte) + '</p>',
+      { extra: '<span class="fc-selo" title="Base travada: só consulta">' + U.icone('lock', 'fc-ic') + 'Só consulta</span>' });
+  }
   function nf(v, c) { return v === null || v === undefined ? '' : fmt(v, c); }
   function linhasBombas() {
     var q = S.filtro.toLowerCase().trim();
@@ -132,7 +143,7 @@
     });
   }
   U.telas.cadastros = function () {
-    var a = S.aba.cadastros, h = '<div class="cab"><div class="tx"><h1>Cadastros</h1></div></div>' + abas('cadastros', ABAS_C) + '<div role="tabpanel" aria-labelledby="aba-cadastros-' + a + '">';
+    var a = S.aba.cadastros, h = U.cab(0, 'Cadastros') + abas('cadastros', ABAS_C) + '<div role="tabpanel" aria-labelledby="aba-cadastros-' + a + '">';
     if (a === 'tubos') {
       var grupos = {}; D.tubos.forEach(function (t) { var k = t.norma + ', classe ' + t.classe; (grupos[k] = grupos[k] || []).push(t); });
       Object.keys(grupos).forEach(function (k) { var g = grupos[k], fts = []; g.forEach(function (t) { if (fts.indexOf(t.fonte) < 0) fts.push(t.fonte); }); h += travado('Tubos ' + esc(k), fts.join('; '), tab([['DN'], ['Polegada'], ['Externo (mm)', 1], ['Parede (mm)', 1], ['Interno (mm)', 1], ['Rosca']], g.map(function (t) { return tr(['DN' + esc(t.dn), esc(t.pol || ''), [nf(t.dext, 1)], [nf(t.parede, 2)], [nf(t.dint, 1)], esc(t.rosca || '')]); }))); });
@@ -141,12 +152,14 @@
       h += travado('Fator C de Hazen-Williams', 'IT 22, Tabela 1', tab([['Material'], ['C', 1], ['Fonte']], D.C.map(function (c) { return tr([esc(c.material), [esc(c.C)], '<span class="peq">' + esc(c.fonte) + '</span>']); })));
     } else if (a === 'hid') {
       h += travado('Esguichos reguláveis', arquivos(D.esguichos.map(function (e) { return e.fonte; })), tab([['Modelo'], ['Vazão (L/min)', 1], ['Pressão (mca)', 1], ['Alcance (m)', 1], ['Fonte']], D.esguichos.map(function (e) { return tr([esc(e.modelo), [nf(e.Q, 0)], [nf(e.P, 0)], [nf(e.alcance, 1)], '<span class="peq">' + esc(e.fonte) + '</span>']); })));
+      var EC = D.esguichoCurvas || {};
+      if (Object.keys(EC).length) h += travado('Curvas dos esguichos', arquivos(Object.keys(EC).map(function (m) { return EC[m].fonte; })), tab([['Modelo'], ['Entrada (mca)'], ['Alcance máx. (m)', 1], ['Incerteza do alcance (m)', 1], ['Fonte']], Object.keys(EC).map(function (m) { var e = EC[m], j = e.posicoes.jato, ps = j.alcance.P; return tr([esc(m), fmt(ps[0], 0) + ' a ' + fmt(ps[ps.length - 1], 0), [nf(Math.max.apply(null, j.alcance.v), 1)], [nf(e.incerteza.alcance, 1)], '<span class="peq">' + esc(e.fonte) + '</span>']); })));
       var EP = D.esguichoPonta || {};
       if (Object.keys(EP).length) h += travado('Pressão na ponta do esguicho', arquivos(Object.keys(EP).map(function (m) { return EP[m].fonte; })), tab([['Modelo'], ['Ponta / entrada', 1], ['Ponto do catálogo'], ['Fonte']], Object.keys(EP).map(function (m) { var e = EP[m]; return tr([esc(m), [nf(e.razao, 2)], (e.pontos || []).map(function (p) { return nf(p.Q, 0) + ' L/min a ' + nf(p.P, 0) + ' mca'; }).join('; '), '<span class="peq">' + esc(e.fonte) + '</span>']); })));
       [D.mangueira, D.mangueira65].forEach(function (m) { if (!m) return; var L = m.leitura_kpa_m; h += travado('Mangueira ' + esc(m.modelo), m.fonte, tab([['Vazão (L/min)', 1], ['Perda (kPa/m)', 1]], L.Q.map(function (q, i) { return tr([[nf(q, 0)], [nf(L.kPa_m[i], 3)]]); }))); });
     } else if (a === 'bombas') {
       h += travado('Bombas de incêndio e de pressurização (' + D.bombasBase.length + ')', arquivos(D.bombasBase.map(function (b) { return b.fonte; })),
-        '<label class="cmp" style="max-width:360px;margin:8px 0"><span class="rt">Filtrar por modelo ou série</span><input class="campo" id="cad-filtro" value="' + esc(S.filtro) + '" placeholder="BPI-21" autocomplete="off"></label>' +
+        '<label class="fc-campo" style="max-width:360px;margin:8px 0"><span class="fc-campo__rot">Filtrar por modelo ou série</span><span class="fc-entrada"><input id="cad-filtro" value="' + esc(S.filtro) + '" placeholder="BPI-21" autocomplete="off"></span></label>' +
         tab([['Modelo'], ['Série'], ['Potência (cv)', 1], ['Vazão nula (mca)', 1], ['Faixa de vazão (m³/h)', 1], ['Sucção máxima (mca)', 1], ['NPSH requerido', 1], ['Fonte']], linhasBombas(), 'cad-bombas'));
     } else if (a === 'ocup') {
       Object.keys(D.normas).forEach(function (k) { var N = D.normas[k]; h += travado('Tipos de sistema, ' + esc(N.nome), N.fonte, tab([['Tipo'], ['Esguicho (mm)', 1], ['Mangueira (mm)', 1], ['Expedições', 1], ['Vazão (L/min)', 1], ['Pressão (mca)', 1]], N.tipos.map(function (t) { return tr([esc(t.id), [t.esguicho], [t.mangueira], [t.exp], [nf(t.Q, 0)], [nf(t.P, 0)]]); }))); });
@@ -174,20 +187,19 @@
     ['11. Enquadramento de São Paulo pelo decreto', 'Só em São Paulo. Com a divisão, a área e a altura da edificação, a ferramenta indica o que o decreto diz sobre hidrantes e mangotinhos: com área até 750 m² e altura até 12 m (os dois valores incluídos) o decreto não traz hidrantes (Tabela 5); acima de 750 m² ou de 12 m vale a tabela da divisão (Tabelas 6A a 6M.5). Nos casos que dependem de exceção, de ocupação mista, de edificação existente ou de análise do Corpo de Bombeiros, o resultado é verifique. É uma indicação de apoio: o dimensionamento do sistema segue os passos de 1 a 10.', 'Decreto 69.118/24, arts. 3º, 4º, 16 a 19 e 22, Anexo A, Tabelas 5, 6 e 7; IT 22/2025, Anexo E']
   ];
   function abaTeste() {
-    var t = S.teste, h = '<div class="cartao bloco"><h2 class="t3">Testar meu computador</h2>' +
-      '<div class="linha-ac"><button class="bt pri" data-mod="teste-rodar"' + (t && t.pendente ? ' disabled' : '') + '>' + (t ? 'Rodar de novo' : 'Rodar as conferências') + '</button></div>';
-    if (!t) return h + '</div>';
+    var t = S.teste, h = '<div class="fc-bts"><button class="fc-bt fc-bt--pri" data-mod="teste-rodar"' + (t && t.pendente ? ' disabled' : '') + '>' + (t ? 'Rodar de novo' : 'Rodar as conferências') + '</button></div>';
+    if (!t) return U.cartao('Testar meu computador', h);
     h += '<div id="teste-res" role="status" style="margin-top:12px">' + (t.pendente ? U.aviso('in', 'Gerando a planilha de teste na memória...') : t.falha ? U.aviso('er', '<b>' + (t.ok + t.falha) + ' conferidas, ' + t.falha + (t.falha > 1 ? ' falhas' : ' falha') + '.</b> Não use este arquivo para projeto: baixe o FireCalc de novo e repita o teste. Se a falha continuar, mande a lista abaixo ao suporte.') : U.aviso('in', '<b>' + (t.ok + t.falha) + ' conferidas, 0 falhas.</b> Este navegador calcula igual ao gabarito.')) + '</div>';
     var ruins = t.linhas.filter(function (l) { return !l.ok; }), lin = function (l) { return '<tr><td>' + esc(l.nome) + '</td><td class="r tec">' + (l.obt === null ? '' : fmt(l.obt, 3)) + '</td><td class="r tec">' + (l.esp === null ? '' : fmt(l.esp, 3)) + '</td><td class="r tec">' + (l.tol === null ? '' : String(l.tol).replace('.', ',')) + '</td><td>' + U.pilula(l.ok ? 'ok' : 'er', l.ok ? 'Confere' : 'Não confere') + '</td></tr>'; };
     var cab = '<thead><tr><th>Conferência</th><th class="r">Obtido</th><th class="r">Esperado</th><th class="r">Tolerância</th><th>Situação</th></tr></thead>';
-    if (ruins.length) h += '<div class="rolar" style="margin-top:12px"><table>' + cab + '<tbody>' + ruins.map(lin).join('') + '</tbody></table></div>';
-    return h + '<details style="margin-top:12px"><summary class="peq" style="cursor:pointer">Ver as ' + t.linhas.length + ' conferências</summary><div class="rolar"><table>' + cab + '<tbody>' + t.linhas.map(lin).join('') + '</tbody></table></div></details></div>';
+    if (ruins.length) h += '<div class="fc-tab-rolar" style="margin-top:12px"><table class="fc-tab">' + cab + '<tbody>' + ruins.map(lin).join('') + '</tbody></table></div>';
+    h += '<details style="margin-top:12px"><summary class="peq" style="cursor:pointer">Ver as ' + t.linhas.length + ' conferências</summary><div class="fc-tab-rolar"><table class="fc-tab">' + cab + '<tbody>' + t.linhas.map(lin).join('') + '</tbody></table></div></details>';
+    return U.cartao('Testar meu computador', h);
   }
   U.telas.ajuda = function () {
-    var a = S.aba.ajuda, h = '<div class="cab"><div class="tx"><h1>Ajuda</h1></div></div>' + abas('ajuda', ABAS_A) + '<div role="tabpanel" aria-labelledby="aba-ajuda-' + a + '">';
-    if (a === 'glossario') h += '<div class="cartao bloco"><h2 class="t3">Glossário</h2><dl class="gloss">' + U.GLOSS.slice().sort(function (x, y) { return x[0].localeCompare(y[0], 'pt-BR'); }).map(function (g) { var p = g[1].split(/\s*Fonte(?: da convenção)?:\s*/); return '<dt>' + esc(g[0]) + '</dt><dd>' + esc(p[0]) + (p[1] ? ' <span class="peq">Fonte: ' + esc(p[1]) + '</span>' : '') + '</dd>'; }).join('') + '</dl></div>';
-    else if (a === 'calculo') h += '<div class="cartao bloco"><h2 class="t3">Como a ferramenta calcula</h2>' + CALC.map(function (c) { return '<div class="passo-calc"><h3>' + esc(c[0]) + '</h3><p>' + esc(c[1]) + '</p><p class="peq">Fonte: ' + esc(c[2]) + '</p></div>'; }).join('') +
-      '</div>';
+    var a = S.aba.ajuda, h = U.cab(0, 'Ajuda') + abas('ajuda', ABAS_A) + '<div role="tabpanel" aria-labelledby="aba-ajuda-' + a + '">';
+    if (a === 'glossario') h += U.cartao('Glossário', '<dl class="gloss">' + U.GLOSS.slice().sort(function (x, y) { return x[0].localeCompare(y[0], 'pt-BR'); }).map(function (g) { var p = g[1].split(/\s*Fonte(?: da convenção)?:\s*/); return '<dt>' + esc(g[0]) + '</dt><dd>' + esc(p[0]) + (p[1] ? ' <span class="peq">Fonte: ' + esc(p[1]) + '</span>' : '') + '</dd>'; }).join('') + '</dl>');
+    else if (a === 'calculo') h += U.cartao('Como a ferramenta calcula', CALC.map(function (c) { return '<div class="passo-calc"><h3>' + esc(c[0]) + '</h3><p>' + esc(c[1]) + '</p><p class="peq">Fonte: ' + esc(c[2]) + '</p></div>'; }).join(''));
     else h += abaTeste();
     return h + '</div>';
   };
@@ -196,28 +208,28 @@
   /* 2.6.0: nome, pressão dinâmica, estática e o limite do estado; o clique na linha (ou no nome) mostra a curva daquele hidrante.
    * O botão da válvula redutora fica no cabeçalho deste cartão e abre o menu sobreposto. */
   U.quadroPressoes = function () {
-    var sit = S.sit, cab = '<div class="cartao bloco" id="quadro-pressoes"><div class="cab-pres"><h2 class="t3" id="qp-tit">Pressão em cada hidrante</h2><button type="button" class="bt lig min red-bt" id="red-abrir" data-hi="red" aria-haspopup="dialog" aria-label="Válvula redutora de pressão' + (U.nRedutoras() ? ', ' + U.nRedutoras() + ' no projeto' : '') + '">' + FireSVG.redutora() + 'V. redutora' + (U.nRedutoras() ? ' (' + U.nRedutoras() + ')' : '') + '</button></div>';
-    if (sit.k !== 'ok' || !sit.R.par || !sit.R.ctx) return U.nRedutoras() ? cab + '<dl class="hi-l"><div><dt>Pressões</dt><dd>a calcular</dd></div></dl></div>' : '';   /* o botão continua ao alcance enquanto falta a regulagem */
+    var sit = S.sit, cab = U.cartaoAbre('Pressão em cada hidrante', { id: 'quadro-pressoes', tid: 'qp-tit', extra: '<button type="button" class="fc-bt fc-bt--disc fc-bt--p red-bt" id="red-abrir" data-hi="red" aria-haspopup="dialog" aria-label="Válvula redutora de pressão' + (U.nRedutoras() ? ', ' + U.nRedutoras() + ' no projeto' : '') + '">' + FireSVG.redutora() + 'V. redutora' + (U.nRedutoras() ? ' (' + U.nRedutoras() + ')' : '') + '</button>' });
+    if (sit.k !== 'ok' || !sit.R.par || !sit.R.ctx) return U.nRedutoras() ? cab + '<dl class="fc-kv"><dt>Pressões</dt><dd>a calcular</dd></dl>' + U.cartaoFim() : '';   /* o botão continua ao alcance enquanto falta a regulagem */
     var lp = M.pressoesHidrantes(sit.R.ctx, sit.R.par), bxs = {}, n = sit.R.numeros, pmax = U.norma().pmax, atual = lp.some(function (x) { return x.id === S.hidCurva; }) ? S.hidCurva : sit.R.par.crit.hid.id;
     var h = cab +
-      '<div class="rolar" role="region" tabindex="0" aria-labelledby="qp-tit"><table class="tab-res tab-pres"><thead><tr><th scope="col">Hidrante</th><th scope="col" class="r">Dinâmica <small>(mca)</small></th><th scope="col" class="r">Estática <small>(mca)</small></th><th scope="col">Limite de ' + fmt(pmax, 0) + ' mca</th></tr></thead><tbody>';
+      '<div class="fc-tab-rolar" role="region" tabindex="0" aria-labelledby="qp-tit"><table class="fc-tab tab-res tab-pres"><thead><tr><th scope="col">Hidrante</th><th scope="col" class="r">Dinâmica <small>(mca)</small></th><th scope="col" class="r">Estática <small>(mca)</small></th><th scope="col">Limite de ' + fmt(pmax, 0) + ' mca</th></tr></thead><tbody>';
     M.abaixoMinimo(sit.R.ctx, sit.R.par).forEach(function (a) { bxs[a.no] = a; });   /* 2.7.0 (FC-031) */
     lp.forEach(function (x) {
       var acima = x.din > pmax || (x.est !== null && x.est > pmax), sel = x.id === atual, abaixo = !!bxs[x.no];
-      h += '<tr data-h="' + esc(x.id) + '"' + (sel ? ' class="sel"' : '') + '><th scope="row"><button type="button" class="bt lig min" data-hi="curva" data-h="' + esc(x.id) + '" aria-pressed="' + sel + '" aria-label="Mostrar a curva do hidrante ' + esc(x.id) + '">' + esc(x.id) + '</button>' + (x.redutora !== undefined ? ' ' + U.pilula('in', 'redutora a ' + fmt(x.redutora, 1) + ' mca') : '') + '</th>' +
+      h += '<tr data-h="' + esc(x.id) + '"' + (sel ? ' aria-selected="true"' : '') + '><th class="fc-tab__rh" scope="row">' + (x.id === sit.R.par.crit.hid.id ? '<span class="fc-critico" role="img" aria-label="Hidrante mais desfavorável" title="Hidrante mais desfavorável"></span>' : '') + '<button type="button" class="fc-bt fc-bt--disc fc-bt--p" data-hi="curva" data-h="' + esc(x.id) + '" aria-pressed="' + sel + '" aria-label="Mostrar a curva do hidrante ' + esc(x.id) + '">' + esc(x.id) + '</button>' + (x.redutora !== undefined ? ' ' + U.pilula('in', 'redutora a ' + fmt(x.redutora, 1) + ' mca') : '') + '</th>' +
         '<td class="r">' + fmt(x.din, 2) + '</td><td class="r">' + (x.est === null ? (x.semBomba ? 'a calcular' : 'sem dado') : fmt(x.est, 2)) + '</td><td>' + (acima ? U.pilula('er', 'Acima') : abaixo ? U.pilula('al', 'Abaixo do mínimo') : x.est === null ? U.pilula('in', 'a calcular') : U.pilula('ok', 'Dentro')) + '</td></tr>';
     });
-    return h + '</tbody></table></div>' + (lp.some(function (x) { return x.est === null; }) ? '<p class="peq">' + (lp.some(function (x) { return x.semBomba; }) ? 'A estática aparece quando a bomba for escolhida na etapa Bomba e automação.' : 'A estática aparece quando a cota do reservatório cheio estiver preenchida na etapa Abastecimento.') + '</p>' : '') + '</div>';
+    return h + '</tbody></table></div>' + (lp.some(function (x) { return x.est === null; }) ? '<p class="peq">' + (lp.some(function (x) { return x.semBomba; }) ? 'A estática aparece quando a bomba for escolhida na etapa Bomba e automação.' : 'A estática aparece quando a cota do reservatório cheio estiver preenchida na etapa Abastecimento.') + '</p>' : '') + U.cartaoFim();
   };
 
   // ---------------------------------------------------------------- modo personalizado: par usado no cálculo (etapa Hidrantes)
   U.parForcado = function () {
     var sit = S.sit, F = S.F;
     if (S.modo !== 'personalizado') return F.parForcado ? U.aviso('al', 'Este projeto usa um par de hidrantes escolhido à mão (' + esc(F.parForcado) + '), e não o mais desfavorável. Para trocar, use o modo personalizado.') : '';
-    if (sit.k !== 'ok' || !sit.R.pares || sit.R.pares.length < 2) return F.parForcado ? U.aviso('al', 'Par escolhido à mão: ' + esc(F.parForcado) + '. <button class="bt lig min" data-mod="par-auto">Voltar ao par mais desfavorável</button>') : '';
+    if (sit.k !== 'ok' || !sit.R.pares || sit.R.pares.length < 2) return F.parForcado ? U.aviso('al', 'Par escolhido à mão: ' + esc(F.parForcado) + '. <button class="fc-bt fc-bt--disc fc-bt--p" data-mod="par-auto">Voltar ao par mais desfavorável</button>') : '';
     var n = sit.R.numeros, ops = sit.R.pares.slice().sort(function (a, b) { return b.AMT - a.AMT; }).map(function (p) { return [p.par, p.par + ': ' + fmt(p.AMT, 2) + ' mca, ' + fmt(p.Qt, 1) + ' L/min' + (p.par === n.parMaisDesfavoravel ? ' (o mais desfavorável)' : '')]; });
-    return '<div class="cartao bloco" id="par-forcado"><h2 class="t3">Par usado no cálculo <span class="pilula p-al">modo personalizado</span></h2><p class="peq">A norma pede o par mais desfavorável (IT 22, 4.8.3 e 4.8.4). Escolher outro par serve só para estudo: a verificação da hipótese passa a pedir conferência e o resultado deixa de ser o da norma.</p><div class="form">' +
-      U.escolha('parForcado', 'Par de hidrantes', ops, { vazio: 'O mais desfavorável (' + n.parMaisDesfavoravel + '), como a norma pede', larga: true }) + '</div></div>';
+    return U.cartao('Par usado no cálculo', '<p class="peq">A norma pede o par mais desfavorável (IT 22, 4.8.3 e 4.8.4). Escolher outro par serve só para estudo: a verificação da hipótese passa a pedir conferência e o resultado deixa de ser o da norma.</p><div class="form">' +
+      U.escolha('parForcado', 'Par de hidrantes', ops, { vazio: 'O mais desfavorável (' + n.parMaisDesfavoravel + '), como a norma pede', larga: true }) + '</div>', { id: 'par-forcado', extra: '<span class="fc-selo fc-selo--al">' + U.icone('triangle-alert', 'fc-ic') + 'modo personalizado</span>' });
   };
 
   // ---------------------------------------------------------------- eventos destes módulos
@@ -237,12 +249,12 @@
     else if (m === 'bib-cadastrar') {
       var g = function (k) { var e = document.getElementById('nb-' + k); return e ? e.value : ''; };
       var r = U.leBomba({ fab: g('fab'), mod: g('mod'), cv: g('cv'), rotor: g('rotor'), so: g('so'), hs: g('hs'), fonte: g('fonte'), pts: g('pts'), jockey: document.getElementById('nb-jockey').checked });
-      if (r.erro) { document.getElementById('nb-msg').innerHTML = '<div class="msg-er" style="margin-top:10px">' + esc(r.erro) + '</div>'; return; }
+      if (r.erro) { document.getElementById('nb-msg').innerHTML = '<div class="fc-campo__erro" role="alert" style="margin-top:10px">' + U.icone('circle-x', 'fc-ic') + esc(r.erro) + '</div>'; return; }
       U.bib.push(r.bomba); salvaBib(); redesenha(); U.avisa('Bomba cadastrada na biblioteca: ' + r.bomba.modelo + '.');
     }
     else if (m === 'mang-cadastrar') {
       var gm = function (k) { var e = document.getElementById('nm-' + k); return e ? e.value : ''; }, rm = U.leMangueira({ dn: gm('dn'), modelo: gm('modelo'), fonte: gm('fonte'), pts: gm('pts') });
-      if (rm.erro) { document.getElementById('nm-msg').innerHTML = '<div class="msg-er" style="margin-top:10px">' + esc(rm.erro) + '</div>'; return; }
+      if (rm.erro) { document.getElementById('nm-msg').innerHTML = '<div class="fc-campo__erro" role="alert" style="margin-top:10px">' + U.icone('circle-x', 'fc-ic') + esc(rm.erro) + '</div>'; return; }
       S.F.mangueirasUsuario = S.F.mangueirasUsuario || {}; S.F.mangueirasUsuario[String(rm.dn)] = rm.mangueira; U.mudou(); U.avisa('Mangueira de ' + rm.dn + ' mm cadastrada no projeto aberto.');
     }
     else if (m === 'mang-tirar') { if (S.F.mangueirasUsuario) delete S.F.mangueirasUsuario[v]; U.mudou(); }
@@ -292,7 +304,7 @@
       r.onload = function () { trazDeArquivo(String(r.result)); };
       r.readAsText(t.files[0]); t.value = ''; return;
     }
-    if (t.dataset && t.dataset.cfg && t.tagName === 'SELECT') { U.cfg[t.dataset.cfg] = t.value; guarda(CH.cfg, U.cfg); }
+    if (t.dataset && t.dataset.cfg && (t.tagName === 'SELECT' || t.tagName === 'INPUT')) { U.cfg[t.dataset.cfg] = t.value; guarda(CH.cfg, U.cfg); U.avisa('Configurações salvas', 2500); }   /* Notificação do design system, uma vez por campo mudado (o evento change vem ao sair do campo) */
   });
   document.addEventListener('input', function (ev) {
     var t = ev.target;

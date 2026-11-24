@@ -603,9 +603,8 @@
     });
     el.appendChild($('div', { class: 'fl' }, [lab('Altitude (m)', numIn(P.ambiente.altitude, function (v) { P.ambiente.altitude = v === null ? 0 : v; })), lab('Temperatura da água (°C)', numIn(P.ambiente.temperatura, function (v) { P.ambiente.temperatura = v === null ? 20 : v; }))]));
     el.appendChild(amb);
-    el.appendChild($('h3', { class: 's', text: 'Saídas, jockey e pressostatos' }));
+    el.appendChild($('h3', { class: 's', text: 'Jockey e pressostatos' }));
     el.appendChild($('div', { class: 'fl' }, [
-      lab('Saídas de hidrante (jockey, SP: acima de 6)', numIn(P.saidas === undefined ? '' : P.saidas, function (v) { if (v === null) delete P.saidas; else P.saidas = v; })),
       lab('Fundo de escala do pressostato (bar)', numIn(P.pressostatoFundoBar === undefined ? '' : P.pressostatoFundoBar, function (v) { if (v === null) delete P.pressostatoFundoBar; else P.pressostatoFundoBar = v; }))]));
     if (P.norma === 'PR') el.appendChild($('div', { class: 'fl' }, [llab('Ramal de retorno para testes lançado e dimensionado para a curva da bomba (NPT 022, 5.10.6.3)', chk(!!P.retornoTeste, function (v) { if (v) P.retornoTeste = true; else delete P.retornoTeste; }))]));
     // cotas extras

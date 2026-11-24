@@ -26,31 +26,32 @@
 
   function nomeTipo(tipo, tip) { var l = (tipo === 'inferior' ? TIPOS_INF : TIPOS_ELE).filter(function (x) { return x[0] === tip; })[0]; return l ? l[1] : ''; }
   function botao(id, acao, v, on, svg, titulo, texto, attr) {
-    return '<button type="button" class="ab-bt' + (on ? ' on' : '') + '" id="' + id + '" ' + (attr || 'data-acao') + '="' + acao + '" data-v="' + v + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + SV.abast(svg) + '<b>' + titulo + '</b>' + (texto ? '<span>' + texto + '</span>' : '') + '</button>';
+    return '<button type="button" class="fc-opcao" id="' + id + '" ' + (attr || 'data-acao') + '="' + acao + '" data-v="' + v + '" aria-pressed="' + (on ? 'true' : 'false') + '"><span class="fc-opcao__des">' + SV.abast(svg) + '</span><span class="fc-opcao__marca"></span><span class="fc-opcao__tx"><b>' + titulo + '</b>' + (texto ? '<span>' + texto + '</span>' : '') + '</span></button>';
   }
   function grupo(idTit, lista, atual, prefixo, acao, attr) {
-    return '<div class="ab-bts" role="group" aria-labelledby="' + idTit + '">' + lista.map(function (x) { return botao(prefixo + x[0], acao, x[0], atual === x[0], x[3], x[1], x[2], attr); }).join('') + '</div>';
+    return '<div class="fc-opcoes" role="group" aria-labelledby="' + idTit + '">' + lista.map(function (x) { return botao(prefixo + x[0], acao, x[0], atual === x[0], x[3], x[1], x[2], attr); }).join('') + '</div>';
   }
 
   /* ---------- tela ---------- */
   function blocoFonte() {
     var fo = S.F.fonte, m = U.msg('fonte.tipo');
-    return '<div class="cartao bloco" id="ab-fonte"><h2 class="t3" id="ab-fonte-t">De onde vem a pressão?</h2>' +
-      '<div class="ab-bts" role="group" aria-labelledby="ab-fonte-t">' + ['inferior', 'elevado'].map(function (k) { var t = FONTES[k]; return botao('ab-fonte-' + k, 'fonte', k, fo.tipo === k, t[2], t[0], t[1]); }).join('') + '</div>' +
-      (m ? '<div class="msg-er" id="ab-fonte-m">' + esc(m.msg) + '</div>' : '') + '</div>';
+    return U.cartaoAbre('De onde vem a pressão?', { id: 'ab-fonte', tid: 'ab-fonte-t' }) +
+      '<div class="fc-opcoes" role="group" aria-labelledby="ab-fonte-t">' + ['inferior', 'elevado'].map(function (k) { var t = FONTES[k]; return botao('ab-fonte-' + k, 'fonte', k, fo.tipo === k, t[2], t[0], t[1]); }).join('') + '</div>' +
+      (m ? '<div class="fc-campo__erro" role="alert" id="ab-fonte-m">' + U.icone('circle-x', 'fc-ic') + esc(m.msg) + '</div>' : '') + U.cartaoFim();
   }
   function blocoTipo() {
     var F = S.F, fo = F.fonte, inf = fo.tipo === 'inferior', m = U.msg('fonte.tip');
     var lista = inf ? TIPOS_INF.filter(function (x) { return x[0] !== 'piscina' || F.norma === 'SP'; }) : TIPOS_ELE;   /* 2.7.0 (FC-027): a piscina só em SP (reservatório inferior) */
-    return '<div class="cartao bloco" id="ab-tipo"><h2 class="t3" id="ab-tipo-t">Que tipo de reservatório?</h2>' + grupo('ab-tipo-t', lista, fo.tip, 'ab-tip-', 'tip') +
-      (m ? '<div class="msg-er" id="ab-tipo-m">' + esc(m.msg) + '</div>' : '') + '</div>';
+    return U.cartaoAbre('Que tipo de reservatório?', { id: 'ab-tipo', tid: 'ab-tipo-t' }) + grupo('ab-tipo-t', lista, fo.tip, 'ab-tip-', 'tip') +
+      (m ? '<div class="fc-campo__erro" role="alert" id="ab-tipo-m">' + U.icone('circle-x', 'fc-ic') + esc(m.msg) + '</div>' : '') + U.cartaoFim();
   }
-  function linhaDado(id, valor, un, texto) { return '<div id="' + id + '"><b>' + valor + '</b>' + un + ', ' + texto + '</div>'; }
+  /** Valor calculado (fc-entrada--calc): valor e unidade em destaque e a frase que o explica, só leitura; o texto é o mesmo de antes. */
+  function linhaDado(id, valor, un, texto) { return '<div class="fc-entrada fc-entrada--calc fc-calc" id="' + id + '"><b>' + valor + '</b>' + un + ', ' + texto + '</div>'; }
   var ROT_SUC = { afogada: ['ok', 'Bomba afogada'], positiva: ['al', 'Sucção positiva, dentro da tolerância'], negativa: ['al', 'Sucção negativa'] };
   function cartaoDados(r) {
-    var F = S.F, fo = F.fonte, inf = fo.tipo === 'inferior', rt = U.rtiTabela(), h = '<div class="cartao bloco" id="ab-dados" aria-live="polite"><h2 class="t3">Dados do reservatório <span class="pilula p-in">calculado</span></h2>';
-    if (!r.ok) return h + '<p class="peq" id="x-falta">O resultado aparece quando você informar ' + esc(r.falta.join(', ')) + '.</p>' + btnAbrir(true) + '</div>';
-    h += '<div class="dados">' + linhaDado('x-valor', fmt(r.X, 3), 'm', inf ? 'cota do nível X' : 'cota de referência da altura') +
+    var F = S.F, fo = F.fonte, inf = fo.tipo === 'inferior', rt = U.rtiTabela(), h = U.cartaoAbre('Dados do reservatório', { id: 'ab-dados', attrs: 'aria-live="polite"', extra: '<span class="fc-selo fc-selo--in">' + U.icone('info', 'fc-ic') + 'calculado</span>' });
+    if (!r.ok) return h + '<p class="peq" id="x-falta">O resultado aparece quando você informar ' + esc(r.falta.join(', ')) + '.</p>' + btnAbrir(true) + U.cartaoFim();
+    h += '<div class="fc-form">' + linhaDado('x-valor', fmt(r.X, 3), 'm', inf ? 'cota do nível X' : 'cota de referência da altura') +
       (r.hProp > 0 ? linhaDado('x-prop', fmt(r.hProp, 3), 'm', 'carga própria da coluna, entre a referência e a saída na base') : '') +
       (inf && r.faixa > 0 ? linhaDado('x-faixa', fmt(r.faixa, 3), 'm', 'de água acima do fundo que não contam como reserva') : '') +
       (r.reserva !== undefined ? linhaDado('x-reserva', fmt(r.reserva, 2), 'm³', 'reserva efetiva') : '') + (rt !== null ? linhaDado('x-tabela', fmt(rt, 0), 'm³', 'reserva de incêndio pedida pela tabela') : '') + '</div>';
@@ -62,9 +63,9 @@
     r.alertas.forEach(function (a) { h += U.aviso('al', esc(a)); });
     r.notas.forEach(function (n) { h += U.aviso('al', esc(n)); });
     if (inf && r.poco && r.X < r.fundo) h += U.aviso('in', r.volPoco !== undefined ? 'O nível X fica dentro do poço de sucção, abaixo do piso do reservatório: a água do poço entre o nível X e o piso entra na reserva (' + fmt(r.volPoco, 3) + ' m³).' : 'O nível X fica dentro do poço de sucção, abaixo do piso do reservatório: sem o lado do poço, a água do poço não entra na reserva, que é contada do piso para cima.');
-    return h + btnAbrir(false) + '</div>';
+    return h + btnAbrir(false) + U.cartaoFim();
   }
-  function btnAbrir(pri) { return '<div class="linha-ac"><button type="button" class="bt' + (pri ? ' pri' : '') + '" id="ab-abrir" data-acao="abmenu" aria-haspopup="dialog">' + (pri ? 'Informar os dados do reservatório' : 'Alterar os dados do reservatório') + '</button></div>'; }
+  function btnAbrir(pri) { return '<div class="linha-ac"><button type="button" class="fc-bt' + (pri ? ' fc-bt--pri' : '') + '" id="ab-abrir" data-acao="abmenu" aria-haspopup="dialog">' + (pri ? 'Informar os dados do reservatório' : 'Alterar os dados do reservatório') + '</button></div>'; }
 
   /** Comentários do rodapé: o que a figura mostra e o que cuidar, sem item de norma (a norma fica nas Verificações). */
   function comentarios(r) {
@@ -85,13 +86,13 @@
       c.push('A reserva efetiva é a água acima da referência, até o nível normal.');
     }
     if (!V.vazio(fo.zConsumo)) c.push('Com a tomada de consumo acima da referência, a reserva termina na tomada de consumo, e não no nível normal.');
-    return '<div class="cartao bloco" id="ab-coment"><h2 class="t3">Comentários</h2><ul class="ab-coment">' + c.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    return U.cartao('Comentários', '<ul class="ab-coment">' + c.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>', { id: 'ab-coment' });
   }
 
   /* ---------- desenho com os níveis ---------- */
   function figura(r) {
     var F = S.F, fo = F.fonte, inf = fo.tipo === 'inferior', tip = fo.tip, n = V.num, zc = n(fo.zCheio);
-    if (!r.ok) return '<div class="cartao bloco" id="fig-res"><h2 class="t3">Desenho do reservatório</h2><p class="peq">O desenho aparece com o tipo do reservatório, as cotas e o DN.</p></div>';
+    if (!r.ok) return U.cartao('Desenho do reservatório', '<p class="peq">O desenho aparece com o tipo do reservatório, as cotas e o DN.</p>', { id: 'fig-res' });
     var zbi = (inf || fo.elevModo === 'reforco') ? n(F.nos.BI) : NaN, taca = tip === 'taca_seca' || tip === 'taca_molhada', torre = tip === 'torre', sp = tip === 'standpipe';
     var zf = taca ? n(fo.zFundoCuba) : sp ? n(fo.zBase) : r.fundo, ref = r.X;
     var zbaseCol = tip === 'taca_molhada' ? n(fo.zBase) : (tip === 'taca_seca' || torre) ? n(fo.zSaida) : NaN, piso = inf && r.poco ? r.base : zf;
@@ -99,42 +100,42 @@
     var zras = tip === 'piscina' ? n(fo.zRaso) : NaN;   /* 2.7.0 (FC-027): piscina com o fundo em rampa, parte rasa à esquerda e funda (com a tomada) à direita */
     var vs = [piso, topoAgua, ref].concat(isNaN(zbi) ? [] : [zbi], isNaN(zbaseCol) ? [] : [zbaseCol], isNaN(zras) ? [] : [zras]), lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs), pd = Math.max(0.3, (hi - lo) * 0.14); lo -= pd; hi += pd;
     var T = 22, B = 238; function Y(z) { return B - (z - lo) / (hi - lo) * (B - T); }
-    var yc = Y(topoAgua), yr = Y(ref), yf = Y(zf), yp = Y(piso), s = '', ext = 'var(--fc-texto-2)';
+    var yc = Y(topoAgua), yr = Y(ref), yf = Y(zf), yp = Y(piso), s = '', ext = 'var(--texto-2)';
     function rot(y, t, forte, ev) { var yy = y + 4; if (ev !== undefined && Math.abs(yy - ev) < 13) yy = ev + (yy >= ev ? 13 : -13); return '<text x="262" y="' + yy + '"' + (forte ? ' font-weight="700"' : '') + '>' + t + '</text>'; }
     var xe = 40, xd = 240;   /* bordas do reservatório */
     if (taca) { /* cuba larga sobre coluna */
       var yb = isNaN(zbaseCol) ? yf + 40 : Y(zbaseCol), coluna = tip === 'taca_molhada';
       s += '<path d="M40 ' + (yc - 12) + 'V' + yf + 'H120V' + yb + 'M160 ' + yb + 'V' + yf + 'H240V' + (yc - 12) + '" fill="none" stroke="' + ext + '" stroke-width="2"/>';
-      s += '<rect x="41" y="' + yc + '" width="198" height="' + Math.max(0, Math.min(yr, yf) - yc) + '" fill="var(--fc-info-fundo)"/>';
-      if (coluna) s += '<rect x="121" y="' + yf + '" width="38" height="' + Math.max(0, yb - yf) + '" fill="var(--fc-info-fundo)"/>';
-      if (yf - yr > 1) s += '<rect x="41" y="' + yr + '" width="198" height="' + (yf - yr - 1) + '" fill="var(--fc-superficie-2)"/>';
+      s += '<rect x="41" y="' + yc + '" width="198" height="' + Math.max(0, Math.min(yr, yf) - yc) + '" fill="var(--info-fundo)"/>';
+      if (coluna) s += '<rect x="121" y="' + yf + '" width="38" height="' + Math.max(0, yb - yf) + '" fill="var(--info-fundo)"/>';
+      if (yf - yr > 1) s += '<rect x="41" y="' + yr + '" width="198" height="' + (yf - yr - 1) + '" fill="var(--superficie-2)"/>';
       if (!coluna) s += '<path d="M120 ' + yf + 'V' + yb + 'M160 ' + yf + 'V' + yb + '" stroke="' + ext + '" stroke-width="2" fill="none"/>';
       s += '<text class="s" x="140" y="' + (yb + 14) + '" text-anchor="middle">base ' + (isNaN(zbaseCol) ? '' : fmt(zbaseCol, 2)) + '</text>';
     } else if (torre || sp) {
       var xa = sp ? 110 : 80, xb = sp ? 170 : 200, yb2 = isNaN(zbaseCol) ? yf + 30 : Y(zbaseCol);
       if (sp) { yb2 = yf; }
       s += '<path d="M' + xa + ' ' + (yc - 12) + 'V' + yf + 'H' + xb + 'V' + (yc - 12) + '" fill="none" stroke="' + ext + '" stroke-width="2"/>';
-      s += '<rect x="' + (xa + 1) + '" y="' + yc + '" width="' + (xb - xa - 2) + '" height="' + Math.max(0, Math.min(yr, yf) - yc) + '" fill="var(--fc-info-fundo)"/>';
-      if (yf - yr > 1) s += '<rect x="' + (xa + 1) + '" y="' + yr + '" width="' + (xb - xa - 2) + '" height="' + (yf - yr - 1) + '" fill="var(--fc-superficie-2)"/>';
+      s += '<rect x="' + (xa + 1) + '" y="' + yc + '" width="' + (xb - xa - 2) + '" height="' + Math.max(0, Math.min(yr, yf) - yc) + '" fill="var(--info-fundo)"/>';
+      if (yf - yr > 1) s += '<rect x="' + (xa + 1) + '" y="' + yr + '" width="' + (xb - xa - 2) + '" height="' + (yf - yr - 1) + '" fill="var(--superficie-2)"/>';
       if (torre) s += '<path d="M130 ' + yf + 'V' + yb2 + 'M150 ' + yf + 'V' + yb2 + '" stroke="' + ext + '" stroke-width="2" fill="none"/><text class="s" x="140" y="' + (yb2 + 14) + '" text-anchor="middle">saída na base ' + fmt(zbaseCol, 2) + '</text>';
       xe = xa; xd = xb;
     } else if (tip === 'tronco') {
       s += '<path d="M40 ' + (yc - 12) + 'L72 ' + yf + 'H208L240 ' + (yc - 12) + '" fill="none" stroke="' + ext + '" stroke-width="2"/>';
-      s += '<path d="M' + (41 + (yf - yc) / Math.max(1, yf - yc + 12) * 30) + ' ' + yc + 'H' + (239 - (yf - yc) / Math.max(1, yf - yc + 12) * 30) + 'L208 ' + Math.min(yr, yf) + 'H72Z" fill="var(--fc-info-fundo)"/>';
-      if (yf - yr > 1) s += '<rect x="73" y="' + yr + '" width="134" height="' + (yf - yr - 1) + '" fill="var(--fc-superficie-2)"/>';
+      s += '<path d="M' + (41 + (yf - yc) / Math.max(1, yf - yc + 12) * 30) + ' ' + yc + 'H' + (239 - (yf - yc) / Math.max(1, yf - yc + 12) * 30) + 'L208 ' + Math.min(yr, yf) + 'H72Z" fill="var(--info-fundo)"/>';
+      if (yf - yr > 1) s += '<rect x="73" y="' + yr + '" width="134" height="' + (yf - yr - 1) + '" fill="var(--superficie-2)"/>';
     } else if (!isNaN(zras) && zras > zf) {
       var yz0 = Y(zras), xi = 41 + 198 * Math.min(1, Math.max(0, (zras - ref) / (zras - zf))), pXi = zras > ref ? xi + ',' + yr : '41,' + yr;
       s += '<path d="M40 ' + (yc - 12) + 'V' + yz0 + 'L240 ' + yf + 'V' + (yc - 12) + '" fill="none" stroke="' + ext + '" stroke-width="2"/>';
-      s += '<polygon points="41,' + yc + ' 239,' + yc + ' 239,' + yf + ' 41,' + yz0 + '" fill="var(--fc-info-fundo)"/>';
-      if (yf - yr > 1) s += '<polygon points="' + pXi + ' 239,' + yr + ' 239,' + (yf - 1) + (zras > ref ? '' : ' 41,' + (yz0 - 1)) + '" fill="var(--fc-superficie-2)"/>';
+      s += '<polygon points="41,' + yc + ' 239,' + yc + ' 239,' + yf + ' 41,' + yz0 + '" fill="var(--info-fundo)"/>';
+      if (yf - yr > 1) s += '<polygon points="' + pXi + ' 239,' + yr + ' 239,' + (yf - 1) + (zras > ref ? '' : ' 41,' + (yz0 - 1)) + '" fill="var(--superficie-2)"/>';
     } else {
       s += '<path d="M40 ' + (yc - 12) + 'V' + yf + (inf && r.poco ? 'H150V' + yp + 'H240' : 'H240') + 'V' + (yc - 12) + '" fill="none" stroke="' + ext + '" stroke-width="2"/>';
-      s += '<rect x="41" y="' + yc + '" width="198" height="' + Math.max(0, Math.min(yr, yf) - yc) + '" fill="var(--fc-info-fundo)"/>';
-      if (yf - yr > 1) s += '<rect x="41" y="' + yr + '" width="198" height="' + (yf - yr - 1) + '" fill="var(--fc-superficie-2)"/>';
-      if (inf && r.poco) s += '<rect x="151" y="' + Math.max(yr, yf) + '" width="88" height="' + Math.max(0, yp - Math.max(yr, yf) - 1) + '" fill="var(--fc-superficie-2)"/>';
+      s += '<rect x="41" y="' + yc + '" width="198" height="' + Math.max(0, Math.min(yr, yf) - yc) + '" fill="var(--info-fundo)"/>';
+      if (yf - yr > 1) s += '<rect x="41" y="' + yr + '" width="198" height="' + (yf - yr - 1) + '" fill="var(--superficie-2)"/>';
+      if (inf && r.poco) s += '<rect x="151" y="' + Math.max(yr, yf) + '" width="88" height="' + Math.max(0, yp - Math.max(yr, yf) - 1) + '" fill="var(--superficie-2)"/>';
     }
-    s += '<line x1="30" x2="254" y1="' + yc + '" y2="' + yc + '" stroke="var(--fc-agua)" stroke-width="2"/>' + rot(yc, 'nível normal ' + (isNaN(zc) ? 'a informar' : fmt(zc, 2)));
-    s += '<line x1="30" x2="254" y1="' + yr + '" y2="' + yr + '" stroke="var(--fc-fogo)" stroke-width="2" stroke-dasharray="6 4"/>' + rot(yr, (inf ? 'nível X ' : 'referência ') + fmt(ref, 3), true, yc + 4);
+    s += '<line x1="30" x2="254" y1="' + yc + '" y2="' + yc + '" stroke="var(--grafico-sistema)" stroke-width="2"/>' + rot(yc, 'nível normal ' + (isNaN(zc) ? 'a informar' : fmt(zc, 2)));
+    s += '<line x1="30" x2="254" y1="' + yr + '" y2="' + yr + '" stroke="var(--grafico-ponto)" stroke-width="2" stroke-dasharray="6 4"/>' + rot(yr, (inf ? 'nível X ' : 'referência ') + fmt(ref, 3), true, yc + 4);
     if (!taca && !sp) s += '<text class="s" x="' + (inf && r.poco ? 96 : 140) + '" y="' + (yf + 14) + '" text-anchor="middle">fundo ' + fmt(zf, 2) + '</text>';
     else if (taca) s += '<text class="s" x="80" y="' + (yf + 14) + '" text-anchor="middle">fundo da cuba ' + fmt(zf, 2) + '</text>';
     else s += '<text class="s" x="140" y="' + (yf + 14) + '" text-anchor="middle">base ' + fmt(zf, 2) + '</text>';
@@ -143,17 +144,17 @@
     /* saída do reservatório */
     if (inf || tip === 'ret' || tip === 'cil' || tip === 'tronco' || sp) {
       var yt = Y(r.topo), dpx = Math.max(6, Y(r.topo - r.D) - yt), lat = r.saida === 'lateral' || (sp && r.saida === 'acima') || (!inf && tip === 'tronco');
-      if (lat) s += '<rect x="' + xd + '" y="' + yt + '" width="16" height="' + dpx + '" fill="var(--fc-agua)" opacity=".85"/>';
-      else if (r.saida === 'fundo' || r.saida === 'base') s += '<rect x="' + (inf && r.poco ? 190 : 136) + '" y="' + yp + '" width="8" height="' + Math.min(18, 256 - yp) + '" fill="var(--fc-agua)" opacity=".85"/>';
-      else s += '<path d="M254 ' + (yc - 22) + 'H200V' + yt + '" fill="none" stroke="var(--fc-agua)" stroke-width="7" opacity=".85"/>';
+      if (lat) s += '<rect x="' + xd + '" y="' + yt + '" width="16" height="' + dpx + '" fill="var(--grafico-sistema)" opacity=".85"/>';
+      else if (r.saida === 'fundo' || r.saida === 'base') s += '<rect x="' + (inf && r.poco ? 190 : 136) + '" y="' + yp + '" width="8" height="' + Math.min(18, 256 - yp) + '" fill="var(--grafico-sistema)" opacity=".85"/>';
+      else s += '<path d="M254 ' + (yc - 22) + 'H200V' + yt + '" fill="none" stroke="var(--grafico-sistema)" stroke-width="7" opacity=".85"/>';
       if (inf && !r.anti && yt - yr > 8) s += '<line x1="222" x2="222" y1="' + yt + '" y2="' + yr + '" stroke="' + ext + '" stroke-width="1.5"/><text class="s" x="216" y="' + ((yt + yr) / 2 + 4) + '" text-anchor="end">A</text>';
-      if (!isNaN(zbi)) s += '<path d="M' + (lat ? xd + 16 : 262) + ' ' + (lat ? yt + dpx / 2 : Y(zbi)) + 'H430V' + Y(zbi) + '" fill="none" stroke="var(--fc-agua)" stroke-width="3" opacity=".5"/>';
+      if (!isNaN(zbi)) s += '<path d="M' + (lat ? xd + 16 : 262) + ' ' + (lat ? yt + dpx / 2 : Y(zbi)) + 'H430V' + Y(zbi) + '" fill="none" stroke="var(--grafico-sistema)" stroke-width="3" opacity=".5"/>';
     }
-    if (!isNaN(zbi)) s += '<circle cx="450" cy="' + Y(zbi) + '" r="15" fill="var(--fc-superficie)" stroke="var(--fc-agua)" stroke-width="2"/><text x="450" y="' + (Y(zbi) + 4) + '" text-anchor="middle" font-weight="700">BI</text><text class="s" x="472" y="' + (Y(zbi) + 4) + '">' + fmt(zbi, 2) + '</text>';
+    if (!isNaN(zbi)) s += '<circle cx="450" cy="' + Y(zbi) + '" r="15" fill="var(--superficie)" stroke="var(--grafico-sistema)" stroke-width="2"/><text x="450" y="' + (Y(zbi) + 4) + '" text-anchor="middle" font-weight="700">BI</text><text class="s" x="472" y="' + (Y(zbi) + 4) + '">' + fmt(zbi, 2) + '</text>';
     var st = '';
     if (inf && !isNaN(zbi)) { var g = zbi - ref; st = g > 0 ? 'Pelas cotas, o eixo da bomba fica ' + fmt(g, 2) + ' m acima do nível X.' : 'Pelas cotas, o eixo da bomba fica ' + fmt(-g, 2) + ' m abaixo do nível X: bomba afogada.'; }
     var rotA = 'Corte esquemático do reservatório, ' + nomeTipo(fo.tipo, tip).toLowerCase() + '. Fundo na cota ' + fmt(zf, 2) + ' m, ' + (inf ? 'nível X na cota ' : 'referência da água na cota ') + fmt(ref, 3) + ' m' + (isNaN(zc) ? '' : ', nível normal na cota ' + fmt(zc, 2) + ' m') + '. ' + st;
-    return '<div class="cartao bloco" id="fig-res"><h2 class="t3">Desenho do reservatório</h2><svg class="fig-res" viewBox="0 0 560 262" role="img" aria-label="' + esc(rotA) + '">' + s + '</svg><p class="peq">' + (st ? '<b>' + esc(st) + '</b> ' : '') + 'Esquema fora de escala na horizontal; as alturas seguem as cotas.</p></div>';
+    return U.cartao('Desenho do reservatório', '<svg class="fig-res" viewBox="0 0 560 262" role="img" aria-label="' + esc(rotA) + '">' + s + '</svg><p class="peq">' + (st ? '<b>' + esc(st) + '</b> ' : '') + 'Esquema fora de escala na horizontal; as alturas seguem as cotas.</p>', { id: 'fig-res' });
   }
 
   U.telas[U.POS.abast] = function () {
@@ -196,8 +197,8 @@
   }
   function seletorBib(tip) {
     var l = bibDoTipo(tip); if (!l.length) return '';
-    return '<label class="cmp larga"><span class="rt">Escolher da minha biblioteca</span><select class="campo" id="abm-bib" data-bib="1"><option value="">Escolha</option>' + l.map(function (p) {
-      var x = p[0]; return '<option value="' + p[1] + '">' + esc(x.fabricante + ' ' + x.modelo + ', ' + U.medidasRes(x) + (x.volumeNominal ? ', ' + fmt(x.volumeNominal, 3) + ' m³' : '')) + '</option>'; }).join('') + '</select></label>';
+    return '<label class="fc-campo larga"><span class="fc-campo__rot">Escolher da minha biblioteca</span><span class="fc-sel"><span class="fc-entrada"><select id="abm-bib" data-bib="1"><option value="">Escolha</option>' + l.map(function (p) {
+      var x = p[0]; return '<option value="' + p[1] + '">' + esc(x.fabricante + ' ' + x.modelo + ', ' + U.medidasRes(x) + (x.volumeNominal ? ', ' + fmt(x.volumeNominal, 3) + ' m³' : '')) + '</option>'; }).join('') + '</select></span>' + U.icone('chevron-down', 'fc-ic') + '</span></label>';
   }
   /** Só preenche os campos de medida; nada mais muda e cada campo segue editável. */
   function preencheDaBib(i) {
@@ -214,10 +215,10 @@
     var F = S.F, fo = F.fonte, inf = fo.tipo === 'inferior', tip = fo.tip, PR = F.norma === 'PR', h = '', r = V.nivelX(F);
     var tubo = tip === 'ret' || tip === 'cil' || tip === 'tronco' || tip === 'piscina', taca = tip === 'taca_seca' || tip === 'taca_molhada', torre = tip === 'torre', sp = tip === 'standpipe';
     h += '<h2 id="dlg-tit">Dados do reservatório: ' + esc(nomeTipo(fo.tipo, tip).toLowerCase()) + (inf ? ', inferior' : ', elevado') + '</h2>';
-    if (!inf) h += bloco('elev', 'Entrega da água', grupo('abm-elev-t', ELEV_MODO, fo.elevModo, 'abm-elev-', 'elev', 'data-abm') + (U.msg('fonte.elevModo') ? '<div class="msg-er">' + esc(U.msg('fonte.elevModo').msg) + '</div>' : ''));
+    if (!inf) h += bloco('elev', 'Entrega da água', grupo('abm-elev-t', ELEV_MODO, fo.elevModo, 'abm-elev-', 'elev', 'data-abm') + (U.msg('fonte.elevModo') ? '<div class="fc-campo__erro" role="alert">' + U.icone('circle-x', 'fc-ic') + esc(U.msg('fonte.elevModo').msg) + '</div>' : ''));
     /* saída */
     var lista = null; if (inf) lista = tip === 'tronco' ? SAIDAS_INF.filter(function (x) { return x[0] !== 'fundo'; }) : SAIDAS_INF; else if (sp) lista = SAIDAS_SP; else if (tip === 'ret' || tip === 'cil') lista = SAIDAS_ELE;
-    if (lista) h += bloco('saida', 'Saída da água', grupo('abm-saida-t', lista, fo.saida, 'abm-saida-', 'saida', 'data-abm') + (U.msg('fonte.saida') ? '<div class="msg-er" id="abm-saida-m">' + esc(U.msg('fonte.saida').msg) + '</div>' : ''));
+    if (lista) h += bloco('saida', 'Saída da água', grupo('abm-saida-t', lista, fo.saida, 'abm-saida-', 'saida', 'data-abm') + (U.msg('fonte.saida') ? '<div class="fc-campo__erro" role="alert" id="abm-saida-m">' + U.icone('circle-x', 'fc-ic') + esc(U.msg('fonte.saida').msg) + '</div>' : ''));
     /* cotas */
     var c = '<div class="form">';
     if (tip === 'piscina') c += U.campo('fonte.zFundo', 'Cota do fundo na parte funda', { un: 'm', num: true, aj: 'Junto à tomada, face de dentro do fundo.' }) + U.campo('fonte.zRaso', 'Cota do fundo na parte rasa (opcional)', { un: 'm', num: true, aj: 'Em branco, o fundo é plano. Fundo em rampa reta de uma ponta à outra; com patamar, informe a forma pela área.' });
@@ -263,7 +264,7 @@
     h += bloco('part', 'Particularidades', p);
     /* modo avançado */
     var usa = !V.vazio(fo.zTomada), ab = S.avanc || usa, tomada = inf || (tubo && fo.saida === 'lateral' && tip !== 'tronco') || tip === 'taca_molhada' || (sp && fo.saida === 'acima');
-    var av = '<button type="button" class="bt lig" id="abm-av-bt" data-abm="avanc" aria-expanded="' + (ab ? 'true' : 'false') + '" aria-controls="abm-av-c">Modo avançado' + (usa ? ' (em uso)' : '') + '</button>';
+    var av = '<button type="button" class="fc-bt fc-bt--disc" id="abm-av-bt" data-abm="avanc" aria-expanded="' + (ab ? 'true' : 'false') + '" aria-controls="abm-av-c">Modo avançado' + (usa ? ' (em uso)' : '') + '</button>';
     if (!ab) av += '<p class="peq">Cota real da tomada. Fechado, a ferramenta usa o mínimo da norma.</p>';
     else {
       av += '<div id="abm-av-c">' + (tomada ? '<div class="form">' + U.campo('fonte.zTomada', inf ? (fo.saida === 'lateral' ? 'Cota real da geratriz superior da tomada' : 'Cota real da boca da tomada') : 'Cota real da face superior do tubo de saída', { un: 'm', num: true, aj: 'Só se a tomada ficar acima do mínimo' + (r.ok ? ' (' + fmt(r.minTopo, 3) + ' m)' : '') + '. Em branco, vale o mínimo.' }) + '</div>' : '<p class="peq">Este tipo de reservatório não usa a cota da tomada.</p>') +
@@ -272,7 +273,7 @@
     h += '<section class="ab-m-bloco" id="abm-avancado">' + av + '</section>';
     /* resultado ao vivo */
     h += '<div class="ab-m-res" id="abm-res" aria-live="polite">' + resumoMenu(r) + '</div>';
-    return h + '<div class="linha-ac" style="margin-top:16px"><button type="button" class="bt pri" data-abm="ok" id="abm-ok">Confirmar</button><button type="button" class="bt" data-abm="cancela">Cancelar</button></div>';
+    return h + '<div class="linha-ac" style="margin-top:16px"><button type="button" class="fc-bt fc-bt--pri" data-abm="ok" id="abm-ok">Confirmar</button><button type="button" class="fc-bt" data-abm="cancela">Cancelar</button></div>';
   }
   function resumoMenu(r) {
     var inf = S.F.fonte.tipo === 'inferior';
@@ -316,6 +317,6 @@
       snap = null; var b = document.getElementById('ab-abrir'); if (b) b.focus({ preventScroll: true });
     };
     if (!d.open) d.showModal();
-    var p1 = d.querySelector('.ab-bt.on') || d.querySelector('input,select'); if (p1) p1.focus({ preventScroll: true });
+    var p1 = d.querySelector('.fc-opcao[aria-pressed="true"]') || d.querySelector('input,select'); if (p1) p1.focus({ preventScroll: true });
   };
 })();

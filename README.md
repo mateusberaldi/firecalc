@@ -2,7 +2,7 @@
 
 Programa de dimensionamento de hidrantes e mangotinhos para o Paraná (NPT 022 do CBMPR) e para São Paulo (IT 22 do CBPMESP). É um arquivo HTML único: abre no navegador, funciona sem internet e não envia nenhum dado do projeto para fora do computador.
 
-Versão **2.7.0** (23/11/2026); o que mudou está em [NOTAS_DA_VERSAO.md](NOTAS_DA_VERSAO.md).
+Versão **2.8.0** (23/11/2026); o que mudou está em [NOTAS_DA_VERSAO.md](NOTAS_DA_VERSAO.md).
 
 ## O que ele faz
 

@@ -84,11 +84,11 @@
 
   /** Planilha trecho a trecho: seis colunas, preenchida quando o cálculo fecha; ▲ no que passa do limite do estado. */
   function planilha(F, sit) {
-    var d = dadosRede(F, sit), pc = d && d.parcial ? ' <span class="parc">parcial</span>' : '', h = '<div class="rolar" tabindex="0" role="region" aria-label="Planilha da rede, trecho a trecho"><table class="tab-res"><thead><tr><th>Trecho</th><th>Diâmetro</th><th class="r">Vazão <small>(L/min)</small>' + pc + '</th><th class="r">Velocidade <small>(m/s)</small>' + pc + '</th><th class="r">Perda <small>(mca)</small>' + pc + '</th><th class="r">Pressão <small>(mca, no fim do trecho)</small>' + pc + '</th></tr></thead><tbody>';
+    var d = dadosRede(F, sit), pc = d && d.parcial ? ' <span class="parc">parcial</span>' : '', h = '<div class="fc-tab-rolar" tabindex="0" role="region" aria-label="Planilha da rede, trecho a trecho"><table class="fc-tab tab-res"><thead><tr><th>Trecho</th><th>Diâmetro</th><th class="r">Vazão <small>(L/min)</small>' + pc + '</th><th class="r">Velocidade <small>(m/s)</small>' + pc + '</th><th class="r">Perda <small>(mca)</small>' + pc + '</th><th class="r">Pressão <small>(mca, no fim do trecho)</small>' + pc + '</th></tr></thead><tbody>';
     function c(txt, al, bx) { return '<td class="r' + (al || bx ? ' alerta' : '') + '">' + txt + (al ? ' <span class="al-m" aria-hidden="true">▲</span><span class="so-leitor">acima do limite</span>' : '') + (bx ? ' <span class="al-m" aria-hidden="true">▲</span><span class="so-leitor">abaixo do mínimo</span>' : '') + '</td>'; }
     F.trechos.forEach(function (t, i) {
       var r = d && d.tr[i], ok = r && !r.fora, v0 = d ? NA : AC;
-      h += '<tr' + (r && (r.vAl || r.pAl || r.pBx) ? ' class="al"' : '') + '><th scope="row">' + esc(nome(t)) + '</th><td>DN' + esc(t.dn) + '</td>' + c(ok ? fmt(r.Q, 1) : v0) + c(ok ? fmt(r.v, 2) : v0, ok && r.vAl) + c(ok ? fmt(r.hf, 2) : v0) + c(ok && r.P !== null ? fmt(r.P, 1) : (ok && r.pAc ? AC : v0), ok && r.pAl, ok && r.pBx) + '</tr>';
+      h += '<tr' + (r && (r.vAl || r.pAl || r.pBx) ? ' class="al"' : '') + '><th class="fc-tab__rh" scope="row">' + esc(nome(t)) + '</th><td>DN' + esc(t.dn) + '</td>' + c(ok ? fmt(r.Q, 1) : v0) + c(ok ? fmt(r.v, 2) : v0, ok && r.vAl) + c(ok ? fmt(r.hf, 2) : v0) + c(ok && r.P !== null ? fmt(r.P, 1) : (ok && r.pAc ? AC : v0), ok && r.pAl, ok && r.pBx) + '</tr>';
     });
     return h + '</tbody></table></div><p class="peq">' + (d ? (d.parcial ? 'Valores parciais, só com a rede e os hidrantes lançados: o projeto ainda não fechou o cálculo. Só o par de hidrantes mais desfavorável está em uso' : 'Valores do cenário de cálculo: só o par de hidrantes mais desfavorável está em uso') + ', e o trecho que não leva água nele aparece com vazão zero.' + (d.alerta || d.alertaMin ? ' ▲ marca ' + (d.alerta ? 'o que passa do limite do estado' : '') + (d.alerta && d.alertaMin ? ' e ' : '') + (d.alertaMin ? 'o hidrante abaixo do mínimo' : '') + '.' : '') : 'Vazão, velocidade, perda e pressão aparecem com a rede completa: todos os trechos ligados ao reservatório, a cota de cada nó e ao menos um hidrante.') + '</p>';
   }
@@ -110,10 +110,10 @@
     var par = {}, nomePar = '';
     var sr = sitRede(F, sit);
     if (sr) { var R = sr.R; [R.par.tronco, R.par.ramalCrit, R.par.ramalOut].forEach(function (l) { l.forEach(function (e) { par[e.t.nome] = 1; }); }); nomePar = R.numeros.par; }
-    var dr = dadosRede(F, sit), g = '', nos = '', hit = '', hT = [], hN = [], tri = function (x, y) { return '<path class="al-m" d="M' + (x - 8) + ' ' + (y + 7) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 8) + ' ' + (y + 7) + 'Z" fill="var(--fc-erro)"/><text class="al-t" x="' + x + '" y="' + (y + 5) + '" text-anchor="middle">!</text>'; };
+    var dr = dadosRede(F, sit), g = '', nos = '', hit = '', hT = [], hN = [], tri = function (x, y) { return '<path class="al-m" d="M' + (x - 8) + ' ' + (y + 7) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 8) + ' ' + (y + 7) + 'Z" fill="var(--erro)"/><text class="al-t" x="' + x + '" y="' + (y + 5) + '" text-anchor="middle">!</text>'; };
     F.trechos.forEach(function (t, i) {
       if (!ori[i]) return; var d = ori[i].m, p = ori[i].j; if (!pos[d] || !pos[p]) return;
-      var solto = !est.alc[d], noPar = par[nome(t)], cor = solto ? 'var(--fc-erro)' : (rec[i] ? 'var(--fc-texto-3)' : (noPar ? 'var(--fc-fogo)' : 'var(--fc-agua)'));
+      var solto = !est.alc[d], noPar = par[nome(t)], cor = solto ? 'var(--erro)' : (rec[i] ? 'var(--texto-3)' : (noPar ? 'var(--grafico-ponto)' : 'var(--grafico-sistema)'));
       var x1 = X(d), y1 = Y(d), x2 = X(p), y2 = Y(p), xm = x1 + 26;
       g += '<path d="M' + x1 + ' ' + y1 + 'H' + xm + 'V' + y2 + 'H' + x2 + '" fill="none" stroke="' + cor + '" stroke-width="3"' + (solto ? ' stroke-dasharray="6 5"' : (rec[i] ? ' stroke-dasharray="3 4"' : '')) + ' stroke-linejoin="round"/>' +
         '<text x="' + ((xm + x2) / 2) + '" y="' + (y2 - 9) + '" text-anchor="middle">' + esc(nome(t)) + '</text><text class="s" x="' + ((xm + x2) / 2) + '" y="' + (y2 + 17) + '" text-anchor="middle">DN' + esc(t.dn) + ', ' + esc(t.L) + ' m</text>';
@@ -123,11 +123,11 @@
     });
     Object.keys(pos).forEach(function (n) {
       var x = X(n), yy = Y(n), solto = !est.alc[n];
-      if (n === 'RI') nos += '<rect x="' + (x - 22) + '" y="' + (yy - 16) + '" width="44" height="32" rx="4" fill="var(--fc-info-fundo)" stroke="var(--fc-agua)" stroke-width="2"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">RI</text>';
-      else if (n === 'BI') nos += '<circle cx="' + x + '" cy="' + yy + '" r="16" fill="var(--fc-superficie)" stroke="var(--fc-agua)" stroke-width="2"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">BI</text>';
-      else if (hid[n]) { var q = sr && (sr.R.par.a.no === n || sr.R.par.b.no === n); nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="13" fill="' + (solto ? 'var(--fc-erro-fundo)' : (q ? 'var(--fc-fogo-fundo)' : 'var(--fc-superficie)')) + '" stroke="' + (solto ? 'var(--fc-erro)' : (q ? 'var(--fc-fogo)' : 'var(--fc-agua)')) + '" stroke-width="2"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>'; }
-      else if (rr && n === F.recalque.no) nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="4" fill="var(--fc-superficie)" stroke="var(--fc-texto-3)" stroke-width="2" stroke-dasharray="3 3"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
-      else nos += '<circle cx="' + x + '" cy="' + yy + '" r="7" fill="' + (solto ? 'var(--fc-erro)' : 'var(--fc-agua)') + '"/><text x="' + x + '" y="' + (yy - 14) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
+      if (n === 'RI') nos += '<rect x="' + (x - 22) + '" y="' + (yy - 16) + '" width="44" height="32" rx="4" fill="var(--info-fundo)" stroke="var(--grafico-sistema)" stroke-width="2"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">RI</text>';
+      else if (n === 'BI') nos += '<circle cx="' + x + '" cy="' + yy + '" r="16" fill="var(--superficie)" stroke="var(--grafico-sistema)" stroke-width="2"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">BI</text>';
+      else if (hid[n]) { var q = sr && (sr.R.par.a.no === n || sr.R.par.b.no === n); nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="13" fill="' + (solto ? 'var(--erro-fundo)' : (q ? 'var(--selecionado-fundo)' : 'var(--superficie)')) + '" stroke="' + (solto ? 'var(--erro)' : (q ? 'var(--grafico-ponto)' : 'var(--grafico-sistema)')) + '" stroke-width="2"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>'; }
+      else if (rr && n === F.recalque.no) nos += '<rect x="' + (x - 4) + '" y="' + (yy - 13) + '" width="52" height="26" rx="4" fill="var(--superficie)" stroke="var(--texto-3)" stroke-width="2" stroke-dasharray="3 3"/><text x="' + (x + 22) + '" y="' + (yy + 4) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
+      else nos += '<circle cx="' + x + '" cy="' + yy + '" r="7" fill="' + (solto ? 'var(--erro)' : 'var(--grafico-sistema)') + '"/><text x="' + x + '" y="' + (yy - 14) + '" text-anchor="middle" font-weight="700">' + esc(n) + '</text>';
       var dn_ = dr && dr.nos[n];
       if (dn_ && (dn_.al || dn_.bx)) nos += tri(x + (hid[n] ? 62 : 16), yy - (hid[n] ? 14 : 24));
       if (!(rr && n === F.recalque.no)) hN.push([pos[n].x, pos[n].y, '<rect class="hit" tabindex="-1" role="img" aria-label="' + esc(n === 'RI' ? 'Reservatório RI' : n === 'BI' ? 'Bomba BI' : hid[n] ? 'Hidrante ' + n : 'Nó ' + n) + '" x="' + (x - 24) + '" y="' + (yy - 20) + '" width="' + (hid[n] ? 76 : 48) + '" height="40" rx="10" data-card="' + esc(JSON.stringify(cartaoNo(n, F, dr))) + '"/>']);
@@ -138,10 +138,12 @@
     /* 2.6.4: roving tabindex, uma só parada de Tab no desenho (o primeiro elemento); com menos de dois elementos não há por que parar. */
     hit = hit.split(' tabindex="-1"').length > 2 ? hit.replace(' tabindex="-1"', ' tabindex="0"') : hit.replace(/ tabindex="-1"/g, '');
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="Desenho esquemático da rede, gerado dos trechos">' + g + nos + hit+ '</svg>' +
-      '<div class="leg"><span><i style="background:var(--fc-agua)"></i>tubo</span>' + (nomePar ? '<span><i style="background:var(--fc-fogo)"></i>' + (sr.R.numeros.jatoUnico ? 'caminho do jato (' : 'par mais desfavorável (') + esc(nomePar) + ')</span>' : '') + (rr ? '<span><i style="background:var(--fc-texto-3)"></i>tracejado cinza: ramo do recalque, fora do cálculo</span>' : '') + (est.avisos.length ? '<span><i style="background:var(--fc-erro)"></i>tracejado vermelho: sem ligação ao reservatório</span>' : '') + (dr && dr.parcial ? '<span><span class="parc">parcial</span> valores do cálculo parcial</span>' : '') + (dr && dr.alerta ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--fc-erro)"/></svg>acima do limite do estado</span>' : '') + (dr && dr.alertaMin ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--fc-erro)"/></svg>abaixo do mínimo</span>' : '') + '<span>RI reservatório, BI bomba, H hidrante</span></div>';
+      '<div class="fc-leg"><span><i style="background:var(--grafico-sistema)"></i>tubo</span>' + (nomePar ? '<span><i style="background:var(--grafico-ponto)"></i>' + (sr.R.numeros.jatoUnico ? 'caminho do jato (' : 'par mais desfavorável (') + esc(nomePar) + ')</span>' : '') + (rr ? '<span><i style="background:var(--texto-3)"></i>tracejado cinza: ramo do recalque, fora do cálculo</span>' : '') + (est.avisos.length ? '<span><i style="background:var(--erro)"></i>tracejado vermelho: sem ligação ao reservatório</span>' : '') + (dr && dr.parcial ? '<span><span class="parc">parcial</span> valores do cálculo parcial</span>' : '') + (dr && dr.alerta ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--erro)"/></svg>acima do limite do estado</span>' : '') + (dr && dr.alertaMin ? '<span><svg class="leg-al" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 15L8 1l7 14Z" fill="var(--erro)"/></svg>abaixo do mínimo</span>' : '') + '<span>RI reservatório, BI bomba, H hidrante</span></div>';
   }
   U.arvore = arvore;
 
+  var CH_GUIA = 'firecalc2_guia_rede';
+  document.addEventListener('toggle', function (ev) { var d = ev.target; if (d && d.id === 'guia-lancamento') { try { localStorage.setItem(CH_GUIA, d.open ? 'aberto' : 'fechado'); } catch (e) { /* sem armazenamento */ } } }, true);
   /** 2.6.0: guia de lançamento em passos numerados curtos, sem desenho. O primeiro passo muda com a rota (RI-BI com bomba, RI-A na gravidade). */
   function guiaLancamento() {
     var grav = S.F.fonte.modo === 'gravidade', passos = [
@@ -150,8 +152,10 @@
       ['O nome se forma sozinho', 'Montante e jusante dão o nome do trecho, como <span class="tec">A-H1</span>.'],
       ['A cota é do nó', 'O mesmo nó tem uma cota só, em todas as linhas em que aparece.'],
       ['Lance a rede inteira', 'Com os hidrantes de todos os pavimentos, também os de baixo.']];
-    return '<section class="cartao bloco guia" id="guia-lancamento" aria-labelledby="guia-tit"><h2 class="t3" id="guia-tit">Como lançar os trechos</h2><ol class="guia-passos">' +
-      passos.map(function (x) { return '<li><b>' + x[0] + '</b><span>' + x[1] + '</span></li>'; }).join('') + '</ol></section>';
+    /* F14: grupo recolhido; aberto na primeira vez e lembrado depois (a chave guarda o que o usuário escolheu) */
+    var aberto = true; try { aberto = localStorage.getItem(CH_GUIA) !== 'fechado'; } catch (e) { aberto = true; }
+    return '<details class="fc-cartao guia fc-guia"' + (aberto ? ' open' : '') + ' id="guia-lancamento"><summary class="fc-cartao__cab"><h2 class="t3" id="guia-tit">Como lançar os trechos</h2>' + '</summary><div class="fc-cartao__corpo"><ol class="guia-passos" aria-labelledby="guia-tit">' +
+      passos.map(function (x) { return '<li><b>' + x[0] + '</b><span>' + x[1] + '</span></li>'; }).join('') + '</ol></div></details>';
   }
   /** 2.6.0: tubo padrão em 1/3 da largura e, ao lado, o guia nos 2/3 restantes. */
   function topoRede() { return '<div class="g-rd1">' + U.barraTubo() + guiaLancamento() + '</div>'; }
@@ -168,17 +172,17 @@
       var bm = F.fonte.modo === 'bomba', rx = V.nivelX(F), prop = n === 'RI' && rx.ok && rx.hProp > 0, v = n === 'RI' ? (bm ? F.fonte.zX : F.nos.RI) : F.nos.BI,
         o = n === 'RI' ? (bm ? 'nível X' : prop ? 'saída na base' : 'referência') : 'eixo', onde = n === 'RI' ? (bm ? 'do nível X' : prop ? 'da saída na base do reservatório' : 'de referência do reservatório') : 'do eixo da bomba';
       return '<td class="c-cota ro" data-rot="Cota ' + lado + '"><span class="tec">' + (V.vazio(v) ? 'a informar' : fmt(V.num(v), 2)) + '</span> <small>' + o + '</small>' + (prop ? '<br><small class="carga-propria">carga própria ' + fmt(rx.hProp, 2) + ' mca</small>' : '') +
-        '<br><button class="bt lig min" data-acao="abmenu" aria-label="Cota ' + onde + ': editar no menu do Abastecimento">editar</button></td>';
+        '<br><button class="fc-bt fc-bt--disc fc-bt--p" data-acao="abmenu" aria-label="Cota ' + onde + ': editar no menu do Abastecimento">editar</button></td>';
     }
     var c = 'nos.' + n, prim = !vistos[n], m = prim ? U.msg(c) : null, idc = U.idDe(c) + (prim ? '' : '-l' + i); vistos[n] = 1;
     var opc = !V.ehHid(n) && (V.grafo(F)[n] || []).length < 3;
-    return '<td class="c-cota" data-rot="Cota ' + lado + '"><input class="campo num" id="' + idc + '" data-c="' + esc(c) + '" value="' + esc(U.pega(c) === undefined ? '' : U.pega(c)) + '"' + (opc ? ' placeholder="opcional"' : '') + ' inputmode="decimal" aria-label="' + esc((V.ehHid(n) ? 'Cota da válvula do hidrante ' : 'Cota do nó ') + n + ', em metros. Vale para todas as linhas com ' + n) + '"' + (m ? U.attrMsg(c, m) : '') + ' autocomplete="off">' + (m ? U.htmlMsg(c, m) : '') + '</td>';
+    return '<td class="c-cota" data-rot="Cota ' + lado + '"><span class="fc-entrada"><input class="num" id="' + idc + '" data-c="' + esc(c) + '" value="' + esc(U.pega(c) === undefined ? '' : U.pega(c)) + '"' + (opc ? ' placeholder="opcional"' : '') + ' inputmode="decimal" aria-label="' + esc((V.ehHid(n) ? 'Cota da válvula do hidrante ' : 'Cota do nó ') + n + ', em metros. Vale para todas as linhas com ' + n) + '"' + (m ? U.attrMsg(c, m) : '') + ' autocomplete="off"></span>' + (m ? U.htmlMsg(c, m) : '') + '</td>';
   }
 
   /** Fator C só deste trecho: no modo personalizado, campo abaixo do tipo de tubo; no padrão, só o aviso quando o arquivo traz um C próprio. */
   function celC(t, base, nm) {
     var c = base + '.C', m = U.msg(c);
-    if (S.modo === 'personalizado') return '<label class="c-proprio"><span class="peq">C só deste trecho</span><input class="campo num" id="' + U.idDe(c) + '" data-c="' + c + '" value="' + esc(t.C || '') + '" placeholder="' + esc(S.F.C || '120') + '" inputmode="decimal" aria-label="Fator C só do trecho ' + esc(nm) + ', modo personalizado. Em branco vale o do tubo"' + U.attrMsg(c, m) + ' autocomplete="off">' + U.htmlMsg(c, m) + '</label>';
+    if (S.modo === 'personalizado') return '<label class="c-proprio"><span class="peq">C só deste trecho</span><span class="fc-entrada"><input class="num" id="' + U.idDe(c) + '" data-c="' + c + '" value="' + esc(t.C || '') + '" placeholder="' + esc(S.F.C || '120') + '" inputmode="decimal" aria-label="Fator C só do trecho ' + esc(nm) + ', modo personalizado. Em branco vale o do tubo"' + U.attrMsg(c, m) + ' autocomplete="off"></span>' + U.htmlMsg(c, m) + '</label>';
     return String(t.C || '').trim() ? '<small class="peq" id="c-trecho-' + esc(base.split('.')[1]) + '">C próprio: ' + esc(t.C) + '</small>' : '';
   }
   function linha(t, i, avs, dns0, vistos) {
@@ -187,32 +191,32 @@
     var lq = 0, np = 0, falta = false; Object.keys(t.pecas || {}).forEach(function (id) { var q = parseInt(t.pecas[id], 10) || 0, l = U.leq(id, t.dn); np += q; if (isNaN(l)) falta = true; else lq += q * l; }); lq += (t._o && t._o.Lvirtual) || 0;
     var dns = t.tipo ? E.dnsDoTipo(D, t.tipo) : dns0, rr = ramoRec(F), noRec = rr && rr.idx.indexOf(i) >= 0;
     var tps = D.tiposTubo.map(function (x) { return [x.id, x.curto]; }), tp0 = E.tipoTubo(D, F.tipoTubo);
-    return '<tr class="' + (i === S.sel ? 'sel' : '') + (noRec ? ' rec' : '') + '" data-linha="' + i + '">' +
-      '<td class="c-trecho" data-rot="Trecho"><span class="mover"><button class="bt ic" data-arrasta="' + i + '" draggable="true" title="Arrastar ou usar as setas para mover" aria-label="Mover o trecho ' + esc(nm) + '. Use as setas para cima e para baixo">' + IC_MOVER + '</button></span><b class="tec">' + esc(nm) + '</b>' + (noRec ? '<small class="peq">recalque, fora do cálculo</small>' : '') + '</td>' +
+    return '<tr' + (i === S.sel ? ' aria-selected="true"' : '') + (noRec ? ' class="rec"' : '') + ' data-linha="' + i + '">' +
+      '<td class="c-trecho" data-rot="Trecho"><span class="mover"><button class="fc-bt fc-bt--icone fc-bt--disc" data-arrasta="' + i + '" draggable="true" title="Arrastar ou usar as setas para mover" aria-label="Mover o trecho ' + esc(nm) + '. Use as setas para cima e para baixo">' + IC_MOVER + '</button></span><b class="tec">' + esc(nm) + '</b>' + (noRec ? '<small class="peq">recalque, fora do cálculo</small>' : '') + '</td>' +
       U.celula(base + '.de', 'Nó de montante do trecho ' + nm).replace('<td>', '<td data-rot="Montante">') + celCota(t.de, i, 'montante', vistos) +
       U.celula(base + '.para', 'Nó de jusante do trecho ' + nm).replace('<td>', '<td data-rot="Jusante">') + celCota(t.para, i, 'jusante', vistos) +
       '<td data-rot="Diâmetro">' + U.escolha(base + '.dn', '', (dns.indexOf(t.dn) < 0 ? [t.dn] : []).concat(dns).map(function (d) { return [d, 'DN' + d]; }), { num: true, aria: 'Diâmetro do trecho ' + nm }) + '</td>' +
       U.celula(base + '.L', 'Comprimento do tubo em metros, trecho ' + nm, 'num').replace('<td>', '<td data-rot="Tubo (m)">') +
-      '<td data-rot="Tipo tubo"><button class="bt lig min" id="' + U.idDe(base + '.tipo') + '" data-tubo="' + i + '" aria-haspopup="dialog" aria-label="Tipo de tubo do trecho ' + esc(nm) + ': ' + esc(t.tipo && E.tipoTubo(D, t.tipo) ? E.tipoTubo(D, t.tipo).nome : 'padrão do projeto, ' + (tp0 ? tp0.nome : 'a definir')) + '">' + esc(t.tipo && E.tipoTubo(D, t.tipo) ? E.tipoTubo(D, t.tipo).curto : 'Padrão') + '</button>' + (U.msg(base + '.tipo') ? U.htmlMsg(base + '.tipo', U.msg(base + '.tipo')) : '') + celC(t, base, nm) + '</td>' +
-      '<td class="r" data-rot="Peças"><button class="bt lig min" data-pecas="' + i + '" aria-haspopup="dialog" aria-label="Peças do trecho ' + esc(nm) + ': ' + np + (np === 1 ? ' peça' : ' peças') + '">' + np + (np === 1 ? ' peça, ' : ' peças, ') + (falta ? 'ver' : fmt(lq, 1) + '&nbsp;m') + '</button></td>' +
+      '<td data-rot="Tipo tubo"><button class="fc-bt fc-bt--disc fc-bt--p" id="' + U.idDe(base + '.tipo') + '" data-tubo="' + i + '" aria-haspopup="dialog" aria-label="Tipo de tubo do trecho ' + esc(nm) + ': ' + esc(t.tipo && E.tipoTubo(D, t.tipo) ? E.tipoTubo(D, t.tipo).nome : 'padrão do projeto, ' + (tp0 ? tp0.nome : 'a definir')) + '">' + esc(t.tipo && E.tipoTubo(D, t.tipo) ? E.tipoTubo(D, t.tipo).curto : 'Padrão') + '</button>' + (U.msg(base + '.tipo') ? U.htmlMsg(base + '.tipo', U.msg(base + '.tipo')) : '') + celC(t, base, nm) + '</td>' +
+      '<td class="r" data-rot="Peças"><button class="fc-bt fc-bt--disc fc-bt--p" data-pecas="' + i + '" aria-haspopup="dialog" aria-label="Peças do trecho ' + esc(nm) + ': ' + np + (np === 1 ? ' peça' : ' peças') + '">' + np + (np === 1 ? ' peça, ' : ' peças, ') + (falta ? 'ver' : fmt(lq, 1) + '&nbsp;m') + '</button></td>' +
       '<td data-rot="Situação">' + (er ? U.pilula('er', 'Corrigir') : solto ? U.pilula('er', 'Sem ligação') : vz ? U.pilula('in', 'Preencher') : U.pilula('ok', 'Completo')) + '</td>' +
-      '<td class="c-ac" data-rot="Duplicar"><button class="bt ic" data-dup="' + i + '" title="Duplicar o trecho ' + esc(nm) + '" aria-label="Duplicar o trecho ' + esc(nm) + '">' + IC_DUP + '</button></td>' +
-      '<td class="c-ac" data-rot="Excluir"><button class="bt ic perigo" data-exc="' + i + '" title="Excluir o trecho ' + esc(nm) + '" aria-label="Excluir o trecho ' + esc(nm) + '">' + IC_EXC + '</button></td></tr>';
+      '<td class="c-ac" data-rot="Duplicar"><button class="fc-bt fc-bt--icone fc-bt--disc" data-dup="' + i + '" title="Duplicar o trecho ' + esc(nm) + '" aria-label="Duplicar o trecho ' + esc(nm) + '">' + IC_DUP + '</button></td>' +
+      '<td class="c-ac" data-rot="Excluir"><button class="fc-bt fc-bt--icone fc-bt--disc fc-bt--perigo" data-exc="' + i + '" title="Excluir o trecho ' + esc(nm) + '" aria-label="Excluir o trecho ' + esc(nm) + '">' + IC_EXC + '</button></td></tr>';
   }
 
   U.telas[U.POS.rede] = function () {
     var F = S.F, sit = S.sit, cab = U.cab(U.POS.rede, 'Rede', '');
-    if (!F.trechos.length) return cab + topoRede() + '<div class="vazia" style="margin-top:16px"><svg class="il" viewBox="0 0 96 96" aria-hidden="true"><rect x="8" y="36" width="22" height="24" rx="3" fill="var(--fc-info-fundo)" stroke="var(--fc-agua)" stroke-width="2"/><path d="M30 48h18v-20h22M48 48v20h22" fill="none" stroke="var(--fc-agua)" stroke-width="3" stroke-dasharray="5 4"/><rect x="70" y="20" width="18" height="16" rx="8" fill="none" stroke="var(--fc-borda-campo)" stroke-width="2"/><rect x="70" y="60" width="18" height="16" rx="8" fill="none" stroke="var(--fc-borda-campo)" stroke-width="2"/></svg>' +
-      '<h2>Nenhum trecho lançado</h2><p>' + (F.fonte.modo === 'gravidade' ? 'Comece pela saída do reservatório: montante RI (reservatório), jusante A. Depois siga a água até cada hidrante. O nome do trecho se forma sozinho com os dois nós, de montante para jusante (RI-A, A-H1).' : 'Comece pela sucção: montante RI (reservatório), jusante BI (bomba). Depois siga a água até cada hidrante. O nome do trecho se forma sozinho com os dois nós, de montante para jusante (RI-BI, BI-A, A-H1).') + '</p>' +
-      '<div class="acoes"><button class="bt pri" data-acao="primeiro">Lançar o primeiro trecho</button></div>' +
-      '<p class="peq">Não sabe o que é nó ou trecho? <button class="bt lig min" data-acao="busca">Abrir o glossário</button></p></div>';
+    if (!F.trechos.length) return cab + topoRede() + '<div class="fc-vazio" style="margin-top:16px"><span class="fc-vazio__ic">' + U.icone('waypoints', 'fc-ic--g') + '</span>' +
+      '<h3>Nenhum trecho lançado</h3><p>' + (F.fonte.modo === 'gravidade' ? 'Comece pela saída do reservatório: montante RI (reservatório), jusante A. Depois siga a água até cada hidrante. O nome do trecho se forma sozinho com os dois nós, de montante para jusante (RI-A, A-H1).' : 'Comece pela sucção: montante RI (reservatório), jusante BI (bomba). Depois siga a água até cada hidrante. O nome do trecho se forma sozinho com os dois nós, de montante para jusante (RI-BI, BI-A, A-H1).') + '</p>' +
+      '<div class="fc-bts"><button class="fc-bt fc-bt--pri" data-acao="primeiro">Lançar o primeiro trecho</button></div>' +
+      '<p class="peq">Não sabe o que é nó ou trecho? <button class="fc-bt fc-bt--disc fc-bt--p" data-acao="busca">Abrir o glossário</button></p></div>';
     var avs = sit.k === 'incompleta' ? sit.av : (sit.k === 'invalido' ? V.estrutura(F).avisos : []), dns = U.dns(), vistos = {};
-    var h = cab + topoRede() + '<div class="cartao" style="margin-top:16px"><div id="aviso-cota" role="note">' + U.aviso('in', 'A cota é sempre o valor real, em relação ao nível 0,00 do projeto.') + '</div><div class="rolar"><table class="tab-rede"><thead><tr><th>Trecho <small>(automático)</small></th><th>Montante <small>(de onde vem)</small></th><th class="r">Cota montante <small>(m)</small></th><th>Jusante <small>(para onde vai)</small></th><th class="r">Cota jusante <small>(m)</small></th><th>Diâmetro</th><th class="r">Tubo <small>(m)</small></th><th>Tipo tubo</th><th class="r">Peças <small>(m equiv.)</small></th><th>Situação</th><th><span class="so-leitor">Duplicar</span></th><th><span class="so-leitor">Excluir</span></th></tr></thead><tbody>';
+    var h = cab + topoRede() + '<div class="fc-cartao fc-cartao--tab"><div class="fc-cartao__corpo"><div id="aviso-cota" role="note">' + U.aviso('in', 'A cota é sempre o valor real, em relação ao nível 0,00 do projeto.') + '</div><div class="fc-tab-rolar" tabindex="0" role="region" aria-label="Trechos da rede, para editar"><table class="fc-tab fc-tab--edit tab-rede"><thead><tr><th>Trecho <small>(automático)</small></th><th>Montante <small>(de onde vem)</small></th><th class="r">Cota montante <small>(m)</small></th><th>Jusante <small>(para onde vai)</small></th><th class="r">Cota jusante <small>(m)</small></th><th>Diâmetro</th><th class="r">Tubo <small>(m)</small></th><th>Tipo tubo</th><th class="r">Peças <small>(m equiv.)</small></th><th>Situação</th><th><span class="so-leitor">Duplicar</span></th><th><span class="so-leitor">Excluir</span></th></tr></thead><tbody>';
     F.trechos.forEach(function (t, i) { h += linha(t, i, avs, dns, vistos); });
-    h += '</tbody></table></div><div class="rodape-tab"><button class="bt" data-acao="linha">Adicionar trecho</button><span class="peq" style="margin-left:auto"><span class="kbd">Enter</span> na última linha cria um trecho novo. A cota é do nó: muda em todas as linhas em que ele aparece.</span></div></div>';
-    if (F.fonte.modo === 'bomba') h += '<div class="cartao bloco" id="cartao-recalque" style="margin-top:16px"><h2 class="t3">Dispositivo de recalque</h2>' + U.marcar('recalque.ativo', 'Registrar o dispositivo de recalque (entrada na fachada, no muro ou no passeio).') + '<p class="peq">Opcional. O recalque recebe água da viatura do Corpo de Bombeiros. Não é dimensionado: aqui fica só o registro do dispositivo, que vai para o relatório.</p>' + (F.recalque.ativo ? U.cartaoRecalque() : '') + '</div>';   /* 2.5.2: saiu da etapa Bomba e automação */
-    h += '<div class="cartao bloco des" style="margin-top:16px"><h2 class="t3">Desenho da rede</h2><p class="peq" style="margin-bottom:8px">Esquema sem escala, para conferir a ligação dos trechos com o isométrico da prancha.</p><div id="des-rede">' + arvore() + '</div><div id="cartao-mouse" role="tooltip" hidden></div><div id="cm-folga" aria-hidden="true"></div></div>';
-    h += '<div class="cartao bloco" id="cartao-planilha" style="margin-top:16px"><h2 class="t3">Planilha da rede</h2><div id="plan-rede">' + planilha(F, sit) + '</div></div>';
+    h += '</tbody></table></div></div><div class="fc-cartao__pe"><button class="fc-bt" data-acao="linha">Adicionar trecho</button><span class="apoio" style="margin-left:auto"><span class="kbd">Enter</span> na última linha cria um trecho novo. A cota é do nó: muda em todas as linhas em que ele aparece.</span></div></div>';
+    if (F.fonte.modo === 'bomba') h += U.cartaoAbre('Dispositivo de recalque', { id: 'cartao-recalque' }) + U.marcar('recalque.ativo', 'Registrar o dispositivo de recalque (entrada na fachada, no muro ou no passeio).') + '<p class="peq">Opcional. O recalque recebe água da viatura do Corpo de Bombeiros. Não é dimensionado: aqui fica só o registro do dispositivo, que vai para o relatório.</p>' + (F.recalque.ativo ? U.cartaoRecalque() : '') + U.cartaoFim();   /* 2.5.2: saiu da etapa Bomba e automação */
+    h += U.cartaoAbre('Desenho da rede', { cls: 'des' }) + '<p class="peq" style="margin-bottom:8px">Esquema sem escala, para conferir a ligação dos trechos com o isométrico da prancha.</p><div id="des-rede">' + arvore() + '</div><div id="cartao-mouse" role="tooltip" hidden></div><div id="cm-folga" aria-hidden="true"></div>' + U.cartaoFim();
+    h += U.cartao('Planilha da rede', '<div id="plan-rede">' + planilha(F, sit) + '</div>', { id: 'cartao-planilha' });
     return h;
   };
 
@@ -230,10 +234,10 @@
       if (tem) { if (isNaN(l)) falta = true; else if (q > 0) soma += q * l; }
       h += '<li class="' + (tem ? 'marcada' : '') + '"><label class="pc"><input type="checkbox" id="pc-' + esc(id) + '" data-pc="' + esc(id) + '"' + (tem ? ' checked' : '') + '>' + U.iconePeca(id) + '<span>' + esc(U.nomePeca(id)) + '</span></label>' +
         '<span class="leq tec">' + (isNaN(l) ? 'sem dado no DN' + esc(t.dn) : fmt(l, 2) + ' m cada') + '</span>' +
-        (tem ? '<input class="campo num qt" id="' + U.idDe(c) + '" data-c="' + esc(c) + '" value="' + esc(t.pecas[id]) + '" inputmode="numeric" aria-label="Quantidade de ' + esc(U.nomePeca(id)) + '"' + (m && m.n === 'erro' ? ' aria-invalid="true"' : '') + '>' : '<span class="qt"></span>') + '</li>';
+        (tem ? '<span class="fc-entrada"><input class="num qt" id="' + U.idDe(c) + '" data-c="' + esc(c) + '" value="' + esc(t.pecas[id]) + '" inputmode="numeric" aria-label="Quantidade de ' + esc(U.nomePeca(id)) + '"' + (m && m.n === 'erro' ? ' aria-invalid="true"' : '') + '></span>' : '<span class="qt"></span>') + '</li>';
     });
     h += '</ul><div class="soma-pecas" id="soma-pecas">' + somaTxt(soma, falta, L, Lv) + '</div>';
-    return '<h2 id="dlg-tit">Peças do trecho ' + esc(nm) + ', DN' + esc(t.dn) + '</h2>' + h + '<div class="linha-ac" style="margin-top:16px"><button class="bt pri" data-fechar="1">Fechar</button></div>';
+    return '<div class="fc-janela__cab"><h2 id="dlg-tit">Peças do trecho ' + esc(nm) + ', DN' + esc(t.dn) + '</h2>' + U.xFechar() + '</div><div class="fc-janela__corpo">' + h + '</div><div class="fc-janela__pe"><button class="fc-bt fc-bt--pri" data-fechar="1">Fechar</button></div>';
   }
   function somaTxt(soma, falta, L, Lv) {
     var lok = !isNaN(L) && L > 0;
@@ -245,24 +249,24 @@
    * k = 'p' (tubo padrão do projeto, com o fator C e a tabela de comprimento equivalente, que saíram da etapa Sistema) ou o índice do trecho. */
   function fichaTubo(x) {
     var dn = []; E.dnsDoTipo(D, x.id).forEach(function (d) { var tb = E.tuboDoTipo(D, x.id, d); if (tb) dn.push('DN' + d + ' <small>' + fmt(tb.dint, 1) + '</small>'); });
-    return '<span class="tb-n"><b>' + esc(x.nome) + '</b>' + (x.usuario ? ' <span class="pilula p-al">personalizado</span>' : '') + '</span>' +
+    return '<span class="tb-n"><b>' + esc(x.nome) + '</b>' + (x.usuario ? ' <span class="fc-selo fc-selo--al">' + U.icone('triangle-alert', 'fc-ic') + 'personalizado</span>' : '') + '</span>' +
       '<span class="tb-d">' + esc(x.material) + '; junta ' + esc(x.junta) + '. <b>Fator C ' + esc(x.C) + '</b> (' + esc(x.fonteC) + ').' + (x.template ? ' Tipo do template Revit: <span class="tec">' + esc(x.id) + '</span>.' : '') + (x.nota ? ' ' + esc(x.nota) : '') + '</span>' +
       '<span class="tb-dn tec">Diâmetro interno (mm): ' + dn.join(' · ') + '</span>';
   }
   function corpoTubo(k) {
     var F = S.F, proj = k === 'p', t = proj ? null : F.trechos[k], at = proj ? F.tipoTubo : (t.tipo || ''), tp0 = E.tipoTubo(D, F.tipoTubo), alt = E.cAlterado(F, D);
-    var h = '<h2 id="dlg-tit">' + (proj ? 'Tubo padrão do projeto' : 'Tubo do trecho ' + esc(nome(t))) + '</h2><p class="peq">' + (proj ? 'Vale para todos os trechos que não tiverem um tubo próprio. O fator C acompanha o tubo escolhido.' : 'Escolha um tubo só para este trecho, ou deixe o padrão do projeto.') + '</p><ul class="lista-tubos">';
+    var h = '<div class="fc-janela__cab"><h2 id="dlg-tit">' + (proj ? 'Tubo padrão do projeto' : 'Tubo do trecho ' + esc(nome(t))) + '</h2>' + U.xFechar() + '</div><div class="fc-janela__corpo"><p class="peq">' + (proj ? 'Vale para todos os trechos que não tiverem um tubo próprio. O fator C acompanha o tubo escolhido.' : 'Escolha um tubo só para este trecho, ou deixe o padrão do projeto.') + '</p><ul class="lista-tubos">';
     if (!proj) h += '<li class="' + (at === '' ? 'marcada' : '') + '"><label class="tb"><input type="radio" name="tb" value=""' + (at === '' ? ' checked' : '') + '><span class="tb-f"><span class="tb-n"><b>Padrão do projeto</b></span><span class="tb-d">' + (tp0 ? esc(tp0.nome) + ', fator C ' + esc(F.C) : 'a definir') + '.</span></span></label></li>';
     D.tiposTubo.forEach(function (x) { h += '<li class="' + (at === x.id ? 'marcada' : '') + '"><label class="tb"><input type="radio" name="tb" value="' + esc(x.id) + '"' + (at === x.id ? ' checked' : '') + '><span class="tb-f">' + fichaTubo(x) + '</span></label></li>'; });
     h += '</ul>';
-    if (proj) h += '<div class="form">' + U.campo('C', 'Fator C de Hazen-Williams' + (alt ? ' <span class="pilula p-al">alterado</span>' : ''), { ex: tp0 ? String(tp0.C) : '120', num: true, aj: tp0 ? 'Preenchido pelo tubo: C ' + esc(tp0.C) + ' (' + esc(tp0.fonteC) + '). Pode alterar, com a fonte.' : '' }) +
+    if (proj) h += '<div class="form">' + U.campo('C', 'Fator C de Hazen-Williams' + (alt ? ' <span class="fc-selo fc-selo--al">' + U.icone('triangle-alert', 'fc-ic') + 'alterado</span>' : ''), { ex: tp0 ? String(tp0.C) : '120', num: true, aj: tp0 ? 'Preenchido pelo tubo: C ' + esc(tp0.C) + ' (' + esc(tp0.fonteC) + '). Pode alterar, com a fonte.' : '' }) +
       U.escolha('tabelaLeq', 'Tabela de comprimento equivalente', Object.keys(D.leq).map(function (q) { return [q, D.leq[q].titulo]; }), { aj: 'Uma só tabela por projeto.' }) + '</div>';
-    return h + '<div class="linha-ac" style="margin-top:16px"><button class="bt pri" data-fechar="1">Fechar</button></div>';
+    return h + '</div><div class="fc-janela__pe"><button class="fc-bt fc-bt--pri" data-fechar="1">Fechar</button></div>';
   }
   U.dialogoTubo = function (k) {
     var d = document.getElementById('dlg'); if (k !== 'p') { k = +k; if (!S.F.trechos[k]) return; }
     d.dataset.modo = 'tubos'; d.setAttribute('aria-labelledby', 'dlg-tit'); d.innerHTML = corpoTubo(k);
-    d.onclick = function (ev) { if (ev.target.closest('[data-fechar]') || ev.target === d) d.close(); };
+    d.onclick = function (ev) { if (ev.target.closest('[data-fechar], [data-dlg-fechar]') || U.veu(ev, d)) d.close(); };
     d.oninput = null;
     d.onchange = function (ev) {
       var b = ev.target; if (d.dataset.modo !== 'tubos') return;
@@ -279,15 +283,15 @@
   /** 2.6.0: cartão do tubo padrão do projeto, com o desenho do tubo e uma informação por linha. O botão ocupa o cartão inteiro: o clique continua abrindo a troca do tubo, do fator C e da tabela. */
   U.barraTubo = function () {
     var F = S.F, tp = E.tipoTubo(D, F.tipoTubo), alt = E.cAlterado(F, D), mc = U.msg('C'), l = function (r, v) { return '<div><dt>' + r + '</dt><dd>' + v + '</dd></div>'; };
-    return '<section class="cartao bloco tubo-card" id="tubo-padrao" aria-labelledby="tubo-tit"><h2 class="t3" id="tubo-tit">Tubo padrão do projeto</h2><div class="tubo-corpo">' + FireSVG.tubo() + '<dl class="tubo-l">' +
-      l('Tubo', tp ? esc(tp.nome) : 'a definir') + l('Material', tp ? esc(tp.material) : '') + l('Junta', tp ? esc(tp.junta) : '') + l('Fator C', esc(F.C) + (alt ? ' <span class="pilula p-al">alterado</span>' : '')) + l('Comprimento equivalente', 'tabela ' + esc(F.tabelaLeq)) + '</dl></div>' +
-      (mc && mc.n !== 'alerta' ? '<div class="msg-er" style="max-width:none">Fator C: ' + esc(mc.msg) + '</div>' : '') +
-      '<button type="button" class="bt lig min tubo-troca" data-tubo="p" aria-haspopup="dialog" aria-label="Trocar o tubo, o fator C ou a tabela. Tubo padrão atual: ' + (tp ? esc(tp.nome) : 'a definir') + ', fator C ' + esc(F.C) + '">Trocar</button></section>';
+    return U.cartaoAbre('Tubo padrão do projeto', { tag: 'section', cls: 'tubo-card', id: 'tubo-padrao', attrs: 'aria-labelledby="tubo-tit"', tid: 'tubo-tit' }) + '<div class="tubo-corpo">' + FireSVG.tubo() + '<dl class="tubo-l">' +
+      l('Tubo', tp ? esc(tp.nome) : 'a definir') + l('Material', tp ? esc(tp.material) : '') + l('Junta', tp ? esc(tp.junta) : '') + l('Fator C', esc(F.C) + (alt ? ' <span class="fc-selo fc-selo--al">' + U.icone('triangle-alert', 'fc-ic') + 'alterado</span>' : '')) + l('Comprimento equivalente', 'tabela ' + esc(F.tabelaLeq)) + '</dl></div>' +
+      (mc && mc.n !== 'alerta' ? '<div class="fc-campo__erro" role="alert" style="max-width:none">' + U.icone('circle-x', 'fc-ic') + 'Fator C: ' + esc(mc.msg) + '</div>' : '') +
+      '<button type="button" class="fc-bt fc-bt--disc fc-bt--p tubo-troca" data-tubo="p" aria-haspopup="dialog" aria-label="Trocar o tubo, o fator C ou a tabela. Tubo padrão atual: ' + (tp ? esc(tp.nome) : 'a definir') + ', fator C ' + esc(F.C) + '">Trocar</button>' + U.cartaoFim(null, 'section');
   };
   U.dialogoPecas = function (i) {
     var d = document.getElementById('dlg'); if (!S.F.trechos[i]) return;
     d.dataset.modo = 'pecas'; d.setAttribute('aria-labelledby', 'dlg-tit'); d.innerHTML = corpoPecas(i);
-    d.onclick = function (ev) { if (ev.target.closest('[data-fechar]') || ev.target === d) d.close(); };
+    d.onclick = function (ev) { if (ev.target.closest('[data-fechar], [data-dlg-fechar]') || U.veu(ev, d)) d.close(); };
     d.onchange = function (ev) {
       var b = ev.target; if (d.dataset.modo !== 'pecas' || !b.dataset.pc) return;
       var t = S.F.trechos[i]; t.pecas = t.pecas || {}; if (b.checked) t.pecas[b.dataset.pc] = '1'; else delete t.pecas[b.dataset.pc];
@@ -359,7 +363,7 @@
   function halo(h) {
     var o = document.getElementById('foco-halo'); if (o) o.remove();
     if (!h || h.tagName !== 'path') return;
-    var n = document.createElementNS('http://www.w3.org/2000/svg', 'path'); n.setAttribute('id', 'foco-halo'); n.setAttribute('d', h.getAttribute('d')); n.setAttribute('fill', 'none'); n.setAttribute('stroke', 'var(--fc-foco-des)');
+    var n = document.createElementNS('http://www.w3.org/2000/svg', 'path'); n.setAttribute('id', 'foco-halo'); n.setAttribute('d', h.getAttribute('d')); n.setAttribute('fill', 'none'); n.setAttribute('stroke', 'var(--foco)');
     n.setAttribute('stroke-width', '9'); n.setAttribute('stroke-linejoin', 'round'); n.setAttribute('pointer-events', 'none'); h.ownerSVGElement.insertBefore(n, h.ownerSVGElement.firstChild);
   }
   document.addEventListener('focusin', function (ev) {

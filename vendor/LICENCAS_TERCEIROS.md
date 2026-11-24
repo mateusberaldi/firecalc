@@ -11,6 +11,7 @@ licença do seu autor; os textos completos estão nos repositórios de origem.
 | pako | nas duas | MIT e Zlib (`pako-LICENSE.txt` e `pako-zlib-README.txt`) | github.com/nodeca/pako |
 | ieee754 | `exceljs-4.4.0.min.js` | BSD-3-Clause | github.com/feross/ieee754 |
 | safe-buffer | `exceljs-4.4.0.min.js` | MIT | github.com/feross/safe-buffer |
+| Lucide 0.460.0 | sprite de ícones do HTML (`v2/ui/ds/icones`, copiados do design system) | ISC (`lucide-LICENSE.txt`) | github.com/lucide-icons/lucide |
 
 O `docx-9.8.1.min.js` foi minificado sem mudança de código e não traz o aviso de licença no próprio arquivo; o aviso
 está em `docx-LICENSE.txt`.
@@ -28,6 +29,7 @@ O `firecalc.html` traz, no bloco `licencas-terceiros` (script `text/plain`, sem 
 | pako, aviso zlib | não declarada | `pako-zlib-README.txt` | `lib/zlib/README` do pacote 1.0.11 instalado, copiado inteiro (traz o aviso da licença Zlib); versão inferida |
 | ieee754 | não declarada | `ieee754-LICENSE.txt` | pacote 1.2.1 instalado; versão inferida |
 | safe-buffer | não declarada | `safe-buffer-LICENSE.txt` | pacote 5.2.1 instalado; versão inferida |
+| Lucide | 0.460.0 (ícones do sprite) | `lucide-LICENSE.txt` | igual, byte a byte, ao `LICENCA_Lucide.txt` do design system; `ferramentas/sincroniza_ds.py --confere` confere a igualdade |
 
 O bundle do ExcelJS não declara a versão de pako, ieee754 nem safe-buffer; as versões acima são as instaladas com o exceljs 4.4.0, e o texto de licença não foi conferido contra a versão exata embutida.
 O JSZip é de licença dupla (MIT ou GPLv3): o arquivo guarda o texto inteiro e o bloco do HTML traz só o trecho MIT, que o FireCalc usa.

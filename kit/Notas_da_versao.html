@@ -1,8 +1,25 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><title>FireCalc 2.7.0: notas da versão</title>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>FireCalc 2.8.0: notas da versão</title>
 <style>@page { size: A4; margin: 10mm 13mm; } body { font-family: "Segoe UI", Arial, sans-serif; font-size: 8.6pt; line-height: 1.3; color: #0A0A0A; margin: 0; } h1 { font-size: 15pt; margin: 0 0 1mm; color: #A84300; } h2 { font-size: 10pt; margin: 3mm 0 1mm; color: #A84300; border-bottom: 0.3mm solid #B84A00; padding-bottom: 0.4mm; } p { margin: 0 0 1.2mm; } ul { margin: 0 0 1mm; padding-left: 4.5mm; } li { margin-bottom: 0.6mm; }</style></head><body>
-<h1>FireCalc 2.7.0: notas da versão</h1>
-<p>23/11/2026. Sobre a 2.6.4. Software livre sob a AGPL-3.0; código-fonte em github.com/mateusberaldi/firecalc.</p>
+<h1>FireCalc 2.8.0: notas da versão</h1>
+<p>23/11/2026. Sobre a 2.7.0. Software livre sob a AGPL-3.0; código-fonte em github.com/mateusberaldi/firecalc.</p>
+<h2>Também na 2.8.0: pressostato, jockey e esguichos (FC-073, FC-074 e FC-075)</h2>
+<ul>
+<li><strong>Escala de acionamento dos pressostatos (FC-073):</strong> no cartão Pressostatos, da etapa Bomba e automação, o projetista pode adotar outro diferencial de acionamento (de 1 a 20 mca) no lugar dos cerca de 10 mca que a IT 22 recomenda; o campo mostra "Norma: 10 mca" e tem Restaurar. Com a escala adotada, a escada de pressões, a planilha, o memorial e a verificação V17 passam a usar o valor adotado e a dizê-lo. A V17 só fica "aceito pelo projetista" quando a escada cabe e o fundo de escala do pressostato está informado e dentro dos 70%; sem o fundo informado ela segue em ALERTA, que cita a escala adotada. Quando a escada não cabe, o aviso traz "Alterar escala" e "Trocar bomba".</li>
+<li><strong>Pressurização: saídas e escolha da bomba (FC-074):</strong> o número de saídas do sistema passa a ser o de hidrantes lançados na Rede, sem campo à parte; arquivos antigos que gravaram esse campo abrem normalmente e usam os hidrantes da Rede. Qualquer bomba cadastrada (catálogo e biblioteca do usuário) pode ser escolhida como bomba de pressurização, além das sugeridas. A V15 passa a dar ERRO "a bomba não alcança a altura de partida" quando a bomba escolhida não chega à altura de partida, no lugar de uma vazão negativa.</li>
+<li><strong>Números do cálculo:</strong> nenhum muda com o diferencial da norma. Mudam só a V14 (de "7 saídas" para "5 saídas", de OK para INFO) nos dois exemplos de escritórios, cujo arquivo trazia 7 saídas com 5 hidrantes lançados, e o resultado de quem adotar outra escala. Por desenho, arquivo antigo cujo campo "saidas" era maior que os hidrantes lançados (por exemplo 8 saídas e 5 hidrantes, em SP, sem jockey) passa de ERRO a INFO na V14, sem aviso: vale o que está na Rede.</li>
+</ul>
+<h2>O que muda na 2.8.0</h2>
+<ul>
+<li><strong>Identidade visual nova (FC-042):</strong> o programa passa a seguir um design system único, com cores, fontes, espaçamentos e peças próprios (botões, cartões, tabelas, janelas, avisos, seletores, indicadores), nos temas claro e escuro e sem nenhum arquivo externo. As regras visuais antigas saíram.</li>
+<li><strong>Estrutura nova da tela:</strong> menu lateral com as oito etapas, barra superior, painel de resumo e rodapé de etapa com um único botão principal por tela. A busca rápida, as janelas e as confirmações usam as mesmas peças.</li>
+<li><strong>Responsivo em três larguras:</strong> amplo, médio e móvel (abaixo de 1024 px, com o menu em gaveta). A página não rola de lado e nenhum texto fica cortado nas larguras de 390 a 1440 px; só tabelas largas rolam dentro do próprio cartão.</li>
+<li><strong>Telas refeitas:</strong> Início, as oito etapas, Estatísticas, Cadastros, Configurações, Ajuda e Sobre. Verificações com o que fazer em cada item; Relatório com as três saídas (planilha, memorial e projeto) em destaque; listas de bombas com o botão de escolher sempre à vista, com potência, altura e shut-off sob o modelo em tela estreita.</li>
+<li><strong>Janelas com botão de fechar no cabeçalho</strong> (além do Fechar no pé, do Esc e do clique fora).</li>
+<li><strong>Acessibilidade:</strong> foco visível de 3 px nos desenhos, alvos de 36 px, rótulos de leitor de tela nas tabelas e nos controles, foco devolvido ao controle de tema e de modo depois de trocar.</li>
+<li><strong>Números do cálculo:</strong> nenhum muda. As 12 amostras de projetos, os números dos exemplos e as verificações saem iguais aos da 2.7.0; mudou só a forma de mostrar (por exemplo, o nome e o código de cada verificação ficam separados, e o Relatório traz um título em cada saída).</li>
+<li><strong>Alcance do esguicho pelas curvas do catálogo (FC-075):</strong> o esguicho da Mecânica Reunida com gráficos no catálogo passa a mostrar o alcance lido na curva quando a pressão de entrada fica fora da tabela de ensaio e dentro do gráfico (CAC 1 1/2" a 30 mca: cerca de 8 a 10 m, onde dizia fora da tabela), com a incerteza da leitura (±). Dentro da tabela vale a tabela; fora do gráfico continua fora da tabela, com a faixa. Muda só o alcance e a verificação V28 dos casos; a vazão e a pressão do cálculo não mudam.</li>
+</ul>
 <h2>O que muda na 2.7.0</h2>
 <ul>
 <li><strong>Nível normal ou tomada de consumo abaixo do nível X (FC-019):</strong> com a bomba num reservatório inferior e esse dado inválido, a tela passa a dar o mesmo estado de sucção do motor (negativa se o eixo está acima de X, afogada se não), junto com o alerta que já aparecia; o motor não muda.</li>

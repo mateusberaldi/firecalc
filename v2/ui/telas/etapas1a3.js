@@ -10,13 +10,13 @@
 
   U.telas[U.POS.ident] = function () {
     return U.cab(U.POS.ident, 'Identificação', '') +
-      '<div class="cartao bloco"><h2 class="t3">Obra</h2><div class="form">' + U.campo('ident.obra', 'Nome da obra', { ex: 'Edifício Aurora', larga: true }) +
+      U.cartao('Obra', '<div class="fc-form">' + U.campo('ident.obra', 'Nome da obra', { ex: 'Edifício Aurora', larga: true, uma: true }) +
       U.escolha('norma', 'Norma do projeto', [['SP', 'São Paulo, IT 22/2025'], ['PR', 'Paraná, NPT 022']], { vazio: 'Escolha a norma', aj: 'Define a tabela de tipos, as pressões e as verificações.' }) +
-      U.campo('ident.endereco', 'Endereço', { ex: 'Rua das Flores, 100' }) + U.campo('ident.municipio', 'Município', { ex: 'Pato Branco' }) + U.campo('ident.uf', 'UF', { ex: 'PR' }) + '</div></div>' +
-      '<div class="cartao bloco"><h2 class="t3">Condições do local</h2><div class="form">' + U.campoAjuda('ambiente.altitude', 'Altitude do município', { un: 'm', num: true, ex: '700' }, 'altitude') + U.campoAjuda('ambiente.temperatura', 'Temperatura da água', { un: '°C', num: true, ex: '20' }, 'temperatura') + '</div></div>' +
-      '<div class="cartao bloco"><h2 class="t3">Responsável técnico e escritório</h2><p class="peq">Não bloqueiam o cálculo. Se ficarem em branco, a etapa Relatório avisa.</p><div class="form">' +
+      U.campo('ident.endereco', 'Endereço', { ex: 'Rua das Flores, 100' }) + U.campo('ident.municipio', 'Município', { ex: 'Pato Branco' }) + U.campo('ident.uf', 'UF', { ex: 'PR' }) + '</div>') +
+      U.cartao('Condições do local', '<div class="fc-form">' + U.campoAjuda('ambiente.altitude', 'Altitude do município', { un: 'm', num: true, ex: '700' }, 'altitude') + U.campoAjuda('ambiente.temperatura', 'Temperatura da água', { un: '°C', num: true, ex: '20' }, 'temperatura') + '</div>') +
+      U.cartao('Responsável técnico e escritório', '<p class="peq" style="margin-bottom:12px">Não bloqueiam o cálculo. Se ficarem em branco, a etapa Relatório avisa.</p><div class="fc-form">' +
       U.campo('ident.rt', 'Responsável técnico', { ex: 'Nome completo' }) + U.campo('ident.registro', 'CREA ou CAU', { ex: 'CREA-PR 000000/D' }) + U.campo('ident.art', 'ART ou RRT', { ex: 'número do documento' }) +
-      U.campo('ident.escritorio', 'Razão social do escritório', { ex: 'Estúdio BIM Engenharia' }) + U.campo('ident.cnpj', 'CNPJ', { ex: '00.000.000/0001-00' }) + '</div></div>';
+      U.campo('ident.escritorio', 'Razão social do escritório', { ex: 'Estúdio BIM Engenharia' }) + U.campo('ident.cnpj', 'CNPJ', { ex: '00.000.000/0001-00' }) + '</div>');
   };
 
   /* Uma solução da tabela da norma (uma coluna), com os parâmetros que ela traz para a área informada. */
@@ -34,12 +34,12 @@
    *  o = {tag, atual, attr (atributos de dados), selo (texto curto ao lado do nome)} */
   function botaoSist(t, cl, o) {
     var N = U.norma(), tag = o.tag || 'button', rp = cl ? rtiDe(t) : null, nadm = !!(rp && rp.inferior && !rp.admitido), nome = (t.mangueira <= 25 ? 'Mangotinho' : 'Hidrante') + ', sistema tipo ' + t.id;
-    return '<' + tag + (tag === 'button' ? ' type="button"' : '') + ' class="opcao sbt' + (o.atual ? ' at' : '') + '"' + (tag === 'button' ? ' aria-pressed="' + !!o.atual + '"' : '') + (o.attr || '') + '>' + FireSVG.sistema(t) +
-      '<span class="sb-tx"><span class="ot">' + (o.atual ? U.IC.ok : '') + esc(nome) + (o.selo ? '<span class="selo">' + esc(o.selo) + '</span>' : '') + '</span>' +
-      '<span class="opl"><span>Vazão por jato</span> <b>' + fmt(t.Q, 0) + ' L/min</b></span>' +
-      '<span class="opl"><span>Pressão mínima ' + (N.pressaoNo === 'valvula' ? 'na válvula' : 'na ponta do esguicho') + '</span> <b>' + fmt(t.P, 0) + ' mca</b></span>' +
-      '<span class="opl"><span>Mangueira</span> <b>' + t.mangueira + ' mm</b></span>' +
-      '<span class="opl"><span>Reserva de incêndio</span> <b>' + (!cl ? 'informe a área' : nadm ? 'não admitido' : fmt((rp || cl).rti, 0) + ' m³') + '</b></span></span></' + tag + '>';
+    return '<' + tag + (tag === 'button' ? ' type="button"' : '') + ' class="fc-opcao fc-opcao--sist"' + (tag === 'button' ? ' aria-pressed="' + !!o.atual + '"' : (o.atual ? ' data-atual="true"' : '')) + (o.attr || '') + '><span class="fc-opcao__des">' + FireSVG.sistema(t) + '</span><span class="fc-opcao__marca"></span>' +
+      '<span class="fc-opcao__tx"><b>' + esc(nome) + (o.selo ? ' <span class="fc-selo fc-selo--' + (o.selo === 'Inferior' ? 'al' : 'in') + '">' + (o.selo === 'Inferior' ? U.icone('triangle-alert', 'fc-ic') : U.icone('info', 'fc-ic')) + esc(o.selo) + '</span>' : '') + '</b>' +
+      '<span class="fc-opcao__linha"><span>Vazão por jato</span> <b>' + fmt(t.Q, 0) + ' L/min</b></span>' +
+      '<span class="fc-opcao__linha"><span>Pressão mínima ' + (N.pressaoNo === 'valvula' ? 'na válvula' : 'na ponta do esguicho') + '</span> <b>' + fmt(t.P, 0) + ' mca</b></span>' +
+      '<span class="fc-opcao__linha"><span>Mangueira</span> <b>' + t.mangueira + ' mm</b></span>' +
+      '<span class="fc-opcao__linha"><span>Reserva de incêndio</span> <b>' + (!cl ? 'informe a área' : nadm ? 'não admitido' : fmt((rp || cl).rti, 0) + ' m³') + '</b></span></span></' + tag + '>';
   }
   /** Tipo da tabela para a coluna e a área do projeto (ou nulo). */
   function tipoTabela() {
@@ -51,17 +51,17 @@
   /** Corpo do aviso de confirmação do tipo. */
   U.corpoConfirmaTipo = function () {
     var to = U.tipoObj(), tt = tipoTabela(); if (!to) return '';
-    return '<div class="opcoes sist">' + botaoSist(to, tt.cl, { tag: 'div', atual: true }) + '</div><p style="margin-top:12px">Confirma este sistema para o projeto?</p>';
+    return '<div class="fc-opcoes fc-opcoes--sist">' + botaoSist(to, tt.cl, { tag: 'div', atual: true }) + '</div><p style="margin-top:12px">Confirma este sistema para o projeto?</p>';
   };
   /** 2.6.0: menu "Alterar sistema": qualquer tipo da norma, mesmo fora do que a divisão prevê. O tipo inferior ao da tabela é aceito e
    *  não atende na verificação V30. */
   function corpoSistema() {
-    var F = S.F, N = U.norma(), tt = tipoTabela(), to = U.tipoObj(), h = '<h2 id="dlg-tit" style="margin-bottom:12px">Alterar sistema</h2><div class="opcoes sist">';
+    var F = S.F, N = U.norma(), tt = tipoTabela(), to = U.tipoObj(), h = '<h2 id="dlg-tit" style="margin-bottom:12px">Alterar sistema</h2><div class="fc-opcoes fc-opcoes--sist">';
     N.tipos.forEach(function (t) {
       var rpt = rtiDe(t), selo = tt.id ? (t.id === tt.id || (rpt && rpt.admitido) ? 'Tabela' : posTipo(t.id) > posTipo(tt.id) ? 'Superior' : 'Inferior') : '';
       h += botaoSist(t, tt.cl, { atual: !!to && to.id === t.id, selo: selo, attr: ' data-sistipo="' + esc(t.id) + '"' });
     });
-    return h + '</div><div class="linha-ac" style="margin-top:16px">' + (F.sistema.tipoManual ? '<button type="button" class="bt" data-sistabela="1">Voltar ao que a tabela indica</button>' : '') + '<button type="button" class="bt pri" data-fechar="1">Fechar</button></div>';
+    return h + '</div><div class="linha-ac" style="margin-top:16px">' + (F.sistema.tipoManual ? '<button type="button" class="fc-bt" data-sistabela="1">Voltar ao que a tabela indica</button>' : '') + '<button type="button" class="fc-bt fc-bt--pri" data-fechar="1">Fechar</button></div>';
   }
   U.dialogoSistema = function () {
     var d = document.getElementById('dlg'), F = S.F; if (!U.norma()) return;
@@ -70,7 +70,7 @@
       var b = ev.target.closest('[data-sistipo]'), tt = tipoTabela();
       if (b) { F.sistema.tipoManual = tt.id && b.dataset.sistipo === tt.id ? '' : b.dataset.sistipo; F.conf.tipo = false; U.mudou(); d.close(); return; }
       if (ev.target.closest('[data-sistabela]')) { F.sistema.tipoManual = ''; F.conf.tipo = false; U.mudou(); d.close(); return; }
-      if (ev.target.closest('[data-fechar]') || ev.target === d) d.close();
+      if (ev.target.closest('[data-fechar]') || U.veu(ev, d)) d.close();
     };
     d.onclose = function () { d.dataset.modo = ''; var bt = document.querySelector('[data-acao="alterar"]'); if (bt) bt.focus(); };
     if (!d.open) d.showModal();
@@ -83,38 +83,38 @@
     var F = S.F, V = U.V, x = M.exigenciaHidranteSP(D, F.sistema.divisao, V.num(F.sistema.area), V.num(F.sistema.altura), V.num(F.sistema.carga));
     if (!x) return '';
     var corpo = x.estado === 'falta' ? '<p class="peq" id="enq-res">' + esc(x.msg) + '</p>' : U.aviso(x.estado === 'verifique' ? 'al' : 'in', '<span id="enq-res" data-estado="' + x.estado + '">' + esc(x.msg) + '</span>') + (x.ressalva ? '<p class="peq" id="enq-ress">' + esc(x.ressalva) + '</p>' : '');
-    return '<div class="cartao bloco" id="cartao-enquadramento"><h2 class="t3">Enquadramento</h2>' + corpo + '</div>';
+    return U.cartao('Enquadramento', corpo, { id: 'cartao-enquadramento' });
   }
   U.telas[U.POS.edif] = function () {
     var F = S.F, N = U.norma(), h = U.cab(U.POS.edif, 'Edificação e sistema', '');
-    if (!N) return h + U.aviso('in', 'Escolha a norma na etapa Identificação para ver a classificação. <button class="bt lig min" data-corrigir="norma">Ir para a norma</button>');
+    if (!N) return h + U.aviso('in', 'Escolha a norma na etapa Identificação para ver a classificação. <button class="fc-bt fc-bt--disc fc-bt--p" data-corrigir="norma">Ir para a norma</button>');
     var g = S.sit.ctx.sugestao, cols = COLS[F.norma], tab = F.norma === 'SP' ? 'IT 22, Tabela 3' : 'NPT 022, Tabela 4', sp = F.norma === 'SP', pedeCarga = S.sit.ctx.precisaCarga || !U.V.vazio(F.sistema.carga) || (sp && F.sistema.divisao === 'J-2');   /* 2.7.0 (FC-041): J-2 em SP também pede a carga (opcional) */
     var tt = tipoTabela(), area = tt.area, cl = tt.cl, tabT = tt.id, to = U.tipoObj(), man = !!F.sistema.tipoManual, rel = man && tabT ? posTipo(F.sistema.tipoManual) - posTipo(tabT) : 0, rpm = man && to ? rtiDe(to) : null; if (rel < 0 && rpm && rpm.admitido) rel = 0;
-    h += '<div class="cartao bloco"><h2 class="t3">Dados da edificação</h2><div class="form dados-ed' + (sp && pedeCarga ? ' c4' : sp || pedeCarga ? ' c3' : '') + '">' +
+    h += U.cartaoAbre('Dados da edificação') + '<div class="fc-form dados-ed' + (sp && pedeCarga ? ' c4' : sp || pedeCarga ? ' c3' : '') + '">' +
       U.escolha('sistema.divisao', 'Divisão de ocupação', D.ocupacao.divisoes.map(function (d) { return [d.div, d.div + ', ' + d.desc]; }), { vazio: 'Escolha a divisão', cls: 'destaque' }) +
       U.campo('sistema.area', 'Área da edificação', { un: 'm²', ex: '1000', num: true, cls: 'destaque' }) +
       (sp ? U.campo('sistema.altura', 'Altura da edificação', { un: 'm', ex: '9', num: true, cls: 'destaque' }) : '') +
-      (pedeCarga ? U.campo('sistema.carga', 'Carga de incêndio', { un: 'MJ/m²', ex: '700', num: true, cls: 'destaque' }) : '') + '</div></div>';
+      (pedeCarga ? U.campo('sistema.carga', 'Carga de incêndio', { un: 'MJ/m²', ex: '700', num: true, cls: 'destaque' }) : '') + '</div>' + U.cartaoFim();
     if (sp && F.sistema.divisao) h += cartaoEnquadramento();
-    h += '<div class="cartao bloco" id="cartao-sistema"><div class="cab-ac"><h2 class="t3">Sistema</h2><button type="button" class="bt alt" data-acao="alterar" aria-haspopup="dialog">Alterar sistema</button></div>';
+    h += U.cartaoAbre('Sistema', { id: 'cartao-sistema', extra: '<button type="button" class="fc-bt fc-bt--p" data-acao="alterar" aria-haspopup="dialog">Alterar sistema</button>' });
     if (F.sistema.colManual && F.sistema.coluna) {   // projeto de versão anterior com o enquadramento trocado à mão
-      h += U.aviso('al', 'Enquadramento trocado à mão: <b>' + esc(cols[F.sistema.coluna] || F.sistema.coluna) + '</b> da ' + tab + (g && g.colunas ? ', no lugar de ' + g.colunas.map(function (k) { return cols[k] || k; }).join(' ou ') + ', que é o que a tabela indica para ' + esc(F.sistema.divisao) : '') + '. Justifique no memorial. <button class="bt lig min" data-acao="colauto">Voltar ao que a tabela indica</button>');
+      h += U.aviso('al', 'Enquadramento trocado à mão: <b>' + esc(cols[F.sistema.coluna] || F.sistema.coluna) + '</b> da ' + tab + (g && g.colunas ? ', no lugar de ' + g.colunas.map(function (k) { return cols[k] || k; }).join(' ou ') + ', que é o que a tabela indica para ' + esc(F.sistema.divisao) : '') + '. Justifique no memorial. <button class="fc-bt fc-bt--disc fc-bt--p" data-acao="colauto">Voltar ao que a tabela indica</button>');
     } else if (!F.sistema.divisao) h += '<p class="peq">Escolha a divisão de ocupação. O sistema indicado pela tabela aparece aqui.</p>';
     else if (!g || !g.colunas) h += U.aviso('al', esc(g ? g.msg : 'A tabela não traz esta divisão.') + (g && g.fonte ? ' <span class="peq">Fonte: ' + esc(g.fonte) + '.</span>' : ''));
     else if (!(area > 0)) h += '<p class="peq">Informe a área da edificação para ver o tipo de sistema e a reserva de incêndio.</p>';
     else if (g.colunas.length === 1) {
       var s1 = solucao(g.colunas[0], area);
-      h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b>' + (g.precisaCarga ? ', com carga de incêndio ' + esc(g.faixa) + ',' : '') + ' a tabela indica:</p>' + (s1.t ? '<div class="opcoes sist">' + botaoSist(s1.t, s1.cl, { tag: 'div', atual: true }) + '</div>' : '');
+      h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b>' + (g.precisaCarga ? ', com carga de incêndio ' + esc(g.faixa) + ',' : '') + ' a tabela indica:</p>' + (s1.t ? '<div class="fc-opcoes fc-opcoes--sist">' + botaoSist(s1.t, s1.cl, { tag: 'div', atual: true }) + '</div>' : '');
     } else {
-      h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b> a norma aceita duas soluções. Escolha a que o projeto vai usar:</p><div class="opcoes sist">' + g.colunas.map(function (k) {
+      h += '<p>Para <b>' + esc(F.sistema.divisao) + '</b> a norma aceita duas soluções. Escolha a que o projeto vai usar:</p><div class="fc-opcoes fc-opcoes--sist">' + g.colunas.map(function (k) {
         var s = solucao(k, area); return s.t ? botaoSist(s.t, s.cl, { atual: F.sistema.coluna === k && !man, attr: ' data-acao="coluna" data-v="' + esc(k) + '"' }) : ''; }).join('') + '</div>' +
-        (F.sistema.coluna ? '' : (U.msg('sistema.coluna') ? '<div class="msg-er" id="' + U.idDe('sistema.coluna') + '-m">' + esc(U.msg('sistema.coluna').msg) + '</div>' : ''));
+        (F.sistema.coluna ? '' : (U.msg('sistema.coluna') ? '<div class="fc-campo__erro" role="alert" id="' + U.idDe('sistema.coluna') + '-m">' + U.icone('circle-x', 'fc-ic') + esc(U.msg('sistema.coluna').msg) + '</div>' : ''));
     }
     if (man && to) {
-      h += U.aviso(rel < 0 ? 'er' : 'al', 'Tipo alterado: adotado o tipo ' + esc(F.sistema.tipoManual) + (tabT ? (rel === 0 ? ', que a tabela também admite para a divisão' : ', ' + (rel < 0 ? 'inferior' : 'superior') + ' ao tipo ' + esc(tabT) + ' da tabela') : '') + '.' + (rel < 0 ? ' A verificação do tipo de sistema não atende.' : '') + ' <button type="button" class="bt lig min" data-acao="tipotabela">Voltar ao que a tabela indica</button>');
-      h += '<div class="opcoes sist">' + botaoSist(to, cl, { tag: 'div', atual: true }) + '</div>';
+      h += U.aviso(rel < 0 ? 'er' : 'al', 'Tipo alterado: adotado o tipo ' + esc(F.sistema.tipoManual) + (tabT ? (rel === 0 ? ', que a tabela também admite para a divisão' : ', ' + (rel < 0 ? 'inferior' : 'superior') + ' ao tipo ' + esc(tabT) + ' da tabela') : '') + '.' + (rel < 0 ? ' A verificação do tipo de sistema não atende.' : '') + ' <button type="button" class="fc-bt fc-bt--disc fc-bt--p" data-acao="tipotabela">Voltar ao que a tabela indica</button>');
+      h += '<div class="fc-opcoes fc-opcoes--sist">' + botaoSist(to, cl, { tag: 'div', atual: true }) + '</div>';
     }
-    if (F.norma === 'SP' && cl && (cl.tipo === '4' || cl.tipo === '4-40') && !man) h += '<div class="form">' + U.escolha('sistema.esg4', 'Esguicho do tipo 4', [['40', '40 mm (300 L/min, 65 mca)'], ['65', '65 mm (300 L/min, 30 mca)']], {}) + '</div>';
-    return h + '</div>';
+    if (F.norma === 'SP' && cl && (cl.tipo === '4' || cl.tipo === '4-40') && !man) h += '<div class="fc-form" style="margin-top:12px">' + U.escolha('sistema.esg4', 'Esguicho do tipo 4', [['40', '40 mm (300 L/min, 65 mca)'], ['65', '65 mm (300 L/min, 30 mca)']], {}) + '</div>';
+    return h + U.cartaoFim();
   };
 })();

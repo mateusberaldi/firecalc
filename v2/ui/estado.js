@@ -8,6 +8,8 @@
 })(typeof self !== 'undefined' ? self : this, function (V, CAD) {
   'use strict';
   var num = V.num, vazio = V.vazio;
+  /** FC-073: diferencial de acionamento dos pressostatos aceito no cálculo: número de 1 a 20 mca (a norma recomenda cerca de 10). */
+  function pressDifValido(s) { var v = vazio(s) ? NaN : num(s); return !isNaN(v) && v >= 1 && v <= 20; }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function txt(v) { if (v === undefined || v === null || v === '') return ''; if (typeof v === 'number' && isFinite(v) && Math.abs(v) < 1e15) v = +v.toFixed(10); return String(v).replace('.', ','); }   /* FC-006: 10 casas, sem zeros à direita */
   function txtMapa(m) { var o = {}; Object.keys(m || {}).forEach(function (k) { o[k] = String(m[k]); }); return o; }
@@ -20,7 +22,7 @@
       sistema: { divisao: '', area: '', altura: '', carga: '', coluna: '', tipoManual: '', esg4: '40' }, conf: { coluna: false, tipo: false, lista: false },
       trechos: [], nos: {}, hidrantes: [], cotasExtras: [],
       fonte: fonteNova(), ambiente: { altitude: '', temperatura: '' },
-      bomba: { id: '', npshr: '', npshQ: '1' }, conferidos: {}, jockey: { id: '' }, saidas: '', recalque: { ativo: false, no: '', tipo: '', z: '', dn: 65, L: '' },
+      bomba: { id: '', npshr: '', npshQ: '1' }, conferidos: {}, jockey: { id: '' }, pressostatoDif: '', recalque: { ativo: false, no: '', tipo: '', z: '', dn: 65, L: '' },
       retorno: { ativo: false, zDescarga: '', trechos: [{ dn: 65, L: '', C: '', pecas: {} }] }, retornoTeste: false, parForcado: '', bombasUsuario: [], mangueirasUsuario: {}, lanc: lancNovo() };
   }
   /* Dados do esguicho e da mangueira (2.2): texto dos campos, fonte de cada valor alterado (fQ, fP...) e os valores oficiais da última sincronização (of). */
@@ -112,7 +114,8 @@
     if (p.bomba) F.bomba = { id: p.bomba.id || '', npshr: txt(p.bomba.npshr), npshQ: p.bomba.npshQ === 1.5 ? '1.5' : '1' };
     F.conferidos = p.conferidos && typeof p.conferidos === 'object' ? clone(p.conferidos) : {};   /* 2.5.4 */
     if (p.jockey) F.jockey = { id: p.jockey.id || '' };
-    F.saidas = txt(p.saidas);
+    F.pressostatoDif = txt(p.pressostatoDif);   /* FC-073: diferencial de acionamento adotado pelo projetista; vazio vale o da norma */
+    /* FC-074: arquivo anterior gravava o número de saídas à mão (p.saidas); agora as saídas são os hidrantes lançados na Rede, e o campo antigo é ignorado ao abrir (sem aviso de migração: os números do cálculo não mudam) */
     if (p.recalque) F.recalque = { ativo: p.recalque.ativo !== false, no: p.recalque.no || '', tipo: p.recalque.tipo || '', z: txt(p.recalque.z), dn: p.recalque.dn || 65, L: txt(p.recalque.L) };
     if (p.recalque && !p.recalque.no && (p.recalque.z !== undefined || p.recalque.L !== undefined)) mig.push('O recalque deste arquivo foi lançado à parte (cota, diâmetro e comprimento). Ele continua valendo; para escolher o recalque entre os pontos da rede, lance o ramo dele na etapa Rede.');   /* 2.3: pecas, descontaTronco e C de arquivos antigos são ignorados (o recalque não se calcula) */
     if (p.retorno && p.retorno.trechos) F.retorno = { ativo: true, zDescarga: txt(p.retorno.zDescarga), trechos: p.retorno.trechos.map(function (t) { return { dn: t.dn, L: txt(t.L), C: txt(t.C), pecas: txtMapa(t.pecas) }; }) };
@@ -140,7 +143,7 @@
   }
   function contexto(F, D, M) {
     var g = F.norma && F.sistema.divisao ? M.sugereColuna(D, F.norma, F.sistema.divisao, vazio(F.sistema.carga) ? undefined : num(F.sistema.carga)) : null;
-    var sd = vazio(F.saidas) ? F.hidrantes.length : parseInt(F.saidas, 10);
+    var sd = F.hidrantes.length;   /* FC-074: as saídas são os hidrantes lançados na Rede */
     return { sugestao: g, precisaCarga: !!(g && g.precisaCarga), jockeyExigida: F.norma === 'SP' && F.fonte.modo === 'bomba' && sd > 6 && !F.fonte.elevado,
       altitudes: D.ambiente.atm.alt, temperaturas: D.ambiente.vapor.T, lancAlt: function (k) { return lancAlterado(F, k); },
       npshCurva: (function () { var b = (D.bombas || []).filter(function (x) { return x.id === F.bomba.id; })[0]; return !!(b && b.npsh && b.npsh.length >= 2); })(),   /* 2.5.4 */
@@ -204,14 +207,15 @@
     P.ambiente = {}; poe(P.ambiente, 'altitude', n(F.ambiente.altitude)); poe(P.ambiente, 'temperatura', n(F.ambiente.temperatura));
     if (F.bomba.id && F.fonte.modo !== 'gravidade') { P.bomba = Object.assign({}, P.bomba && P.bomba.id === F.bomba.id ? P.bomba : {}, { id: F.bomba.id }); poe(P.bomba, 'npshr', n(F.bomba.npshr) > 0 ? n(F.bomba.npshr) : undefined); if (F.bomba.npshQ === '1.5') P.bomba.npshQ = 1.5; else delete P.bomba.npshQ; }   /* 2.5.4: zero ou negativo não vai para o cálculo (o campo pede conferência); vazão da comparação do NPSH escolhida pelo projetista */ else delete P.bomba;
     if (F.jockey.id) P.jockey = Object.assign({}, P.jockey && P.jockey.id === F.jockey.id ? P.jockey : {}, { id: F.jockey.id }); else delete P.jockey;
-    poe(P, 'saidas', vazio(F.saidas) ? undefined : parseInt(F.saidas, 10));
+    delete P.saidas;   /* FC-074: o número de saídas vem dos hidrantes da Rede; arquivo antigo que o gravava não o devolve ao motor */
+    poe(P, 'pressostatoDif', pressDifValido(F.pressostatoDif) ? n(F.pressostatoDif) : undefined);   /* FC-073: valor fora de 1 a 20 mca não vai ao cálculo (o campo pede conferência); vazio vale o da norma */
     var rc = F.recalque.ativo && F.recalque.no ? V.ramoRecalque(F, F.recalque.no) : null;   // 2.5.0: dados puxados do ramo escolhido na rede
     if (rc && (tolerante || (rc.ok && rc.L > 0 && n(rc.z) !== undefined))) { P.recalque = { no: F.recalque.no }; if (rc.ok) { P.recalque.dn = rc.dn; poe(P.recalque, 'z', n(rc.z)); poe(P.recalque, 'L', rc.L > 0 ? Math.round(rc.L * 100) / 100 : undefined); } if (F.recalque.tipo) P.recalque.tipo = F.recalque.tipo; }
     else if (F.recalque.ativo && !F.recalque.no && (tolerante || (n(F.recalque.L) > 0 && n(F.recalque.z) !== undefined))) { P.recalque = { dn: F.recalque.dn }; if (F.recalque.tipo) P.recalque.tipo = F.recalque.tipo; poe(P.recalque, 'z', n(F.recalque.z)); poe(P.recalque, 'L', n(F.recalque.L)); } else delete P.recalque;
     if (F.norma === 'PR' && F.retorno.ativo && (tolerante || (n(F.retorno.zDescarga) !== undefined && F.retorno.trechos.every(function (t) { return n(t.L) > 0; })))) { P.retorno = { trechos: F.retorno.trechos.map(function (t) { var o = { dn: t.dn, pecas: numMapa(t.pecas) }, ft = tolerante ? null : tuboDoTipo(D, F.tipoTubo, t.dn); if (ft) o.tubo = { norma: ft.norma, classe: ft.classe }; poe(o, 'L', n(t.L)); poe(o, 'C', n(t.C)); return o; }) }; poe(P.retorno, 'zDescarga', n(F.retorno.zDescarga)); } else delete P.retorno;
     if (F.norma === 'PR' && (F.retornoTeste || P.retorno)) P.retornoTeste = true; else delete P.retornoTeste;
     poe(P, 'parForcado', F.parForcado || undefined);
-    if (tolerante) { P.identificacao = clone(F.ident); P.confirmacoes = clone(F.conf); delete P.origemRede; P.versaoFireCalc = '2.7.0'; if (F.conferidos && Object.keys(F.conferidos).length) P.conferidos = clone(F.conferidos); else delete P.conferidos; }
+    if (tolerante) { P.identificacao = clone(F.ident); P.confirmacoes = clone(F.conf); delete P.origemRede; P.versaoFireCalc = '2.8.0'; if (F.conferidos && Object.keys(F.conferidos).length) P.conferidos = clone(F.conferidos); else delete P.conferidos; }
     else { delete P.identificacao; delete P.confirmacoes; delete P.origemRede; delete P.versaoFireCalc; delete P.conferidos; }
     return P;
   }
@@ -369,6 +373,8 @@
   function migraF(F, D) {
     if (!F.tipoTubo || !tipoTubo(D, F.tipoTubo)) F.tipoTubo = (D.tipoTuboAntigo || {})[F.tubo.norma + '|' + F.tubo.classe] || 'HID_Galvanizado_Classe_Leve_Roscado_BSP';
     if (F.Cfonte === undefined) F.Cfonte = '';
+    if (F.pressostatoDif === undefined) F.pressostatoDif = '';   /* FC-073: cópia guardada no navegador antes do campo */
+    delete F.saidas;   /* FC-074 */
     F.trechos.forEach(function (t) { if (t.tipo === undefined) t.tipo = ''; });
     if (F.recalque && F.recalque.no === undefined) F.recalque.no = '';
     if (F.fonte.xModo !== 'calc') throw new Error(SEM_GEOMETRIA);   /* cópia guardada no navegador por versão anterior, sem a geometria (FC-048) */

@@ -228,6 +228,25 @@
     if (Q < s[0].Q) return Math.pow(Q / (s[0].Q / Math.sqrt(s[0].P)), 2);
     return interp(s.map(function (p) { return p.Q; }), s.map(function (p) { return p.P; }), Q);
   }
+  /** FC-075: curvas do catálogo (D.esguichoCurvas[modelo].posicoes.jato): pressão de entrada (mca) x vazão, x pressão de saída e x alcance, lidas dos gráficos
+   *  vetoriais do fabricante. A tabela de ensaio continua valendo onde existe; a curva de alcance responde abaixo e acima dela. Nunca extrapola: fora do gráfico não há leitura.
+   *  A vazão no esguicho segue pela tabela como antes (a curva de vazão fica guardada nos dados, sem uso no cálculo: ver a FC-076). */
+  function curvaJato(D, modelo) { var c = D.esguichoCurvas && D.esguichoCurvas[modelo]; return c && c.posicoes && c.posicoes.jato && c.posicoes.jato.alcance ? c : null; }
+  function lerSerie(s, P) {
+    if (!s || !s.P || P < s.P[0] - 1e-9 || P > s.P[s.P.length - 1] + 1e-9) return null;
+    return interp(s.P, s.v, Math.min(Math.max(P, s.P[0]), s.P[s.P.length - 1]));
+  }
+  /** Alcance no catálogo para a pressão de entrada Pe (mca): da tabela dentro da faixa dela; da curva fora dela, dentro do gráfico; senão null com a faixa coberta.
+   *  Sem curva do modelo, o resultado é o de antes (tabela ou null). */
+  function alcanceCatalogo(D, modelo, cat, Pe) {
+    var s = cat.slice().sort(function (a, b) { return a.P - b.P; }), tabMin = s[0].P, tabMax = s[s.length - 1].P, c = curvaJato(D, modelo), r = { tabMin: tabMin, tabMax: tabMax, alcance: null, naTabela: false };
+    if (Pe >= tabMin - 1e-9 && Pe <= tabMax + 1e-9) { r.naTabela = true; r.alcance = interp(s.map(function (p) { return p.P; }), s.map(function (p) { return p.alcance; }), Pe); return r; }
+    if (!c) return r;
+    var al = c.posicoes.jato.alcance, a = lerSerie(al, Pe), fMin = Math.min(tabMin, al.P[0]), fMax = Math.max(tabMax, al.P[al.P.length - 1]);
+    r.faixaMin = fMin; r.faixaMax = fMax;
+    if (a !== null) { r.alcance = a; r.alcFonte = 'curva'; r.alcInc = c.incerteza.alcance; }
+    return r;
+  }
   /** Dados do esguicho e da mangueira (2.2). Valores oficiais: Tabela 2 da IT 22 (SP) ou Tabela 1 da NPT 022 (PR), pelo tipo.
    *  proj.lancamento = { Q, P, mangueiraDN, Lmang, alcance, Pentrada, fontes: {campo: texto} } traz só o que o usuário alterou; sem a chave, vale o oficial
    *  e o cálculo é o mesmo das versões anteriores. Pentrada (pressão de projeto na entrada do esguicho) só existe no critério do Paraná. */
@@ -255,10 +274,9 @@
     var PeQ = esguichoP(pts, lanc.Q), PeP = razao ? lanc.P / razao : lanc.P, PeMin = Math.max(PeQ, PeP);
     var Pe = lanc.Pentrada !== undefined ? lanc.Pentrada : PeMin;
     var Q = bisseca(function (q) { return esguichoP(pts, q) - Pe; }, 0, 4000, 100);
-    var ps = cat.map(function (p) { return p.P; }), tabMin = Math.min.apply(null, ps), tabMax = Math.max.apply(null, ps), naTabela = Pe >= tabMin - 1e-9 && Pe <= tabMax + 1e-9, alc = null;
-    if (naTabela) { var s = cat.slice().sort(function (a, b) { return a.P - b.P; }); alc = interp(s.map(function (p) { return p.P; }), s.map(function (p) { return p.alcance; }), Pe); }
-    return { pts: pts, razao: razao, PeQ: PeQ, PeP: PeP, PeMin: PeMin, P: Pe, Q: Q, ponta: razao ? razao * Pe : null, informado: lanc.Pentrada !== undefined, abaixo: Pe < PeMin - 1e-6,
-      tabMin: tabMin, tabMax: tabMax, naTabela: naTabela, alcance: alc, fonte: ep ? ep.fonte : '' };
+    var ac = alcanceCatalogo(D, h.esguicho, cat, Pe), tabMin = ac.tabMin, tabMax = ac.tabMax, naTabela = ac.naTabela, alc = ac.alcance;
+    return Object.assign({ pts: pts, razao: razao, PeQ: PeQ, PeP: PeP, PeMin: PeMin, P: Pe, Q: Q, ponta: razao ? razao * Pe : null, informado: lanc.Pentrada !== undefined, abaixo: Pe < PeMin - 1e-6,
+      tabMin: tabMin, tabMax: tabMax, naTabela: naTabela, alcance: alc, fonte: ep ? ep.fonte : '' }, ac.alcFonte ? { alcFonte: ac.alcFonte, alcInc: ac.alcInc, faixaMin: ac.faixaMin, faixaMax: ac.faixaMax } : ac.faixaMin !== undefined ? { faixaMin: ac.faixaMin, faixaMax: ac.faixaMax } : {});
   }
   /** 2.6.0: esguicho padrão pelo diâmetro do tipo, enquanto o usuário não escolhe outro. */
   var ESG_PADRAO = { 25: 'MR CAC 1" ER longo', 40: 'MR CAC 1 1/2" ER longo', 65: 'MR CAC 2 1/2" ER longo' };
@@ -266,11 +284,12 @@
   /** 2.6.0: o que chega ao esguicho com a pressão Pv na válvula (SP, só leitura). Vazão em que o esguicho do catálogo mais a perda na mangueira
    *  pedem a pressão da válvula; pressão na entrada do esguicho; alcance lido no catálogo (interpolado pela pressão, só dentro da tabela de ensaio). */
   function ateEsguicho(D, modelo, dn, L, Pv) {
-    var cat = D.esguichos.filter(function (e) { return e.modelo === modelo; });
-    if (!cat.length || !(Pv > 0)) return null;
-    var Q = bisseca(function (q) { return esguichoP(cat, q) + mangueiraJ(D, dn, q) * L - Pv; }, 0, 4000, 100), Pe = esguichoP(cat, Q);
-    var s = cat.slice().sort(function (a, b) { return a.P - b.P; }), tabMin = s[0].P, tabMax = s[s.length - 1].P, naTabela = Pe >= tabMin - 1e-9 && Pe <= tabMax + 1e-9;
-    return { Pv: Pv, Q: Q, Pe: Pe, perda: Pv - Pe, alcance: naTabela ? interp(s.map(function (p) { return p.P; }), s.map(function (p) { return p.alcance; }), Pe) : null, naTabela: naTabela, tabMin: tabMin, tabMax: tabMax };
+    var cat0 = D.esguichos.filter(function (e) { return e.modelo === modelo; });
+    if (!cat0.length || !(Pv > 0)) return null;
+    var cat = cat0;
+    var Q = bisseca(function (q) { return esguichoP(cat, q) + mangueiraJ(D, dn, q) * L - Pv; }, 0, 4000, 100), Pe = esguichoP(cat, Q), ac = alcanceCatalogo(D, modelo, cat0, Pe);
+    return Object.assign({ Pv: Pv, Q: Q, Pe: Pe, perda: Pv - Pe, alcance: ac.alcance, naTabela: ac.naTabela, tabMin: ac.tabMin, tabMax: ac.tabMax },
+      ac.alcFonte ? { alcFonte: ac.alcFonte, alcInc: ac.alcInc, faixaMin: ac.faixaMin, faixaMax: ac.faixaMax } : ac.faixaMin !== undefined ? { faixaMin: ac.faixaMin, faixaMax: ac.faixaMax } : {});
   }
   function montaJato(D, proj, norma, h, tipo, idx, lanc) {
     lanc = lanc || dadosLancamento(proj, norma, tipo);
@@ -612,15 +631,17 @@
       var okP = pc.razao ? pc.ponta >= lanc.P - 1e-6 && (jo.nulo || po.razao * Peo >= lanc.P - 1e-6) : pc.P >= lanc.P - 1e-6;
       num.pontoProjeto = { esguicho: jc.esguicho, Pentrada: pc.P, Q: pc.Q, ponta: pc.ponta, PeMin: pc.PeMin, PeQ: pc.PeQ, PeP: pc.PeP, informado: pc.informado, razao: pc.razao, alcance: pc.alcance, naTabela: pc.naTabela, tabMin: pc.tabMin,
         PentradaOut: Peo, pontaOut: po.razao ? po.razao * Peo : null, mangueira: par.Pvcrit - pc.P };
+      if (pc.faixaMin !== undefined) { num.pontoProjeto.faixaMin = pc.faixaMin; num.pontoProjeto.faixaMax = pc.faixaMax; }
+      if (pc.alcFonte) { num.pontoProjeto.alcFonte = pc.alcFonte; num.pontoProjeto.alcInc = pc.alcInc; }
       V.push(vf('V01', okQ && okP ? 'OK' : 'ERRO', (par.unico ? 'Vazão no esguicho e pressão mínima no jato' : 'Vazão no esguicho e pressão mínima no par adotado') + (pc.razao ? ' (pressão na ponta do esguicho)' : ' (pressão na entrada do esguicho; a da ponta fica na V27)'),
         'Q ' + par.Qcrit.toFixed(1) + (par.unico ? '' : ' e ' + par.Qout.toFixed(1)) + ' L/min (mínimo ' + lanc.Q + '); entrada do esguicho ' + pc.P.toFixed(2) + (par.unico ? '' : ' e ' + Peo.toFixed(2)) + ' mca' +
         (pc.razao ? '; ponta ' + pc.ponta.toFixed(2) + (par.unico ? '' : ' e ' + (po.razao * Peo).toFixed(2)) + ' mca (mínimo ' + lanc.P + ')' : '') + (pc.abaixo ? '; a pressão de entrada informada fica abaixo da mínima de ' + pc.PeMin.toFixed(2) + ' mca' : ''), norma, '5.7.1; Tabela 1, notas 3 e 4'));
       if (!pc.razao) V.push(vf('V27', 'ALERTA', 'Pressão na ponta do esguicho: a base não tem esse dado para o esguicho escolhido; comprovar os ' + lanc.P + ' mca pelo catálogo do fabricante', jc.esguicho + ': ' + pc.P.toFixed(2) + ' mca na entrada', norma, 'Tabela 1, nota 4'));
       // alcance: só conferência; não move o ponto de projeto; só alerta, nunca erro
-      if (pc.naTabela) V.push(vf('V28', 'ALERTA', pc.alcance < lanc.alcance - 1e-9 ? 'Alcance do jato: o catálogo fica abaixo do exigido' : 'Alcance do jato: o catálogo ensaia a 45 graus e a NPT mede com o jato paralelo ao solo; conferir com o fabricante',
-        'catálogo: ' + pc.alcance.toFixed(1) + ' m com ' + pc.P.toFixed(1) + ' mca na entrada; exigido: ' + lanc.alcance + ' m', norma, '5.7.1; 5.10.2.3'));
-      else V.push(vf('V28', 'ALERTA', 'Alcance do jato a comprovar pelo projetista: o ponto de projeto fica ' + (pc.P < pc.tabMin ? 'abaixo' : 'acima') + ' da tabela de ensaio do fabricante',
-        pc.P.toFixed(1) + ' mca na entrada; tabela de ' + pc.tabMin + ' a ' + pc.tabMax + ' mca; exigido: ' + lanc.alcance + ' m', norma, '5.7.1; 5.10.2.3'));
+      if (pc.alcance !== null) V.push(vf('V28', 'ALERTA', pc.alcance < lanc.alcance - 1e-9 ? 'Alcance do jato: o catálogo fica abaixo do exigido' : 'Alcance do jato: o catálogo ensaia a 45 graus e a NPT mede com o jato paralelo ao solo; conferir com o fabricante',
+        (pc.alcFonte === 'curva' ? 'curva do catálogo, ajuste da tabela ensaiada de ' + pc.tabMin + ' a ' + pc.tabMax + ' mca, fora da faixa ensaiada (ler pelo gráfico, ±' + pc.alcInc.toFixed(1) + ' m só da leitura): ' : 'catálogo: ') + pc.alcance.toFixed(1) + ' m com ' + pc.P.toFixed(1) + ' mca na entrada; exigido: ' + lanc.alcance + ' m', norma, '5.7.1; 5.10.2.3'));
+      else V.push(vf('V28', 'ALERTA', 'Alcance do jato a comprovar pelo projetista: o ponto de projeto fica ' + (pc.P < (pc.faixaMin !== undefined ? pc.faixaMin : pc.tabMin) ? 'abaixo' : 'acima') + (pc.faixaMin !== undefined ? ' da faixa dos gráficos do fabricante' : ' da tabela de ensaio do fabricante'),
+        pc.P.toFixed(1) + ' mca na entrada; ' + (pc.faixaMin !== undefined ? 'faixa do catálogo de ' + pc.faixaMin + ' a ' + pc.faixaMax : 'tabela de ' + pc.tabMin + ' a ' + pc.tabMax) + ' mca; exigido: ' + lanc.alcance + ' m', norma, '5.7.1; 5.10.2.3'));
     } else
     {
     if (par.unico) V.push(vf('V01', e1 ? 'OK' : 'ERRO', 'Q e P mínimas no jato', 'Q ' + par.Qcrit.toFixed(1) + ' L/min; P ' + par.Pvcrit.toFixed(2) + ' mca', norma));
@@ -630,10 +651,10 @@
       var ec = ateEsguicho(D, mod, dnE, LE, par.Pvcrit), eo = par.unico || par.out.nulo ? null : ateEsguicho(D, mod, dnE, LE, par.Pvout);
       if (ec) {
         num.esguicho = { modelo: mod, padrao: !hc.esguicho, mangueiraDN: dnE, Lmang: LE, alcanceExigido: lanc.alcance, tabMin: ec.tabMin, tabMax: ec.tabMax, crit: Object.assign({ id: par.crit.id }, ec), out: eo ? Object.assign({ id: par.out.id }, eo) : null };
-        var piores = [ec].concat(eo ? [eo] : []), fora = piores.filter(function (e) { return !e.naTabela; }), abaixo = piores.filter(function (e) { return e.naTabela && e.alcance < lanc.alcance - 1e-9; });
-        var txE = piores.map(function (e) { return e.Pe.toFixed(1) + ' mca na entrada e ' + e.Q.toFixed(1) + ' L/min' + (e.naTabela ? ', alcance ' + e.alcance.toFixed(1) + ' m' : ''); }).join('; ') + '; exigido: ' + lanc.alcance + ' m (' + mod + ')';
-        if (fora.length) V.push(vf('V28', 'ALERTA', 'Alcance do jato a comprovar pelo projetista: a pressão no esguicho fica ' + (fora[0].Pe < ec.tabMin ? 'abaixo' : 'acima') + ' da tabela de ensaio do fabricante (de ' + ec.tabMin + ' a ' + ec.tabMax + ' mca)', txE, norma, '4.8.2; 4.11.2.3'));
-        else V.push(vf('V28', abaixo.length ? 'ALERTA' : 'OK', abaixo.length ? 'Alcance do jato: o catálogo fica abaixo do exigido com a pressão da Tabela 2' : 'Alcance do jato no esguicho', txE, norma, '4.8.2; 4.11.2.3'));
+        var piores = [ec].concat(eo ? [eo] : []), fora = piores.filter(function (e) { return e.alcance === null; }), abaixo = piores.filter(function (e) { return e.alcance !== null && e.alcance < lanc.alcance - 1e-9; }), daCurva = piores.filter(function (e) { return e.alcFonte === 'curva'; });
+        var txE = piores.map(function (e) { return e.Pe.toFixed(1) + ' mca na entrada e ' + e.Q.toFixed(1) + ' L/min' + (e.alcance !== null ? ', alcance ' + e.alcance.toFixed(1) + ' m' + (e.alcFonte === 'curva' ? ' (curva do catálogo, ajuste da tabela ensaiada de ' + e.tabMin + ' a ' + e.tabMax + ' mca, fora da faixa ensaiada; ±' + e.alcInc.toFixed(1) + ' m só da leitura do gráfico)' : '') : ''); }).join('; ') + '; exigido: ' + lanc.alcance + ' m (' + mod + ')';
+        if (fora.length) V.push(vf('V28', 'ALERTA', 'Alcance do jato a comprovar pelo projetista: a pressão no esguicho fica ' + (fora[0].Pe < (ec.faixaMin !== undefined ? ec.faixaMin : ec.tabMin) ? 'abaixo' : 'acima') + (ec.faixaMin !== undefined ? ' da faixa dos gráficos do fabricante (de ' + ec.faixaMin + ' a ' + ec.faixaMax : ' da tabela de ensaio do fabricante (de ' + ec.tabMin + ' a ' + ec.tabMax) + ' mca)', txE, norma, '4.8.2; 4.11.2.3'));
+        else V.push(vf('V28', abaixo.length || daCurva.length ? 'ALERTA' : 'OK', abaixo.length ? 'Alcance do jato: o catálogo fica abaixo do exigido com a pressão da Tabela 2' : daCurva.length ? 'Alcance do jato lido na curva do catálogo, fora da faixa ensaiada pelo fabricante (ensaio só de ' + daCurva[0].tabMin + ' a ' + daCurva[0].tabMax + ' mca): a comprovar pelo projetista' : 'Alcance do jato no esguicho', txE, norma, '4.8.2; 4.11.2.3'));
       }
     }
     if (par.unico) V.push(vf('V02', 'INFO', 'Um jato: rede com um só hidrante simples (a IT 22, 4.8.3, define os dois jatos para mais de um hidrante simples)', num.par, norma));
@@ -790,25 +811,29 @@
     if (reds) { num.redutoras = reds.lista; V.push(vf('V25', reds.situacao, 'Válvula redutora de pressão: regulagem declarada (leitura da ferramenta)', reds.valor, norma)); }
     // --- jockey e escada de pressostatos
     if (proj.jockey && b && modo === 'bomba') {
-      var jk = proj.jockey, saidas = proj.saidas || proj.hidrantes.length, asp = ctx.z('BI') - ctx.zX;
+      var jk = proj.jockey, saidas = proj.hidrantes.length, asp = ctx.z('BI') - ctx.zX;
       var exig = proj.norma === 'SP' ? saidas > 6 && !(proj.fonte.elevado) : false;
       V.push(vf('V14', exig ? (jk.pts ? 'OK' : 'ERRO') : 'INFO', proj.norma === 'SP' ? 'Jockey exigida acima de 6 saídas' : 'Jockey facultativa no PR', saidas + ' saídas', norma));
       if (jk.pts) {
         // 2.4.3: escada a partir da pressão calculada na descarga (degrau 1: a principal liga); a jockey liga 10 acima e
         // desliga 10 acima da própria partida, sem passar do teto: shut-off da principal no cavalete, água em X (IT 22, C.1.15.1)
-        var teto = b.shutoff - asp, e1 = par.Pd, e3 = Math.min(e1 + 20, teto), e2 = e3 - 10, cabe = e2 > e1;
+        // FC-073: o diferencial de acionamento (10 mca na norma) pode ser adotado pelo projetista (proj.pressostatoDif, mca, de 1 a 20; fora da faixa ou sem valor vale o da norma, a recomendação de cerca de 10 mca)
+        var DIF_NORMA = 10, dif = typeof proj.pressostatoDif === 'number' && proj.pressostatoDif >= 1 && proj.pressostatoDif <= 20 ? proj.pressostatoDif : DIF_NORMA, adotado = Math.abs(dif - DIF_NORMA) > 1e-9, difTx = String(dif).replace('.', ',');
+        var teto = b.shutoff - asp, e1 = par.Pd, e3 = Math.min(e1 + 2 * dif, teto), e2 = e3 - dif, cabe = e2 > e1;
         var Hj = e2 + asp, Qj = vazaoJockey(jk.pts, jk.shutoff, Hj);
         num.HjPartida = Hj; num.Qjh = Qj; num.Qjl = Qj / CV;
-        V.push(vf('V15', num.Qjl <= 20 ? 'OK' : 'ERRO', 'Vazão da jockey no ponto de partida (<= 20 L/min)', num.Qjl.toFixed(1) + ' L/min', norma));
+        var alcanca = Hj <= jk.shutoff + 1e-9 && Qj >= 0;   // FC-073: bomba escolhida na lista completa que não chega à altura de partida (vazão negativa pela extrapolação) é ERRO, nunca OK com número negativo
+        V.push(vf('V15', alcanca && num.Qjl <= 20 ? 'OK' : 'ERRO', 'Vazão da jockey no ponto de partida (<= 20 L/min)', alcanca ? num.Qjl.toFixed(1) + ' L/min' : 'a bomba não alcança a altura de partida', norma));
         V.push(vf('V16', jk.shutoff >= b.shutoff ? 'OK' : 'ERRO', 'Shut-off da jockey maior ou igual ao da principal', jk.shutoff + ' contra ' + b.shutoff, norma));
         num.escada = { desligaJockey: e3, ligaJockey: e2, ligaPrincipal: e1, fundoJockeyBar: e3 / 0.7 / BAR, fundoPrincipalBar: e1 / 0.7 / BAR, teto: teto, cabe: cabe };
-        var fs = proj.pressostatoFundoBar;
-        V.push(vf('V17', !cabe ? 'ERRO' : fs === undefined ? 'ALERTA' : (fs * 0.7 * BAR >= e3 ? 'OK' : 'ERRO'), 'Escada de pressostatos (70% do fundo de escala)', e3.toFixed(1) + ' / ' + e2.toFixed(1) + ' / ' + e1.toFixed(1) + ' mca, a partir da pressão calculada; teto ' + teto.toFixed(1) + (cabe ? '' : '; a escada não cabe: o teto fica a menos de 10 mca da pressão calculada') + (fs !== undefined ? '; fundo de escala ' + fs + ' bar' : ''), norma));
+        if (adotado) { num.escada.dif = dif; num.escada.difNorma = DIF_NORMA; num.escada.adotado = true; }
+        var fs = proj.pressostatoFundoBar, sit17 = !cabe ? 'ERRO' : fs === undefined ? 'ALERTA' : (fs * 0.7 * BAR >= e3 ? 'OK' : 'ERRO');   // escala adotada não dispensa o fundo de escala: sem ele a V17 segue em ALERTA
+        V.push(vf('V17', sit17, 'Escada de pressostatos (70% do fundo de escala)', e3.toFixed(1) + ' / ' + e2.toFixed(1) + ' / ' + e1.toFixed(1) + ' mca, a partir da pressão calculada; teto ' + teto.toFixed(1) + (cabe ? '' : '; a escada não cabe: o teto fica a menos de ' + (adotado ? difTx : '10') + ' mca da pressão calculada') + (fs !== undefined ? '; fundo de escala ' + fs + ' bar' : '') + (adotado ? '; diferencial de acionamento de ' + difTx + ' mca ' + (sit17 === 'OK' ? 'aceito' : 'adotado') + ' pelo projetista (a norma recomenda cerca de ' + DIF_NORMA + ' mca)' + (sit17 === 'ALERTA' ? '; a escala adotada não dispensa informar o fundo de escala' : '') : ''), norma));
       }
     }
     // --- V14 sem jockey lançada: exigida (SP, mais de 6 saídas, reservatório não elevado) ou não
     if (!proj.jockey && modo === 'bomba') {
-      var sd = proj.saidas || proj.hidrantes.length, ex2 = proj.norma === 'SP' ? sd > 6 && !(proj.fonte && proj.fonte.elevado) : false;
+      var sd = proj.hidrantes.length, ex2 = proj.norma === 'SP' ? sd > 6 && !(proj.fonte && proj.fonte.elevado) : false;
       V.push(vf('V14', ex2 ? 'ERRO' : 'INFO', proj.norma === 'SP' ? (ex2 ? 'Jockey exigida acima de 6 saídas e não lançada' : 'Jockey não exigida (até 6 saídas ou reservatório elevado)') : 'Jockey facultativa no PR, não lançada', sd + ' saídas', norma));
     }
     // --- recalque: só registro (2.3). O dispositivo recebe água da viatura do Corpo de Bombeiros e não é dimensionado; a conta didática (V20) saiu.
@@ -854,5 +879,5 @@
   function vf(id, sit, titulo, valor, norma, item) { return { id: id, situacao: sit, titulo: titulo, valor: valor, item: item || (norma.itens && norma.itens[id]) || '' }; }
 
   return { J: J, vel: vel, interp: interp, alturaBomba: alturaBomba, leCurva: leCurva, vazaoJockey: vazaoJockey, ambiente: ambiente, classifica: classifica, reservaPedida: reservaPedida, sugereColuna: sugereColuna, exigenciaHidranteSP: exigenciaHidranteSP, citacaoExigenciaSP: citacaoExigenciaSP, faixa: faixa,
-    montaGrafo: montaGrafo, pressaoGravidade: pressaoGravidade, estadoSuccao: estadoSuccao, retornoTeste: retornoTeste, curvaSistema: curvaSistema, pontoTrabalho: pontoTrabalho, calcular: calcular, calcularRede: calcularRede, pminHidrante: pminHidrante, abaixoDoMinimo: abaixoDoMinimo, abaixoMinimo: abaixoMinimo, pressoesHidrantes: pressoesHidrantes, pressoesNos: pressoesNos, cascata: cascata, redutoraDe: redutoraDe, avaliaPar: avaliaPar, mangueiraJ: mangueiraJ, esguichoP: esguichoP, ateEsguicho: ateEsguicho, esguichoPadrao: esguichoPadrao, dadosLancamento: dadosLancamento, pontoParana: pontoParana, prepTrecho: prepTrecho, achaTubo: achaTubo, leqPeca: leqPeca, CV: CV, BAR: BAR, ITER: ITER };
+    montaGrafo: montaGrafo, pressaoGravidade: pressaoGravidade, estadoSuccao: estadoSuccao, retornoTeste: retornoTeste, curvaSistema: curvaSistema, pontoTrabalho: pontoTrabalho, calcular: calcular, calcularRede: calcularRede, pminHidrante: pminHidrante, abaixoDoMinimo: abaixoDoMinimo, abaixoMinimo: abaixoMinimo, pressoesHidrantes: pressoesHidrantes, pressoesNos: pressoesNos, cascata: cascata, redutoraDe: redutoraDe, avaliaPar: avaliaPar, mangueiraJ: mangueiraJ, esguichoP: esguichoP, ateEsguicho: ateEsguicho, alcanceCatalogo: alcanceCatalogo, esguichoPadrao: esguichoPadrao, dadosLancamento: dadosLancamento, pontoParana: pontoParana, prepTrecho: prepTrecho, achaTubo: achaTubo, leqPeca: leqPeca, CV: CV, BAR: BAR, ITER: ITER };
 });

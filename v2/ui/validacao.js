@@ -353,7 +353,7 @@
     var suc = succaoDe(F), sNeg = !!(suc && suc.npshObrigatorio), vnr = num(F.bomba.npshr);   /* 2.6.0: NPSH pedido na negativa e, no PR, em qualquer estado */
     if (!vazio(F.bomba.npshr)) p('bomba.npshr', POS.bomba, isNaN(vnr) ? A('Use só número, com vírgula decimal.') : vnr <= 0 ? A('O NPSH requerido precisa ser maior que zero.') : null);
     else if (sNeg && !vazio(F.bomba.id) && !ctx.npshCurva) p('bomba.npshr', POS.bomba, A('Informe o NPSH requerido da bomba escolhida, lido na curva do catálogo.'));
-    if (!vazio(F.saidas) && !/^[1-9]\d*$/.test(String(F.saidas).trim())) p('saidas', POS.bomba, E('Use um número inteiro maior que zero. Exemplo: 7'));
+    if (!vazio(F.pressostatoDif)) { var vpd = num(F.pressostatoDif); p('pressostatoDif', POS.bomba, isNaN(vpd) ? A('Use só número, com vírgula decimal.') : vpd < 1 || vpd > 20 ? A('Informe o diferencial de acionamento entre 1 e 20 mca. Fora disso vale o da norma.') : null); }   /* FC-073 */
     if (ctx.jockeyExigida) p('jockey.id', POS.bomba, vazio(F.jockey.id) ? Z('Este sistema exige bomba de pressurização (jockey). Escolha o modelo.') : null);
     if (bombaModo) {
       if (!F.recalque.ativo) { /* 2.5.3: o recalque é opcional; sem ele o projeto calcula e avança, sem aviso */ }

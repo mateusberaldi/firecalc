@@ -12,10 +12,11 @@ LIBS = {
     'pako-zlib': ('pako, aviso zlib', 'não declarada pelo bundle', 'lib/zlib/README do pacote pako 1.0.11 instalado, versão inferida', 'pako-zlib-README.txt'),
     'ieee754': ('ieee754', 'não declarada pelo bundle', 'texto de licença do pacote 1.2.1 instalado, versão inferida', 'ieee754-LICENSE.txt'),
     'safe-buffer': ('safe-buffer', 'não declarada pelo bundle', 'texto de licença do pacote 5.2.1 instalado, versão inferida', 'safe-buffer-LICENSE.txt'),
+    'lucide': ('Lucide', '0.460.0 (ícones do sprite, de v2/ui/ds/icones)', 'texto de licença do Lucide 0.460.0, igual ao do design system (docs/design-system/assets/Icones/LICENCA_Lucide.txt)', 'lucide-LICENSE.txt'),
 }
 # Licença dupla: no HTML entra só o trecho anterior a esta linha (o texto completo fica em vendor/).
 CORTE = {'jszip': 'GPL version 3'}
-V2 = ['exceljs', 'docx', 'jszip', 'pako', 'pako-zlib', 'ieee754', 'safe-buffer']
+V2 = ['exceljs', 'docx', 'jszip', 'pako', 'pako-zlib', 'ieee754', 'safe-buffer', 'lucide']
 CAB = 'Avisos de licença das bibliotecas de terceiros embutidas neste arquivo. Cada texto segue como no arquivo de licença do pacote.'
 SEP = '=' * 72
 

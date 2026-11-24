@@ -1,6 +1,23 @@
-# FireCalc 2.7.0: notas da versão
+# FireCalc 2.8.0: notas da versão
 
-23/11/2026. Sobre a 2.6.4. Software livre sob a AGPL-3.0; código-fonte em github.com/mateusberaldi/firecalc.
+23/11/2026. Sobre a 2.7.0. Software livre sob a AGPL-3.0; código-fonte em github.com/mateusberaldi/firecalc.
+
+## Também na 2.8.0: pressostato, jockey e esguichos (FC-073, FC-074 e FC-075)
+
+- **Escala de acionamento dos pressostatos (FC-073):** no cartão Pressostatos, da etapa Bomba e automação, o projetista pode adotar outro diferencial de acionamento (de 1 a 20 mca) no lugar dos cerca de 10 mca que a IT 22 recomenda; o campo mostra "Norma: 10 mca" e tem Restaurar. Com a escala adotada, a escada de pressões, a planilha, o memorial e a verificação V17 passam a usar o valor adotado e a dizê-lo. A V17 só fica "aceito pelo projetista" quando a escada cabe e o fundo de escala do pressostato está informado e dentro dos 70%; sem o fundo informado ela segue em ALERTA, que cita a escala adotada. Quando a escada não cabe, o aviso traz "Alterar escala" e "Trocar bomba".
+- **Pressurização: saídas e escolha da bomba (FC-074):** o número de saídas do sistema passa a ser o de hidrantes lançados na Rede, sem campo à parte; arquivos antigos que gravaram esse campo abrem normalmente e usam os hidrantes da Rede. Qualquer bomba cadastrada (catálogo e biblioteca do usuário) pode ser escolhida como bomba de pressurização, além das sugeridas. A V15 passa a dar ERRO "a bomba não alcança a altura de partida" quando a bomba escolhida não chega à altura de partida, no lugar de uma vazão negativa.
+- **Números do cálculo:** nenhum muda com o diferencial da norma. Mudam só a V14 (de "7 saídas" para "5 saídas", de OK para INFO) nos dois exemplos de escritórios, cujo arquivo trazia 7 saídas com 5 hidrantes lançados, e o resultado de quem adotar outra escala. Por desenho, arquivo antigo cujo campo "saidas" era maior que os hidrantes lançados (por exemplo 8 saídas e 5 hidrantes, em SP, sem jockey) passa de ERRO a INFO na V14, sem aviso: vale o que está na Rede.
+
+## O que muda na 2.8.0
+
+- **Identidade visual nova (FC-042):** o programa passa a seguir um design system único, com cores, fontes, espaçamentos e peças próprios (botões, cartões, tabelas, janelas, avisos, seletores, indicadores), nos temas claro e escuro e sem nenhum arquivo externo. As regras visuais antigas saíram.
+- **Estrutura nova da tela:** menu lateral com as oito etapas, barra superior, painel de resumo e rodapé de etapa com um único botão principal por tela. A busca rápida, as janelas e as confirmações usam as mesmas peças.
+- **Responsivo em três larguras:** amplo, médio e móvel (abaixo de 1024 px, com o menu em gaveta). A página não rola de lado e nenhum texto fica cortado nas larguras de 390 a 1440 px; só tabelas largas rolam dentro do próprio cartão.
+- **Telas refeitas:** Início, as oito etapas, Estatísticas, Cadastros, Configurações, Ajuda e Sobre. Verificações com o que fazer em cada item; Relatório com as três saídas (planilha, memorial e projeto) em destaque; listas de bombas com o botão de escolher sempre à vista, com potência, altura e shut-off sob o modelo em tela estreita.
+- **Janelas com botão de fechar no cabeçalho** (além do Fechar no pé, do Esc e do clique fora).
+- **Acessibilidade:** foco visível de 3 px nos desenhos, alvos de 36 px, rótulos de leitor de tela nas tabelas e nos controles, foco devolvido ao controle de tema e de modo depois de trocar.
+- **Números do cálculo:** nenhum muda. As 12 amostras de projetos, os números dos exemplos e as verificações saem iguais aos da 2.7.0; mudou só a forma de mostrar (por exemplo, o nome e o código de cada verificação ficam separados, e o Relatório traz um título em cada saída).
+- **Alcance do esguicho pelas curvas do catálogo (FC-075):** o esguicho da Mecânica Reunida com gráficos no catálogo passa a mostrar o alcance lido na curva quando a pressão de entrada fica fora da tabela de ensaio e dentro do gráfico (CAC 1 1/2" a 30 mca: cerca de 8 a 10 m, onde dizia fora da tabela), com a incerteza da leitura (±). Dentro da tabela vale a tabela; fora do gráfico continua fora da tabela, com a faixa. Muda só o alcance e a verificação V28 dos casos; a vazão e a pressão do cálculo não mudam.
 
 ## O que muda na 2.7.0
 

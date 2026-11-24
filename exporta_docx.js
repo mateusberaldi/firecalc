@@ -99,6 +99,10 @@
           else if (nx.reserva !== undefined) B.push(p('Reserva efetiva = área × (nível normal − ' + (!nx.bomba ? 'nível de referência' : nx.nivelReserva > nx.X ? 'piso do reservatório' : 'nível X') + ') = ' + n2(nx.area, 2) + ' m² × ' + n2(nx.altura, 3) + ' m = ' + n2(nx.reserva, 2) + ' m³.' + (n.rtiTabela !== undefined ? ' A tabela pede ' + numTx(n.rtiTabela) + ' m³.' : '')));
         } else if (P.fonte && P.fonte.modo === 'bomba') B.push(p('Nível X informado pelo projetista' + (P.fonte.zXFonte ? '. Fonte: ' + P.fonte.zXFonte + '.' : ', sem fonte registrada no projeto.')));
       }
+      if (numero === 10 && n.escada && n.escada.adotado) {   // FC-073: diferencial de acionamento adotado pelo projetista, dito sem veredito
+        var v17 = R.verificacoes.filter(function (v) { return v.id === 'V17'; })[0], dtx = String(n.escada.dif).replace('.', ',');   // mesma casa decimal do campo da tela
+        B.push(p('Diferencial de acionamento dos pressostatos adotado pelo projetista: ' + dtx + ' mca, diferente do valor de cerca de ' + n.escada.difNorma + ' mca que a norma recomenda. A escada de pressões deste memorial usa o valor adotado.' + (v17 && v17.situacao === 'OK' ? ' A verificação do ajuste dos pressostatos registra o valor como aceito pelo projetista.' : '')));
+      }
       if (numero === 11) {   // todas as verificações, com o item da norma
         B.push(h(3, 'Quadro de verificações'));
         B.push(tab(['Código', 'Verificação', 'Valor', 'Situação', 'Item (' + sigla + ')'], R.verificacoes.map(function (v) { return [v.id, limpa(v.titulo), limpa(String(v.valor).replace(/(\d)\.(\d)/g, '$1,$2')), (CF && CF[v.id] && v.situacao === 'ALERTA' ? 'Conferido' : SIT[v.situacao] || v.situacao), limpa(v.item || '')]; }), [8, 36, 28, 11, 17], { peq: true, id: 'verificacoes' }));
